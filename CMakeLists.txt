@@ -27,7 +27,6 @@ list(APPEND LINK_LIBS
   rcsc_gz
   rcsc_time
   rcsc_rcg
-  ${CMAKE_THREAD_LIBS_INIT}
 )
 
 add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCES})
