@@ -9,9 +9,11 @@ HFO
  - [soccerwindow2-5.1.0](http://en.sourceforge.jp/projects/rctools/downloads/51942/soccerwindow2-5.1.0.tar.gz/) Optional
 
 ## Install
-1. Edit the `LIBRCSC_INCLUDE` and `LIBRCSC_LINK` variables in CMakeLists.txt to point to your librcsc include and library directories. 
+1. Edit the `LIBRCSC_INCLUDE`/`LIBRCSC_LINK` variables in `CMakeLists.txt` to point to your librcsc include/lib directories. 
 2. `cmake .`
 3. `make`
 
 ## Run
-Execute `bin/start.py`. 
+```bash
+bin/start.py
+```
