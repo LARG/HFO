@@ -1,0 +1,88 @@
+[3.1.1]
+  * gcc-4.6でのコンパイルエラー・警告へ対応
+
+[3.1.0]
+  * librcscの変更に追従し，ボロノイ図計算で暴走する問題を修正した．
+
+[3.0.0]
+  * rcssserverバージョン14に対応し，librcsc-4.0.xを要求するようになっ
+    た．
+
+  * 行動探索フレームワークを追加した．
+
+  * Keepawayのテンプレートを追加した．
+
+[2.1.0]
+  * フォーメーション設定ファイルが新しいフォーマットバージョンに変更さ
+    れた．このフォーマットは，soccerwindow2 4.1.0以降に付属のfeditで編
+		集可能である．
+
+  * フォーメーションファイルの読み込みが統一され，Staticタイプのフォー
+    メーションを他のタイプと同じ手順で読み込めるようになった．
+
+  * start.shのコマンドラインオプションが拡張された．
+    - -f, --formation DIR : フォーメーションのディレクトリ指定
+    - --offline-logging : オフラインクライアント用のログを記録する
+    - --offline-client-mode : オフラインクライアントモードで起動する
+    - --debug-fullstate : 通常のワールドモデルとは別にfullstateで構築
+      したワールドモデルを参照できるようになる
+
+  * デバッグ用の起動スクリプトのサンプル，start-debug.shと
+    start-offline.shがパッケージに追加された．
+
+[2.0.1]
+  * team_graphicサポートの不具合を修正した．
+
+  * team_graphic用のxpmファイルのサンプルを追加した．
+
+[2.0.0]
+  * rcssserverバージョン13をサポートした．
+
+  * librcsc-3.0.xをサポートした．いくつかのアクションはobsoleteとなり，
+    新しいアクションへと置き換えられたことに注意．
+
+  * いくつかのアクションをHELIOS2007-2008相当のものに置き換えた．キー
+    パーはHELIOS2008の非saviorモード時と同等の動作をするようになった．
+    - （追加）Bhv_DangerAreaTackle
+	- （追加）Neck_GoalieTurnNeck
+	- （更新）Bhv_BasicTackle
+	- （更新）Bhv_GoalieBasicMove
+	- （更新）Bhv_GoalieChaseBall
+
+  * rcssserver-13の新ダッシュモデルに対応した．ただし，キーパーの動作
+    に関しては修正が不完全である．
+
+  * デフォルトの守備的動作において，ダッシュスピードを調整した．
+
+  * before-kick-off.confで定義される初期配置を変更した．
+
+  * FormationBPNのサポートを停止した．それに伴い，フォーメーション設定
+    ファイルのoffense-formation.confとdefense-formation.confを
+    normal-formation.confへ統一した．
+
+  * start.shにいくつかのオプションを追加した．
+    - -p, --port PORT : プレイヤの接続ポート番号変更
+    - -P, --coach-port PORT : コーチの接続ポート番号変更
+    - --team-graphic FILE : チームロゴXPMファイルを指定
+    - --debug-server-host HOST : デバッグサーバ(soccerwindow2)のホスト
+      名（またはIPアドレス）を指定
+    - --debug-server-port PORT : デバッグサーバ(soccerwindow2)の接続ポー
+      ト番号を指定
+    - --log-dir DIRECTORY : デバッグログファイルを書き出すディレクトリ
+      パスを指定
+    - --log-ext EXTENTION : デバッグログファイルの拡張子名を指定
+    - --use-fullstate (true|false) : fullstate情報でワールドモデルを更
+      新するか否かを指定
+
+[1.0.0]
+  * Supported rcssserver 12.
+
+[0.4.0]
+  * Supported new communication framework.
+
+  * Supported player type analysis by coach agent.
+
+  * Added coach.conf
+
+  * Fixed defect in the change view action when player search the
+    ball.

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -x
+autoreconf -i -f
+#aclocal -I config
+#autoheader
+#automake -a -c
+#autoconf

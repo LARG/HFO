@@ -1,0 +1,49 @@
+=======
+はじめに
+=======
+agent2dはlibrcscを使用したシンプルなチームの実装例です．RoboCup Soccer
+Simulator(rcssserver)バージョン15で動作させることを想定しています．
+
+- RoboCup Soccer Simulator Homepage: http://sserver.sf.net/
+- RoboCup Official Homepage: http://www.robocup.org/
+
+- librcsc Homepage: http://rctools.sourceforge.jp/
+
+============
+要求ライブラリ
+============
+agent2d-3.1.1 は以下のライブラリを要求します．
+
+ - boost-1.32 or later
+ - librcsc-4.1.x
+
+=====
+ビルド
+=====
+パッケージを展開したディレクトリ内部で以下のコマンドを実行します:
+
+./configure
+make
+
+librcscをシステムのディレクトリにインストールしていない場合，以下のよ
+うにconfigureの'--with-librcsc'オプションによってlibrcscのインストール
+パスを指定しなければなりません．
+
+./configure --with-librcsc=/path/to/prefix
+
+この場合，環境変数 LD_LIBRARY_PATH も設定する必要があるかもしれません．
+
+=================
+インストール時の設定
+=================
+agent2dをビルドする前に，パッケージに含まれるconfigureスクリプトのオプ
+ションによって設定を変更することができます．configureで指定できるオプ
+ションの詳細は，'configure --help'を実行することで参照できます．
+
+==========
+チームの起動
+==========
+agent2dのチームを起動するには，srcディレクトリ内で以下のコマンドをタイ
+プします．
+
+`./start.sh'

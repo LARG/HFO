@@ -1,0 +1,1135 @@
+2012-03-08  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* NEWS:
+	* NEWS.en:
+	* README:
+	* README.en:
+	* configure.ac:
+	- Official release 3.1.1.
+
+	* src/chain_action/bhv_chain_action.cpp:
+	* src/chain_action/bhv_pass_kick_find_receiver.cpp:
+	* src/chain_action/neck_turn_to_receiver.cpp:
+	* src/chain_action/self_pass_generator.cpp:
+	* src/chain_action/shoot_generator.cpp:
+	* src/chain_action/simple_pass_checker.h:
+	- gcc-4.6でのコンパイルエラー・警告へ対応
+
+	* src/start.sh.in:
+	- copyrightの年を更新
+
+2011-05-11  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* NEWS:
+	* configure.ac:
+	- Official release 3.1.0.
+
+	* src/chain_action/field_analyzer.cpp:
+	- ボロノイ図の計算をコメントアウト
+
+	* src/start.sh.in:
+	- pingコマンド追加
+
+	* src/sample_coach.cpp:
+	* src/sample_coach.h:
+	- librcscの変更に追従．handleServerParam(), handlePlayerParam(),
+	handlePlayerType()を追加．heteroID()をplayerTypeId()へ変更．
+
+	* src/start.sh.in:
+	- pingコマンドを追加
+
+2011-05-09  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_set_play.cpp:
+	* src/chain_action/actgen_cross.cpp:
+	* src/chain_action/actgen_direct_pass.cpp:
+	* src/chain_action/actgen_strict_check_pass.cpp:
+	* src/chain_action/action_chain_graph.cpp:
+	* src/chain_action/bhv_pass_kick_find_receiver.cpp:
+	* src/chain_action/clear_generator.cpp:
+	* src/chain_action/cross_generator.cpp:
+	* src/chain_action/field_analyzer.cpp:
+	* src/chain_action/neck_turn_to_receiver.cpp:
+	* src/chain_action/predict_state.cpp:
+	* src/chain_action/predict_state.h:
+	* src/chain_action/strict_check_pass_generator.cpp:
+	* src/chain_action/tackle_generator.cpp:
+	* src/neck_default_intercept_neck.cpp:
+	* src/sample_communication.cpp:
+	* src/sample_field_evaluator.cpp:
+	- librcscの変更に追従．主にWorldModelのインタフェースへの対応．
+
+2010-09-01  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* NEWS:
+	* NEWS.en:
+	* README:
+	* README.en:
+	* configure.ac:
+	- Official release 3.0.0.
+
+2010-08-30  Hiroki Shimora  <shimora@users.sourceforge.net>
+
+	* src/start-debug.sh:
+	* src/start-offline.sh:
+	- 移植性向上のため $@ を ${1+"$@"} に置換
+
+2010-08-27  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* NEWS:
+	* NEWS.en:
+	* README:
+	* README.en:
+	* configure.ac:
+	- updated a major version.
+
+	* src/Makefile.am:
+	- 配布物から抜けていたファイルを追加．
+
+	* src/sample_field_evaluator.cpp:
+	* src/sample_field_evaluator.h:
+	- サンプルの評価関数を用意
+
+	* src/bhv_danger_area_tackle.cpp:
+	* src/bhv_danger_area_tackle.h:
+	* src/body_kick_to_corner.cpp:
+	* src/body_kick_to_corner.h:
+	* src/Makefile.am:
+	* src/bhv_basic_offensive_kick.cpp:
+	- 未使用のアクションを削除
+
+	* src/bhv_custom_before_kick_off.cpp:
+	* src/bhv_custom_before_kick_off.h:
+	* src/chain_action/actgen_action_chain_length_filter.h:
+	* src/chain_action/actgen_cross.cpp:
+	* src/chain_action/actgen_cross.h:
+	* src/chain_action/actgen_direct_pass.cpp:
+	* src/chain_action/actgen_direct_pass.h:
+	* src/chain_action/actgen_self_pass.cpp:
+	* src/chain_action/actgen_self_pass.h:
+	* src/chain_action/actgen_shoot.cpp:
+	* src/chain_action/actgen_shoot.h:
+	* src/chain_action/actgen_short_dribble.cpp:
+	* src/chain_action/actgen_short_dribble.h:
+	* src/chain_action/actgen_simple_dribble.cpp:
+	* src/chain_action/actgen_simple_dribble.h:
+	* src/chain_action/actgen_strict_check_pass.cpp:
+	* src/chain_action/actgen_strict_check_pass.h:
+	* src/chain_action/action_chain_graph.cpp:
+	* src/chain_action/action_chain_graph.h:
+	* src/chain_action/action_chain_holder.cpp:
+	* src/chain_action/action_chain_holder.h:
+	* src/chain_action/action_generator.h:
+	* src/chain_action/action_state_pair.h:
+	* src/chain_action/bhv_chain_action.cpp:
+	* src/chain_action/bhv_chain_action.h:
+	* src/chain_action/bhv_normal_dribble.cpp:
+	* src/chain_action/bhv_normal_dribble.h:
+	* src/chain_action/bhv_pass_kick_find_receiver.cpp:
+	* src/chain_action/bhv_pass_kick_find_receiver.h:
+	* src/chain_action/bhv_strict_check_shoot.cpp:
+	* src/chain_action/bhv_strict_check_shoot.h:
+	* src/chain_action/body_force_shoot.cpp:
+	* src/chain_action/body_force_shoot.h:
+	* src/chain_action/clear_ball.cpp:
+	* src/chain_action/clear_ball.h:
+	* src/chain_action/clear_generator.cpp:
+	* src/chain_action/clear_generator.h:
+	* src/chain_action/cooperative_action.cpp:
+	* src/chain_action/cooperative_action.h:
+	* src/chain_action/cross_generator.cpp:
+	* src/chain_action/cross_generator.h:
+	* src/chain_action/dribble.cpp:
+	* src/chain_action/dribble.h:
+	* src/chain_action/field_analyzer.cpp:
+	* src/chain_action/field_analyzer.h:
+	* src/chain_action/field_evaluator.h:
+	* src/chain_action/hold_ball.cpp:
+	* src/chain_action/hold_ball.h:
+	* src/chain_action/neck_turn_to_receiver.cpp:
+	* src/chain_action/neck_turn_to_receiver.h:
+	* src/chain_action/pass.cpp:
+	* src/chain_action/pass.h:
+	* src/chain_action/pass_checker.h:
+	* src/chain_action/positioning.cpp:
+	* src/chain_action/positioning.h:
+	* src/chain_action/predict_ball_object.h:
+	* src/chain_action/predict_player_object.h:
+	* src/chain_action/predict_state.cpp:
+	* src/chain_action/predict_state.h:
+	* src/chain_action/self_pass_generator.cpp:
+	* src/chain_action/self_pass_generator.h:
+	* src/chain_action/shoot.cpp:
+	* src/chain_action/shoot.h:
+	* src/chain_action/shoot_generator.cpp:
+	* src/chain_action/shoot_generator.h:
+	* src/chain_action/short_dribble_generator.cpp:
+	* src/chain_action/short_dribble_generator.h:
+	* src/chain_action/simple_pass_checker.cpp:
+	* src/chain_action/simple_pass_checker.h:
+	* src/chain_action/strict_check_pass_generator.cpp:
+	* src/chain_action/strict_check_pass_generator.h:
+	* src/chain_action/tackle_generator.cpp:
+	* src/chain_action/tackle_generator.h:
+	* src/communication.h:
+	* src/formations-dt/defense-formation.conf:
+	* src/formations-dt/offense-formation.conf:
+	* src/formations-keeper:
+	* src/formations-keeper/before-kick-off.conf:
+	* src/formations-keeper/defense-formation.conf:
+	* src/formations-keeper/goal-kick-opp.conf:
+	* src/formations-keeper/goal-kick-our.conf:
+	* src/formations-keeper/goalie-catch-opp.conf:
+	* src/formations-keeper/goalie-catch-our.conf:
+	* src/formations-keeper/goalie-formation.conf:
+	* src/formations-keeper/indirect-freekick-opp-formation.conf:
+	* src/formations-keeper/indirect-freekick-our-formation.conf:
+	* src/formations-keeper/kickin-our-formation.conf:
+	* src/formations-keeper/normal-formation.conf:
+	* src/formations-keeper/offense-formation.conf:
+	* src/formations-keeper/setplay-opp-formation.conf:
+	* src/formations-keeper/setplay-our-formation.conf:
+	* src/formations-taker:
+	* src/formations-taker/before-kick-off.conf:
+	* src/formations-taker/defense-formation.conf:
+	* src/formations-taker/goal-kick-opp.conf:
+	* src/formations-taker/goal-kick-our.conf:
+	* src/formations-taker/goalie-catch-opp.conf:
+	* src/formations-taker/goalie-catch-our.conf:
+	* src/formations-taker/goalie-formation.conf:
+	* src/formations-taker/indirect-freekick-opp-formation.conf:
+	* src/formations-taker/indirect-freekick-our-formation.conf:
+	* src/formations-taker/kickin-our-formation.conf:
+	* src/formations-taker/normal-formation.conf:
+	* src/formations-taker/offense-formation.conf:
+	* src/formations-taker/setplay-opp-formation.conf:
+	* src/formations-taker/setplay-our-formation.conf:
+	* src/intention_receive.cpp:
+	* src/intention_receive.h:
+	* src/intention_wait_after_set_play_kick.cpp:
+	* src/intention_wait_after_set_play_kick.h:
+	* src/keepaway.sh.in:
+	* src/keepaway_communication.cpp:
+	* src/keepaway_communication.h:
+	* src/neck_default_intercept_neck.cpp:
+	* src/neck_default_intercept_neck.h:
+	* src/neck_offensive_intercept_neck.cpp:
+	* src/neck_offensive_intercept_neck.h:
+	* src/role_keepaway_keeper.cpp:
+	* src/role_keepaway_keeper.h:
+	* src/role_keepaway_taker.cpp:
+	* src/role_keepaway_taker.h:
+	* src/role_side_half.cpp:
+	* src/role_side_half.h:
+	* src/sample_communication.cpp:
+	* src/sample_communication.h:
+	* src/sample_field_evaluator.cpp:
+	* src/sample_field_evaluator.h:
+	* src/view_tactical.cpp:
+	* src/view_tactical.h:
+	* src/bhv_pre_process.cpp:
+	* src/bhv_pre_process.h:
+	* configure.ac:
+	* src/Makefile.am:
+	* src/bhv_basic_move.cpp:
+	* src/bhv_basic_move.h:
+	* src/bhv_basic_offensive_kick.cpp:
+	* src/bhv_basic_offensive_kick.h:
+	* src/bhv_basic_tackle.cpp:
+	* src/bhv_basic_tackle.h:
+	* src/bhv_go_to_static_ball.h:
+	* src/bhv_goalie_basic_move.cpp:
+	* src/bhv_goalie_basic_move.h:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_goalie_chase_ball.h:
+	* src/bhv_goalie_free_kick.h:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_penalty_kick.h:
+	* src/bhv_prepare_set_play_kick.cpp:
+	* src/bhv_prepare_set_play_kick.h:
+	* src/bhv_set_play.cpp:
+	* src/bhv_set_play.h:
+	* src/bhv_set_play_free_kick.cpp:
+	* src/bhv_set_play_free_kick.h:
+	* src/bhv_set_play_goal_kick.cpp:
+	* src/bhv_set_play_goal_kick.h:
+	* src/bhv_set_play_indirect_free_kick.cpp:
+	* src/bhv_set_play_indirect_free_kick.h:
+	* src/bhv_set_play_kick_in.cpp:
+	* src/bhv_set_play_kick_in.h:
+	* src/bhv_set_play_kick_off.cpp:
+	* src/bhv_set_play_kick_off.h:
+	* src/bhv_their_goal_kick_move.h:
+	* src/body_kick_to_corner.cpp:
+	* src/body_kick_to_corner.h:
+	* src/main_coach.cpp:
+	* src/main_player.cpp:
+	* src/main_trainer.cpp:
+	* src/neck_goalie_turn_neck.cpp:
+	* src/neck_goalie_turn_neck.h:
+	* src/reconnect.sh.in:
+	* src/role_center_back.cpp:
+	* src/role_center_back.h:
+	* src/role_center_forward.cpp:
+	* src/role_center_forward.h:
+	* src/role_defensive_half.cpp:
+	* src/role_defensive_half.h:
+	* src/role_goalie.cpp:
+	* src/role_goalie.h:
+	* src/role_offensive_half.cpp:
+	* src/role_offensive_half.h:
+	* src/role_sample.cpp:
+	* src/role_sample.h:
+	* src/role_side_back.cpp:
+	* src/role_side_back.h:
+	* src/role_side_forward.cpp:
+	* src/role_side_forward.h:
+	* src/sample_coach.cpp:
+	* src/sample_coach.h:
+	* src/sample_player.cpp:
+	* src/sample_player.h:
+	* src/sample_trainer.cpp:
+	* src/soccer_role.cpp:
+	* src/soccer_role.h:
+	* src/start.sh.in:
+	* src/strategy.cpp:
+	* src/strategy.h:
+	* src/train.sh.in:
+	- HELIOS2010からアクション探索フレームワークを移植
+	- Keeawayのテンプレートを追加
+
+2010-08-24  Hiroki Shimora  <shimora@users.sourceforge.net>
+
+	* src/role_goalie.cpp:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_penalty_kick.cpp:
+	- ヘテロキーパーに対応した．
+	ただし，coach の USE_HETERO_GOALIE は有効にはしていない．
+	- librcscの変更に追従
+
+2010-06-02  Hiroki Shimora  <shimora@users.sourceforge.net>
+
+	* src/player.conf:
+	* src/coach.conf:
+	- librcsc の Logger::CHAIN から Logger::ACTION_CHAIN への変更に追
+	従
+
+2010-06-01  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/coach.conf:
+	* src/player.conf:
+	- librcscの変更に追従
+
+	* src/bhv_go_to_static_ball.cpp:
+	- HELIOSからコピー
+
+2010-05-30  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/coach.conf:
+	* src/player.conf:
+	- クライアントのバージョンを14に更新
+
+2010-05-29  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_move.cpp:
+	* src/sample_player.cpp:
+	- librcscの変更に追従し，WorldModel::defenseLineX()を
+	ourDefenseLineX()へ修正
+
+2010-05-14  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_pre_process.cpp:
+	* src/body_kick_to_corner.cpp:
+	* src/main_coach.cpp:
+	* src/main_player.cpp:
+	* src/main_trainer.cpp:
+	- Copyrightの年号を更新．
+	- バージョン付きだったアクションをtypedef後のエイリアス名に修正．
+
+	* src/bhv_penalty_kick.cpp:
+	- librcsc変更に追従．PenaltyKickState::isKickTaker()を利用するよう
+	に修正．WorldModel::isOurLeft()の使用を中止．
+
+2010-05-07  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_penalty_kick.cpp:
+	- librcsc変更に追従．ペナルティキック時の自動サイド反転に対応した．
+
+2010-04-26  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_set_play.cpp:
+	* src/bhv_set_play.h:
+	* src/bhv_set_play_free_kick.cpp:
+	* src/bhv_set_play_free_kick.h:
+	* src/bhv_set_play_goal_kick.cpp:
+	* src/bhv_set_play_goal_kick.h:
+	* src/bhv_set_play_indirect_free_kick.cpp:
+	* src/bhv_set_play_indirect_free_kick.h:
+	* src/bhv_set_play_kick_in.cpp:
+	* src/bhv_set_play_kick_in.h:
+	* src/bhv_set_play_kick_off.cpp:
+	* src/bhv_set_play_kick_off.h:
+	* src/bhv_their_goal_kick_move.cpp:
+	* src/bhv_their_goal_kick_move.h:
+	* src/role_center_back.h:
+	* src/role_center_forward.h:
+	* src/role_defensive_half.h:
+	* src/role_goalie.h:
+	* src/role_offensive_half.h:
+	* src/role_sample.h:
+	* src/role_side_back.h:
+	* src/role_side_forward.h:
+	* src/sample_coach.cpp:
+	* src/sample_coach.h:
+	* src/sample_player.cpp:
+	* src/sample_player.h:
+	* src/sample_trainer.cpp:
+	* src/sample_trainer.h:
+	* src/soccer_role.h:
+	* src/strategy.cpp:
+	* src/strategy.h:
+	- HELIOSからのマージ．インタフェースを修正し，セットプレイアクショ
+	ンのコンストラクタ引数にホームポジションを要求しないように変更．
+
+2010-04-08  Hiroki Shimora  <shimora@users.sourceforge.net>
+
+	* src/start.sh.in:
+	- --debug-fullstate オプションを削除
+	--fullstate FULLSTATE_TYPE オプションを追加
+	- help 出力に --debug-log-ext EXTENSION の記述が抜けていたのを修正
+	- 不正なオプションを与えたときにメッセージを出すよう変更
+
+2010-04-02  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_tackle.cpp:
+	* src/bhv_danger_area_tackle.cpp:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/role_center_back.cpp:
+	* src/role_center_forward.cpp:
+	* src/role_defensive_half.cpp:
+	* src/role_offensive_half.cpp:
+	* src/role_sample.cpp:
+	* src/role_side_back.cpp:
+	* src/role_side_forward.cpp:
+	* src/sample_player.cpp:
+	- Vector2D::valid()/isValid() の変更に追従
+
+2010-01-29  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- added the search path for librcsc
+
+	* m4/ax_boost_base.m4:
+	- updated ax_boost_base.m4
+
+2009-12-12  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_pre_process.cpp:
+	* src/sample_coach.cpp:
+	* src/sample_player.cpp:
+	- supported changes of librcsc.
+
+2009-08-26  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/Makefile.am:
+	* src/bhv_penalty_kick.cpp:
+	- fixed compilier options.
+	- fixed compiler warinings.
+
+2009-08-12  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* NEWS:
+	* NEWS.en:
+	* README:
+	* README.en:
+	* configure.ac:
+	- updated a minir version. Official release 2.1.0.
+
+	* src/Makefile.am:
+	- fixed distribution target.
+
+	* src/reconnect.sh.in:
+	* src/start.sh.in:
+	- fixed command line options.
+
+	* src/Makefile.am:
+	* src/start-debug.sh:
+	* src/start-offline.sh:
+	* src/start.sh.in:
+	* src/strategy.cpp:
+	- fixed typo.
+	- added start-debug.sh and start-offline.sh.
+
+2009-08-11  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/start.sh.in:
+	- changed some command line options.
+
+2009-07-22  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_move.cpp:
+	* src/bhv_basic_offensive_kick.cpp:
+	* src/bhv_go_to_static_ball.cpp:
+	* src/bhv_goalie_basic_move.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/sample_player.cpp:
+	- librcscの変更に追従し，アクションクラス名を統一した
+	- dlogのファイル名出力の方針を修正
+
+2009-05-28  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_move.cpp:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_pre_process.cpp:
+	* src/bhv_their_goal_kick_move.cpp:
+	- Body_Intercept2008をBody_Interceptにリネーム．
+
+	* src/player.conf:
+	* src/start.sh.in:
+	* src/strategy.cpp:
+	- librcscの変更に追従．offline client機能をサポートした．
+
+2009-05-03  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/formations-dt/goalie-formation.conf:
+	* src/formations-dt/indirect-freekick-opp-formation.conf:
+	* src/formations-dt/indirect-freekick-our-formation.conf:
+	* src/formations-dt/kickin-our-formation.conf:
+	* src/formations-dt/normal-formation.conf:
+	* src/formations-dt/setplay-opp-formation.conf:
+	* src/formations-dt/setplay-our-formation.conf:
+	- fixed file format.
+
+2009-05-01  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/formations-dt/goalie-formation.dat:
+	* src/formations-dt/indirect-freekick-opp-formation.dat:
+	* src/formations-dt/indirect-freekick-our-formation.dat:
+	* src/formations-dt/kickin-our-formation.dat:
+	* src/formations-dt/normal-formation.dat:
+	* src/formations-dt/setplay-opp-formation.dat:
+	* src/formations-dt/setplay-our-formation.dat:
+	- removed .dat files.
+
+	* src/Makefile.am:
+	* src/formations-dt/goalie-formation.conf:
+	* src/formations-dt/indirect-freekick-opp-formation.conf:
+	* src/formations-dt/indirect-freekick-our-formation.conf:
+	* src/formations-dt/kickin-our-formation.conf:
+	* src/formations-dt/normal-formation.conf:
+	* src/formations-dt/setplay-opp-formation.conf:
+	* src/formations-dt/setplay-our-formation.conf:
+	- fixed file format.
+
+	* src/sample_coach.cpp:
+	* src/team_logo.xpm:
+	- enabled team_graphic support.
+	- added default team logo.
+
+2009-04-14  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/Makefile.am:
+	* src/bhv_set_play_indirect_free_kick.cpp:
+	* src/bhv_set_play_indirect_free_kick.h:
+	* src/formations-dt/goalie-formation.conf:
+	* src/formations-dt/goalie-formation.dat:
+	* src/formations-dt/indirect-freekick-opp-formation.conf:
+	* src/formations-dt/indirect-freekick-opp-formation.dat:
+	* src/formations-dt/indirect-freekick-our-formation.conf:
+	* src/formations-dt/indirect-freekick-our-formation.dat:
+	* src/formations-dt/setplay-opp-formation.conf:
+	* src/formations-dt/setplay-opp-formation.dat:
+	* src/formations-uva/goalie-formation.conf:
+	* src/formations-uva/indirect-freekick-opp-formation.conf:
+	* src/formations-uva/indirect-freekick-our-formation.conf:
+	* src/formations-uva/setplay-opp-formation.conf:
+	* src/soccer_role.cpp:
+	- added new formation files.
+	- implemented a new role creator.
+
+	* src/bhv_pre_process.cpp:
+	* src/bhv_pre_process.h:
+	* src/formations-dt/goal-kick-opp.conf:
+	* src/formations-dt/goal-kick-our.conf:
+	* src/formations-dt/goalie-catch-opp.conf:
+	* src/formations-dt/goalie-catch-our.conf:
+	* src/formations-uva/goal-kick-opp.conf:
+	* src/formations-uva/goal-kick-our.conf:
+	* src/formations-uva/goalie-catch-opp.conf:
+	* src/formations-uva/goalie-catch-our.conf:
+	* src/role_center_back.cpp:
+	* src/role_center_back.h:
+	* src/role_center_forward.cpp:
+	* src/role_center_forward.h:
+	* src/role_defensive_half.cpp:
+	* src/role_defensive_half.h:
+	* src/role_goalie.cpp:
+	* src/role_goalie.h:
+	* src/role_offensive_half.cpp:
+	* src/role_offensive_half.h:
+	* src/role_sample.cpp:
+	* src/role_sample.h:
+	* src/role_side_back.cpp:
+	* src/role_side_back.h:
+	* src/role_side_forward.cpp:
+	* src/role_side_forward.h:
+	* src/sample_player.cpp:
+	* src/sample_player.h:
+	* src/soccer_role.h:
+	* src/strategy.cpp:
+	* src/strategy.h:
+	- reimplemented a role factory.
+	- reimplemented a formation factory.
+	- changed Strategy class to a singleton class.
+
+2009-04-11  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- added check of librcsc_net and librcsc_time.
+
+2009-04-10  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/role_center_back.h:
+	* src/role_center_forward.h:
+	* src/role_defensive_half.h:
+	* src/role_goalie.h:
+	* src/role_offensive_half.h:
+	* src/role_sample.h:
+	* src/role_side_back.h:
+	* src/role_side_forward.h:
+	* src/soccer_role.h:
+	* src/strategy.cpp:
+	* src/strategy.h:
+	- supported changes of librcsc.
+
+2009-05-01  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	* NEWS:
+	* NEWS.en:
+	* README:
+	* README.en:
+	- updated a point version, Official release 2.0.1.
+
+	* src/Makefile.am:
+	* src/team_logo.xpm:
+	* src/sample_coach.cpp:
+	- supported team_graphic option.
+	- added a xpm file as a default team graphic.
+
+2009-03-24  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	* NEWS:
+	* NEWS.en:
+	- updated a version number string. official release 2.0.0.
+	- updated NEWS file.
+
+	* src/main_coach.cpp:
+	* src/main_player.cpp:
+	* src/main_trainer.cpp:
+	- added copyright messages.
+
+	* src/bhv_basic_move.cpp:
+	* src/bhv_basic_offensive_kick.cpp:
+	* src/bhv_goalie_basic_move.cpp:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_pre_process.cpp:
+	* src/bhv_set_play.cpp:
+	* src/bhv_set_play_free_kick.cpp:
+	* src/bhv_set_play_kick_off.cpp:
+	* src/bhv_their_goal_kick_move.cpp:
+	- supported new dash model in rcssserver-13.
+	- added new rule to determin the dash power for defensive
+	situation.
+	- fixed pass speed for set play situation.
+
+2009-03-23  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* NEWS:
+	* NEWS.en:
+	* README:
+	* README.en:
+	* src/Makefile.am:
+	- Now, NEWS file and README file are written in Japanese.
+	- added English version NEWS file and README file.
+
+	* src/Makefile.am:
+	* src/formations-dt/before-kick-off.conf:
+	* src/formations-uva/before-kick-off.conf:
+	* src/start.sh.in:
+	* src/strategy.cpp:
+	* src/strategy.h:
+	- stopped a support of FormationBPN.
+	- removed formation-bpn from a distribution target.
+
+	* configure.ac:
+	* Makefile.am:
+	* m4/ax_boost_base.m4:
+	- moved M4 macro files from config to m4.
+
+	* src/bhv_danger_area_tackle.cpp:
+	* src/bhv_danger_area_tackle.h:
+	* src/neck_goalie_turn_neck.cpp:
+	* src/neck_goalie_turn_neck.h:
+	* src/bhv_basic_move.cpp:
+	* src/bhv_basic_offensive_kick.cpp:
+	* src/bhv_basic_tackle.cpp:
+	* src/bhv_basic_tackle.h:
+	* src/bhv_goalie_basic_move.cpp:
+	* src/bhv_goalie_basic_move.h:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_goalie_chase_ball.h:
+	* src/bhv_goalie_free_kick.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_pre_process.cpp:
+	* src/bhv_set_play_free_kick.cpp:
+	* src/bhv_set_play_goal_kick.cpp:
+	* src/bhv_set_play_kick_in.cpp:
+	* src/bhv_their_goal_kick_move.cpp:
+	* src/body_kick_to_corner.cpp:
+	* src/role_goalie.cpp:
+	* src/role_goalie.h:
+	* src/sample_player.cpp:
+	- supported changes in librcsc.
+	- added Bhv_DangerAreaTackle.
+	- added Neck_GoalieTurnNeck.
+	- updated Bhv_BasicTackle.
+	- updated Bhv_GoalieBasicMove.
+	- updated Bhv_GoalieChaseBall.
+
+2009-03-23  Hiroki Shimora  <shimora@users.sourceforge.net>
+
+	* src/start.sh.in:
+	- added option -p, --port PORT.
+	- added option -P  --coach-port PORT.
+	- added option --team-graphic FILE.
+	- added option --debug-server-host HOST.
+	- added option --debug-server-port PORT.
+	- added option --log-dir DIRECTORY.
+	- added option --log-ext EXTENSION.
+	- added option --use-fullstate (true|false).
+
+2009-03-17  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_move.cpp:
+	* src/bhv_basic_offensive_kick.cpp:
+	* src/bhv_goalie_basic_move.cpp:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_goalie_free_kick.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_pre_process.cpp:
+	* src/bhv_set_play_free_kick.cpp:
+	* src/bhv_set_play_kick_off.cpp:
+	* src/bhv_their_goal_kick_move.cpp:
+	* src/body_kick_to_corner.cpp:
+	- supported changes in librcsc.
+	- replaced Body_Intercept with Body_Intercept2008.
+	- replaced Body_KickTwoStep and Body_KickMultiStep with Body_SmartKick.
+	- replaced Body_Shoot with Bhv_Shoot2008.
+	- replaced Body_HoldBall with Bhv_HoldBall2008.
+	- replaced Body_Dribble with Body_Dribble2008.
+
+2009-03-16  Hiroki Shimora  <shimora@users.sourceforge.net>
+
+	* src/sample_player.h:
+	* src/sample_player.cpp:
+	- added initializer of kick table to use SmartKick.
+
+	* src/sample_coach.cpp:
+	- fixed compilation problem with gcc-4.3.
+
+2008-11-19  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_coach.cpp:
+	* src/sample_player.cpp:
+	* src/sample_trainer.cpp:
+	- changed the policy of PlayerAgent::initImpl(). Now, "help"
+	option can be checked in initImple().
+
+2008-10-31  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_pre_process.cpp:
+	* src/bhv_their_goal_kick_move.cpp:
+	* src/coach.conf:
+	* src/player.conf:
+	* src/role_goalie.cpp:
+	- supported changes of librcsc.
+
+2008-04-01  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* NEWS:
+	* README:
+	* configure.ac:
+	- updated major version number. Release 1.0.0
+
+2008-03-19  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_goalie_basic_move.cpp:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_goalie_free_kick.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_their_goal_kick_move.cpp:
+	- renamed ourPenaltyAreaLine to ourPenaltyAreaLineX
+	- renamed theirPenaltyAreaLine to theirPenaltyAreaLineX
+
+2008-02-08  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_tackle.cpp:
+	- supported a v.12 tacke model.
+
+2007-12-19  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_coach.cpp (SampleCoach::doFirstSubstitute):
+	- fixed a defect in the player substitution compatibility.
+
+2007-11-30  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/strategy.cpp:
+	- changed the value of DEFFENSE_FORMATION_CONF to
+	"defense-formation.conf"
+	- changed the value of OFFENSE_FORMATION_CONF to
+	"offense-formation.conf"
+
+	* src/Makefile.am:
+	- added 'all-local' rule.
+	- removed unnecessary data target files.
+
+	* configure.ac:
+	- added AC_PROG_LN_S.
+
+2007-11-13  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_tackle.cpp:
+	- considered maxTacklePower() and minTacklePower().
+
+	* src/coach.conf:
+	* src/sample_coach.cpp:
+	* src/sample_coach.h:
+	- added new options.
+	- implemented a strict player type change procedure.
+	- added sendTeamGraphic().
+
+2007-11-12  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/start.sh.in:
+	- added '--debug-coach' option.
+
+	* src/sample_coach.cpp:
+	* src/sample_player.cpp:
+	- moved the initializaion of say message parsers from base
+	classes.
+
+2007-09-27  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_coach.cpp:
+	* src/sample_coach.h
+	- changed HeteroID to int.
+
+2007-09-26  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_player.cpp (communicationImpl):
+	- added Freemessage sample.
+
+2007-09-25  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_basic_move.cpp:
+	* src/bhv_basic_offensive_kick.cpp:
+	* src/bhv_basic_tackle.cpp:
+	* src/bhv_goalie_free_kick.cpp:
+	* src/bhv_goalie_basic_move.cpp:
+	* src/bhv_go_to_static_ball.cpp:
+	* src/bhv_goalie_chase_ball.cpp:
+	* src/bhv_penalty_kick.cpp:
+	* src/bhv_penalty_kick.h:
+	* src/bhv_prepare_set_play_kick.cpp:
+	* src/bhv_pre_process.cpp:
+	* src/bhv_set_play.cpp:
+	* src/bhv_set_play_free_kick.cpp:
+	* src/bhv_set_play_goal_kick.cpp
+	* src/bhv_set_play_kick_in.cpp:
+	* src/bhv_their_goal_kick_move.cpp:
+	* src/body_kick_to_corner.cpp:
+	* src/role_center_back.cpp:
+	* src/role_center_forward.cpp:
+	* src/role_defensive_half.cpp:
+	* src/role_goalie.cpp:
+	* src/role_offensive_half.cpp:
+	* src/role_sample.cpp:
+	* src/role_side_back.cpp:
+	* src/role_side_forward.cpp:
+	* src/sample_player.cpp:
+	* src/strategy.cpp:
+	* src/strategy.h:
+	- change rcsc/player/logger.h to rcsc/common/logger.h.
+	- fixed include order.
+
+2007-09-10  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- added gnu and check-news options to AM_INIT_AUTOMAKE
+	- updated minor version number. Release 0.4.0.
+
+	* src/sample_player.cpp:
+	* sample_player.h:
+	- added the sample code for new communication.
+
+2007-09-03  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_penalty_kick.cpp:
+	- supported the changes of librcsc. Vector2D::operator bool() is
+	no longer available.
+
+2007-08-25  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/start.sh.in:
+	- changed loop procedure to more portable style.
+
+	* src/bhv_pre_process.cpp:
+	* src/sample_player.cpp:
+	* src/sample_player.h:
+	- supported the changes of librcsc.
+
+2007-07-27  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_player.cpp:
+	- fixed sample of command line option parsing.
+	- supported the changes of librcsc. changed communication message
+	length.
+
+2007-07-26  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_player.cpp:
+	- fixed the check of message length for the ball message.
+
+	* configure.ac:
+	- fixed library checking.
+
+	* bootstrap:
+	- Now, autoreconf is used for bootstrap.
+
+2007-07-18  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_pre_process.cpp:
+	- fixed change_view action for ball search mode.
+
+	* src/sample_coach.cpp:
+	* src/sample_coach.h:
+	- added sayPlayerTypes() to broadcast opponent player type info.
+
+2007-06-25  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_player.cpp (communicationImpl):
+	- supported the changes of librcsc.
+
+2007-06-17  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_player.cpp:
+	- supported the changes of librcsc.
+
+2007-06-14  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_player.cpp:
+	* src/bhv_pre_process.cpp:
+	- supported the changes of librcsc.
+
+2007-05-19  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/Makefile.am:
+	* src/coach.conf:
+	* src/start.sh.in:
+	- added coach.conf for the coach agent configuration.
+
+2007-05-17  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/reconnect.sh.in:
+	- added a sample reconnect script.
+
+	* src/start.sh.in:
+	- changed a loop variable operation.
+
+2007-05-11  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- fixed librcsc search path.
+
+	* Makefile.am:
+	- added missing dist target.
+	- specified ACLOCAL_AMFLAGS variable.
+
+2007-04-06  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_set_play_free_kick.cpp:
+	- added missing body action.
+
+	* configure.ac:
+	- updated version number.
+
+	* src/sample_player.cpp (communicationImpl):
+	- reimplemented communication for librcsc-1.3.0
+
+	* src/main_coach.cpp:
+	* src/main_player.cpp:
+	* src/main_trainer.cpp:
+	- followed librcsc.
+
+2007-04-05  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/bhv_pre_process.cpp:
+	- added missing turn neck action.
+
+	* configure.ac:
+	* config/ax_boost_base.m4:
+	- added AX_BOOST_BASE for boost checking.
+
+2007-01-19  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- follow the changes of librcsc.
+
+2006-12-19  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- added BOOST_CPPFLAGS to CPPFLAGS
+	- added BOOST_LDFLAGS to LDFLAGS
+	- added missing check of librcsc_param
+
+2006-12-18  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	* config/ax_boost.m4:
+	- added m4 macro for boost.
+
+2006-11-13  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/player.conf:
+	- added log_ext option.
+
+	* src/sample_player.h:
+	* src/sample_player.cpp:
+	- removed initTeam()
+
+	* src/strategy.h:
+	* src/strategy.cpp:
+	- started to support FormationStatic.
+
+2006-11-10  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_coach.h:
+	* src/sample_coach.cpp:
+	* src/sample_player.h:
+	* src/sample_player.cpp:
+	* src/sample_trainer.h:
+	* src/sample_trainer.cpp:
+	* src/main_coach.cpp:
+	* src/main_player.cpp:
+	* src/main_trainer.cpp:
+	- follow the changes of librcsc.added BasicClient variable in main
+	source file.
+	- renamed doInit() to initImpl().
+	- renamed doAction() to actionImpl()
+	- renamed doCommunication() to communicationImpl()
+
+2006-11-08  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- Now, HAVE_LIBRCSC_GZ is defined if it exists.
+
+2006-11-05  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/start.sh.in:
+	* src/train.sh.in:
+	- renamed option --sbsp with --uva.
+	- added option --bpn.
+
+	* src/formations-dt/*:
+	- added Delaunay Triangulation type formation files.
+
+2006-11-04  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_coach.cpp (doInit):
+	* src/sample_player.cpp (doInit):
+	* src/sample_trainer.cpp (doInit):
+	- follow the changes of librcsc's CmdLineParser.
+
+2006-11-01  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- replaced AC_CHECK_HEADER with AC_CHECK_HEADERS
+	- set version number 0.2.0
+
+2006-10-17  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* Makefile.am:
+	* ssil/*:
+	- added template scripts for SSIL
+
+2006-10-15  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_coach.h:
+	* src/sample_coach.cpp (doInit):
+	* src/sample_player.h:
+	* src/sample_player.cpp (doInit):
+	* src/sample_trainer.h:
+	* src/sample_trainer.cpp (doInit):
+	- follow the new interface of librcsc.
+
+2006-10-09  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/sample_coach.cpp (doInit):
+	* src/sample_player.cpp (doInit):
+	* src/sample_trainer.cpp (doInit):
+	- added new argument `additional_param_map' and sample code.
+
+	* src/role_center_back.cpp:
+	* src/role_side_back.cpp:
+	* src/role_defensive_half.cpp:
+	* src/role_offensive_half.cpp:
+	* src/role_side_forward.cpp:
+	* src/role_center_forward.cpp:
+	* src/sample_player.cpp:
+	* src/strategy.cpp:
+	- removed uva::Formations.
+	- added rcsc::FormationUvA.
+
+2006-10-07  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- fixed AC_CHECK_LIB to check librcsc_agent.
+
+2006-10-06  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/Makefile.am:
+	- follow the change of librcsc. changed library dependency.
+
+2006-10-04  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/strategy.h:
+	- reimplemented.
+
+	* src/formation.h:
+	* src/formation.cpp:
+	- removed and started to replace with librcsc's Formation
+	framework.
+
+2006-10-01  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- released version 0.1.0
+	- This version depends on the librcsc-1.1.0.
+
+2006-09-13  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* src/start.sh.in:
+	- added export to set LD_LIBRARY_PATH
+
+2006-05-08  Hidehisa Akiyama  <akky@users.sourceforge.jp>
+
+	* configure.ac:
+	- version 0.0.0, release for the RoboCup Book.

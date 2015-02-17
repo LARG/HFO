@@ -1,0 +1,67 @@
+[3.1.1]
+  * fixed the compilation problems on gcc-4.6.
+
+[3.1.0]
+  * fixed the problem of going out of control in the voronoi diagram
+    calculation.
+
+[3.0.0]
+  * Supported rcssserver-14
+
+[2.1.0]
+  * Changed formation file format.
+
+  * Changed command line options of start.sh.
+
+[2.0.1]
+  * Fixed a defect of team_graphic option.
+
+  * Added a sample xpm file for team_graphic.
+
+[2.0.0]
+  * Supported rcssserver 13.
+
+  * Supported librcsc-3.0.x. Note that some obsolete actions were
+    replaced with new actions.
+
+  * Some actions were replaced with actions which was used by
+    HELIOS2007-2008. Now, the goalie player's behavior is equivalent
+    to the non-savior mode goalie of HELIOS2008.
+
+  * Supported new dash model in rcssserver-13. Note that the
+    fix of goalie's behavior has not been completed yet.
+
+  * Tuned a dash speed of default behavior for defensive situation.
+
+  * Changed the default formation defined in before-kick-off.conf
+
+  * Stopped to support FormationBPN. Now, offense-formation.conf and
+    defense-formation.conf are integrated into normal-formation.conf.
+
+  * Added new options to start.sh.
+    - -p, --port PORT : set a connection port number for players.
+    - -P, --coach-port PORT : set a connection port number for an
+      online coach.
+    - --team-graphic FILE : set a team logo file formatted by XPM.
+    - --debug-server-host HOST : set a host name(or ip address) to
+      connect to the debug server(soccerwindow2)
+    - --debug-server-port PORT : set a connection port number to
+      connect to the debug server
+    - --log-dir DIRECTORY : set a directory path string to write debug
+      log files.
+    - --log-ext EXTENTION : set a extention name of debug log files.
+    - --use-fullstate (true|false) : enable/disable player's world
+      model to be updated by fullstate information.
+
+[1.0.0]
+  * Supported rcssserver 12.
+
+[0.4.0]
+  * Supported new communication framework.
+
+  * Supported player type analysis by coach agent.
+
+  * Added coach.conf
+
+  * Fixed defect in the change view action when player search the
+    ball.
