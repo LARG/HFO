@@ -4,9 +4,8 @@
 import subprocess, os, time, numpy
 from signal import SIGINT
 
-UT_AGENT_DIR    = '/u/mhauskn/projects/robocup_libs/utvillasim/agent2d-3.1.1/src/'
+# UT_AGENT_DIR    = '/u/mhauskn/projects/hfo/bin/'
 OTHER_AGENT_DIR = '/projects/agents2/villasim/opponents2D/'
-#'/u/mhauskn/projects/robocup_libs/utvillasim/agent2d-3.1.1/src/'
 
 SERVER_CMD = 'rcssserver server::port=6000 server::coach_port=6001 server::olcoach_port=6002 server::coach=1 server::game_log_dir=/tmp server::text_log_dir=/tmp'
 MONITOR_CMD = 'rcssmonitor'
@@ -18,7 +17,7 @@ def getAgentDirCmd(name,first):
     else:
       name = 'ut2'
     cmd = './start.sh -t %s' % name
-    dir = UT_AGENT_DIR
+    dir = os.path.dirname(os.path.realpath(__file__))
   elif name == 'base':
     dir = os.path.join(OTHER_AGENT_DIR,name,'src')
     if first:
