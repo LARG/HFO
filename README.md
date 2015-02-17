@@ -15,5 +15,5 @@ HFO
 
 ## Run
 ```bash
-bin/start.py
+./bin/start.py
 ```
