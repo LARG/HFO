@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(hfo)
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-SET(LIBRCSC_INCLUDE ~/.local/include)
-SET(LIBRCSC_LINK ~/.local/lib)
+set(LIBRCSC_INCLUDE ~/.local/include)
+set(LIBRCSC_LINK ~/.local/lib)
 
 include_directories(
   ${SOURCE_DIR}
@@ -17,7 +17,6 @@ link_directories(
 
 file(GLOB SOURCES ${SOURCE_DIR}/*.cpp ${SOURCE_DIR}/chain_action/*.cpp)
 list(REMOVE_ITEM SOURCES ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/main_trainer.cpp)
-MESSAGE(${SOURCES})
 
 list(APPEND LINK_LIBS
   rcsc_agent
