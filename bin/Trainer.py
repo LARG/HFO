@@ -38,8 +38,8 @@ class Trainer(object):
   # numDefense is excluding the goalie
   def __init__(self,seed=None, options=Values()):
     self._options = options
-    self._numOffense = self._options.numOffense + 1
-    self._numDefense = self._options.numDefense + 1
+    self._numOffense = self._options.numOffense
+    self._numDefense = self._options.numDefense
     self._teams = []
     self._lastTrialStart = -1
     self._numFrames = 0
@@ -81,12 +81,15 @@ class Trainer(object):
     os.chdir(ADHOC_DIR)
     self._adhocTeam = self._offenseTeam if self._options.adhocOffense else self._defenseTeam
     if self._options.adhocOffense:
-      self._adhocNumInt = self._rng.randint(1,self._numOffense)
+      assert self._numOffense > 0
+      self._adhocNumInt = 1 if self._numOffense == 1 \
+                          else self._rng.randint(1, self._numOffense)
     else:
-      self._adhocNumInt = self._rng.randint(1,self._numDefense)
+      assert self._numDefense > 0
+      self._adhocNumInt = 1 if self._numDefense == 1 \
+                          else self._rng.randint(1, self._numDefense)
     self._adhocNumExt = self.convertToExtPlayer(self._adhocTeam,self._adhocNumInt)
-    #adhocCmd = ADHOC_CMD % (teamName,playerNum,' '.join(map(str,self._offenseOrder[:self._numOffense])),' '.join(map(str,self._defenseOrder[:self._numDefense])))
-    adhocCmd = ADHOC_CMD % (self._adhocTeam,self._adhocNumExt)
+    adhocCmd = ADHOC_CMD % (self._adhocTeam, self._adhocNumExt)
     adhocCmd = adhocCmd.split(' ')
     if self._options.learnActions:
       adhocCmd += ['--learn-actions',str(self._options.numLearnActions)]
@@ -418,11 +421,11 @@ class Trainer(object):
     self._lastTrialStart = self._frame
 
   def resetPositionsActionLearning(self,adhocAgentHasBall):
-    for i in range(1,self._numDefense):
+    for i in range(1, self._numDefense):
       if adhocAgentHasBall and (not self._options.adhocOffense) and (i == self._adhocNumInt): continue
       pos = self.boundPoint(self.randomPosInBounds(self._allowedBallX,self._allowedBallY))
       self.movePlayer(self._defenseTeam,i,pos)
-    for i in range(1,self._numOffense):
+    for i in range(1, self._numOffense):
       if adhocAgentHasBall and self._options.adhocOffense and (i == self._adhocNumInt): continue
       pos = self.boundPoint(self.randomPosInBounds(self._allowedBallX,self._allowedBallY))
       self.movePlayer(self._offenseTeam,i,pos)
@@ -436,6 +439,7 @@ class Trainer(object):
       self.movePlayer(self._adhocTeam,self._adhocNumExt,self._ballPosition + offset,convertToExt=False)
 
   def resetPositions(self):
+    print 'in reset position'
     self._ballPosition = self.boundPoint(self.randomPosInBounds(0.20 * self._allowedBallX + 0.05 * self.PITCH_LENGTH,0.8 * self._allowedBallY))
     self.moveBall(self._ballPosition)
     # set up offense
@@ -520,7 +524,7 @@ class Trainer(object):
   def run(self,necProcesses):
     try:
       if self._options.useAdhoc:
-        self._adhocPopen = self.launchAdhoc() # will take care of starting game once adhoc is ready
+        self._adhocPopen = self.launchAdhoc()
         necProcesses.append([self._adhocPopen,'adhoc'])
       print 'starting game'
       self.startGame()
