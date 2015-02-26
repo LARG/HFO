@@ -6,9 +6,10 @@ from optparse import Values
 from signal import SIGINT
 from Communicator import ClientCommunicator, TimeoutError
 
-ADHOC_DIR = os.path.expanduser('~/research/adhoc2/robocup/adhoc-agent/')
+ADHOC_DIR = os.path.dirname(os.path.realpath(__file__))
+#os.path.expanduser('~/research/adhoc2/robocup/adhoc-agent/')
 #ADHOC_CMD = 'bin/start.sh -t %s -u %i --offenseAgents %s --defenseAgents %s'
-ADHOC_CMD = 'bin/start.sh -t %s -u %i'
+ADHOC_CMD = 'start_agent.sh -t %s -u %i'
 
 class DoneError(Exception):
   def __init__(self,msg='unknown'):
@@ -47,7 +48,7 @@ class Trainer(object):
     self._maxFrames = self._options.numFrames
 
     self._rng = numpy.random.RandomState(seed)
-  
+
     self._playerPositions = numpy.zeros((11,2,2))
     self._ballPosition = numpy.zeros(2)
     self._ballHeld = numpy.zeros((11,2))
@@ -521,9 +522,8 @@ class Trainer(object):
       if self._options.useAdhoc:
         self._adhocPopen = self.launchAdhoc() # will take care of starting game once adhoc is ready
         necProcesses.append([self._adhocPopen,'adhoc'])
-      else:
-        print 'starting game'
-        self.startGame()
+      print 'starting game'
+      self.startGame()
       while self.checkLive(necProcesses):
         prevFrame = self._frame
         self.listenAndProcess()
