@@ -19,7 +19,7 @@ link_directories(
 )
 
 file(GLOB SOURCES ${SOURCE_DIR}/*.cpp ${SOURCE_DIR}/chain_action/*.cpp)
-list(REMOVE_ITEM SOURCES ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/main_trainer.cpp)
+list(REMOVE_ITEM SOURCES ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/main_trainer.cpp ${SOURCE_DIR}/main_agent.cpp ${SOURCE_DIR}/sample_coach.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCE_DIR}/sample_trainer.cpp ${SOURCE_DIR}/agent.cpp)
 
 list(APPEND LINK_LIBS
   rcsc_agent
@@ -32,10 +32,12 @@ list(APPEND LINK_LIBS
   rcsc_rcg
 )
 
-add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCES})
-add_executable(sample_player ${SOURCE_DIR}/main_player.cpp ${SOURCES})
-add_executable(sample_trainer ${SOURCE_DIR}/main_trainer.cpp ${SOURCES})
+add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/sample_coach.cpp ${SOURCES})
+add_executable(sample_player ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCES})
+add_executable(sample_trainer ${SOURCE_DIR}/main_trainer.cpp ${SOURCE_DIR}/sample_trainer.cpp ${SOURCES})
+add_executable(agent ${SOURCE_DIR}/main_agent.cpp ${SOURCE_DIR}/agent.cpp ${SOURCES})
 
 target_link_libraries(sample_coach ${LINK_LIBS})
 target_link_libraries(sample_player ${LINK_LIBS})
 target_link_libraries(sample_trainer ${LINK_LIBS})
+target_link_libraries(agent ${LINK_LIBS})
