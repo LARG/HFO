@@ -13,7 +13,7 @@ class DoneError(Exception):
     return 'Done due to %s' % self.msg
 
 class DummyPopen(object):
-  """ Emulates a Popen object. """
+  """ Emulates a Popen object without actually starting a process. """
   def __init__(self, pid):
     self.pid = pid
   def poll(self):
@@ -94,7 +94,9 @@ class Trainer(object):
                                                 self._agentNumInt)
     agentCmd = 'start_agent.sh -t %s -u %i'%(self._agentTeam, self._agentNumExt)
     agentCmd = agentCmd.split(' ')
-    p = subprocess.Popen(agentCmd)
+    # Ignore stderr because librcsc continually prints to it
+    kwargs = {'stderr':open('/dev/null','w')}
+    p = subprocess.Popen(agentCmd, **kwargs)
     p.wait()
     with open('/tmp/start%i' % p.pid,'r') as f:
       output = f.read()
