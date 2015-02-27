@@ -2,14 +2,8 @@
 # encoding: utf-8
 
 import sys, numpy, time, os, subprocess, re
-from optparse import Values
 from signal import SIGINT
 from Communicator import ClientCommunicator, TimeoutError
-
-ADHOC_DIR = os.path.dirname(os.path.realpath(__file__))
-#os.path.expanduser('~/research/adhoc2/robocup/adhoc-agent/')
-#ADHOC_CMD = 'bin/start.sh -t %s -u %i --offenseAgents %s --defenseAgents %s'
-ADHOC_CMD = 'start_agent.sh -t %s -u %i'
 
 class DoneError(Exception):
   def __init__(self,msg='unknown'):
@@ -35,20 +29,19 @@ class DummyPopen(object):
       pass
 
 class Trainer(object):
-  # numDefense is excluding the goalie
-  def __init__(self,seed=None, options=Values()):
-    self._options = options
-    self._numOffense = self._options.numOffense
-    self._numDefense = self._options.numDefense
+  """ Trainer is responsible for setting up the players and game.
+  """
+  def __init__(self, args, rng=numpy.random.RandomState()):
+    self._args = args
+    self._numOffense = self._args.numOffense
+    self._numDefense = self._args.numDefense
     self._teams = []
     self._lastTrialStart = -1
     self._numFrames = 0
     self._lastFrameBallTouched = -1
-    self._maxTrials = self._options.numTrials
-    self._maxFrames = self._options.numFrames
-
-    self._rng = numpy.random.RandomState(seed)
-
+    self._maxTrials = self._args.numTrials
+    self._maxFrames = self._args.numFrames
+    self._rng = rng
     self._playerPositions = numpy.zeros((11,2,2))
     self._ballPosition = numpy.zeros(2)
     self._ballHeld = numpy.zeros((11,2))
@@ -58,76 +51,92 @@ class Trainer(object):
     self.HOLD_FACTOR = 1.5
     self.PITCH_WIDTH = 68.0
     self.PITCH_LENGTH = 105.0
+    # Trial will end if the ball is untouched for this many steps
     self.UNTOUCHED_LENGTH = 100
+    # allowedBallX, allowedBallY defines the usable area of the playfield
     self._allowedBallX = numpy.array([-0.1,0.5 * self.PITCH_LENGTH])
-    self._allowedBallY = numpy.array([-0.5 * self.PITCH_WIDTH,0.5 * self.PITCH_WIDTH])
-
+    self._allowedBallY = numpy.array([-0.5 * self.PITCH_WIDTH,
+                                      0.5 * self.PITCH_WIDTH])
     self._numTrials = 0
     self._numGoals = 0
     self._numBallsCaptured = 0
     self._numBallsOOB = 0
-
-    self._adhocTeam = ''
-    self._adhocNumInt = -1
-    self._adhocNumExt = -1
+    # Indicates if a learning agent is active
+    self._agent = not self._args.no_agent
+    self._agentTeam = ''
+    self._agentNumInt = -1
+    self._agentNumExt = -1
     self._isPlaying = False
-
-    self._adhocPopen = None
-
+    self._agentPopen = None
     self.initMsgHandlers()
 
-  def launchAdhoc(self):
-    # start ad hoc agent
-    os.chdir(ADHOC_DIR)
-    self._adhocTeam = self._offenseTeam if self._options.adhocOffense else self._defenseTeam
-    if self._options.adhocOffense:
+  def launch_agent(self):
+    print '[Trainer] Launching Agent'
+    AGENT_DIR = os.path.dirname(os.path.realpath(__file__))
+    AGENT_CMD = 'start_agent.sh -t %s -u %i'
+    os.chdir(AGENT_DIR)
+    if self._args.play_offense:
       assert self._numOffense > 0
-      self._adhocNumInt = 1 if self._numOffense == 1 \
+      self._agentTeam = self._offenseTeam
+      self._agentNumInt = 1 if self._numOffense == 1 \
                           else self._rng.randint(1, self._numOffense)
     else:
       assert self._numDefense > 0
-      self._adhocNumInt = 1 if self._numDefense == 1 \
-                          else self._rng.randint(1, self._numDefense)
-    self._adhocNumExt = self.convertToExtPlayer(self._adhocTeam,self._adhocNumInt)
-    adhocCmd = ADHOC_CMD % (self._adhocTeam, self._adhocNumExt)
-    adhocCmd = adhocCmd.split(' ')
-    if self._options.learnActions:
-      adhocCmd += ['--learn-actions',str(self._options.numLearnActions)]
-    print 'AdhocCmd', adhocCmd
-    p = subprocess.Popen(adhocCmd)
+      self._agentTeam = self._defenseTeam
+      self._agentNumInt = 0 if self._numDefense == 1 \
+                          else self._rng.randint(0, self._numDefense)
+    self._agentNumExt = self.convertToExtPlayer(self._agentTeam,
+                                                self._agentNumInt)
+    agentCmd = AGENT_CMD % (self._agentTeam, self._agentNumExt)
+    agentCmd = agentCmd.split(' ')
+    p = subprocess.Popen(agentCmd)
     p.wait()
     with open('/tmp/start%i' % p.pid,'r') as f:
       output = f.read()
     pid = int(re.findall('PID: (\d+)',output)[0])
     return DummyPopen(pid)
 
-  def getPlayers(self,name):
-    if name == 'Borregos':
-      offense = [2,4,6,5,3,7,9,10,8,11]
-      defense = [9,10,8,11,7,4,6,2,3,5]
-    elif name == 'WrightEagle':
-      offense = [11,4,7,3,6,10,8,9,2,5]
-      defense = [5,2,8,9,10,6,3,11,4,7]
-    else:
-      offense = [11,7,8,9,10,6,3,2,4,5]
-      defense = [2,3,4,5,6,7,8,11,9,10]
-    return offense, defense
+  def getDefensiveRoster(self, team_name):
+    """Returns a list of player numbers on a given team that are thought
+    to prefer defense. This map is not set in stone as the players on
+    some teams can adapt and change their roles.
 
+    """
+    if team_name == 'Borregos':
+      return [9,10,8,11,7,4,6,2,3,5]
+    elif team_name == 'WrightEagle':
+      return [5,2,8,9,10,6,3,11,4,7]
+    else:
+      return [2,3,4,5,6,7,8,11,9,10]
+
+  def getOffensiveRoster(self, team_name):
+    """Returns a list of player numbers on a given team that are thought
+    to prefer offense. This map is not set in stone as the players on
+    some teams can adapt and change their roles.
+
+    """
+    if team_name == 'Borregos':
+      return [2,4,6,5,3,7,9,10,8,11]
+    elif team_name == 'WrightEagle':
+      return [11,4,7,3,6,10,8,9,2,5]
+    else:
+      return [11,7,8,9,10,6,3,2,4,5]
 
   def setTeams(self):
-    #print 'SETTING TEAMS:',self._teams
+    """ Sets the offensive and defensive teams and player rosters. """
     self._offenseTeamInd = 0
     self._offenseTeam = self._teams[self._offenseTeamInd]
     self._defenseTeam = self._teams[1-self._offenseTeamInd]
-    o,_ = self.getPlayers(self._offenseTeam)
-    _,d = self.getPlayers(self._defenseTeam)
-    self._offenseOrder = [1] + o # 1 for goalie
-    self._defenseOrder = [1] + d # 1 for goalie
+    offensive_roster = self.getOffensiveRoster(self._offenseTeam)
+    defensive_roster = self.getDefensiveRoster(self._defenseTeam)
+    self._offenseOrder = [1] + offensive_roster # 1 for goalie
+    self._defenseOrder = [1] + defensive_roster # 1 for goalie
 
-  def teamToInd(self,team):
-    return self._teams.index(team)
+  def teamToInd(self, team_name):
+    """ Returns the index of a given team. """
+    return self._teams.index(team_name)
 
-  def parseMsg(self,msg):
+  def parseMsg(self, msg):
     assert(msg[0] == '(')
     res,ind = self.__parseMsg(msg,1)
     assert(ind == len(msg)),msg
@@ -157,10 +166,11 @@ class Trainer(object):
         res.append(msg[startInd:ind])
 
   def initComm(self):
+    """ Initialize communication to server. """
     self._comm = ClientCommunicator(port=6001)
     self.send('(init (version 8.0))')
     self.checkMsg('(init ok)',retryCount=5)
-    #self.send('(eye on)')
+    # self.send('(eye on)')
     self.send('(ear on)')
 
   def _hear(self,body):
@@ -168,9 +178,9 @@ class Trainer(object):
     if len(playerInfo) != 3:
       return
     _,team,player = playerInfo
-    if team != self._adhocTeam:
+    if team != self._agentTeam:
       return
-    if int(player) != self._adhocNumExt:
+    if int(player) != self._agentNumExt:
       return
     try:
       length = int(msg[0])
@@ -179,17 +189,13 @@ class Trainer(object):
     msg = msg[1:length+1]
     if msg == 'START':
       if self._isPlaying:
-        print 'Already playing, ignoring message'
+        print '[Trainer] Already playing, ignoring message'
       else:
         self.startGame()
-    elif msg == 'RESWI':
-      self.reset('reset learning action with ball',False,True,True)
-    elif msg == 'RESWO':
-      self.reset('reset learning action withOUT ball',False,True,False)
     elif msg == 'DONE':
       raise DoneError
     else:
-      print 'Unhandled message from ad hoc agent: %s' % msg
+      print '[Trainer] Unhandled message from agent: %s' % msg
 
   def initMsgHandlers(self):
     self._msgHandlers = []
@@ -212,7 +218,7 @@ class Trainer(object):
   def checkMsg(self,expectedMsg,retryCount=None):
     msg = self.recv(retryCount)
     if msg != expectedMsg:
-      print >>sys.stderr,'Error with message'
+      print >>sys.stderr,'[Trainer] Error with message'
       print >>sys.stderr,'  expected: %s' % expectedMsg
       print >>sys.stderr,'  received: %s' % msg
       print >>sys.stderr,len(expectedMsg),len(msg)
@@ -221,7 +227,9 @@ class Trainer(object):
   def extractPoint(self,msg):
     return numpy.array(map(float,msg[:2]))
 
-  def convertToExtPlayer(self,team,num):
+  def convertToExtPlayer(self, team, num):
+    """ Returns the external player number for a given player. """
+    assert team == self._offenseTeam or team == self._defenseTeam
     if team == self._offenseTeam:
       return self._offenseOrder[num]
     else:
@@ -250,15 +258,18 @@ class Trainer(object):
         self._playerPositions[playerNum,:,team] = self.extractPoint(objData)
 
   def registerMsgHandler(self,handler,*args,**kwargs):
-    '''register a message handler
-    handler will be called on a message that matches *args'''
+    '''Register a message handler.
+
+    Handler will be called on a message that matches *args.
+
+    '''
     args = list(args)
     i,_,_ = self._findHandlerInd(args)
     if i < 0:
       self._msgHandlers.append([args,handler])
     else:
       if ('quiet' not in kwargs) or (not kwargs['quiet']):
-        print 'Updating handler for %s' % (' '.join(args))
+        print '[Trainer] Updating handler for %s' % (' '.join(args))
       self._msgHandlers[i] = [args,handler]
 
   def unregisterMsgHandler(self,*args):
@@ -277,7 +288,7 @@ class Trainer(object):
   def handleMsg(self,msg):
     i,prefixLength,handler = self._findHandlerInd(msg)
     if i < 0:
-      print 'Unhandled message:',msg[0:2]
+      print '[Trainer] Unhandled message:',msg[0:2]
     else:
       handler(msg[prefixLength:])
 
@@ -330,20 +341,22 @@ class Trainer(object):
     self.ignoreMsg(*partial,quiet=True)
 
   def startGame(self):
-    self.reset('Start',False)
-    self.registerMsgHandler(self.seeGlobal,'see_global')
-    self.registerMsgHandler(self.seeGlobal,'ok','look',quiet=True)
+    """ Starts a game of HFO. """
+    self.reset()
+    self.registerMsgHandler(self.seeGlobal, 'see_global')
+    self.registerMsgHandler(self.seeGlobal, 'ok', 'look', quiet=True)
     #self.registerMsgHandler(self.checkBall,'ok','check_ball')
     self.send('(look)')
     self._isPlaying = True
 
   def calcBallHolder(self):
-    '''calculates the ball holder, returns results in teamInd,playerInd'''
+    '''Calculates the ball holder, returns results in teamInd, playerInd. '''
     totalHeld = 0
     for team in self._teams:
       for i in range(11):
         pos = self._playerPositions[i,:,self.teamToInd(team)]
-        distBound = self._SP['kickable_margin'] + self._SP['player_size'] + self._SP['ball_size']
+        distBound = self._SP['kickable_margin'] + self._SP['player_size'] \
+                    + self._SP['ball_size']
         distBound *= self.HOLD_FACTOR
         if numpy.linalg.norm(self._ballPosition - pos) < distBound:
           self._ballHeld[i,self.teamToInd(team)] += 1
@@ -360,90 +373,75 @@ class Trainer(object):
       return None,None
 
   def isGoal(self):
-    return (self._ballPosition[0] > self._allowedBallX[1]) and (numpy.abs(self._ballPosition[1]) < self._SP['goal_width'])
+    """ Returns true if a goal has been scored. """
+    return (self._ballPosition[0] > self._allowedBallX[1]) \
+      and (numpy.abs(self._ballPosition[1]) < self._SP['goal_width'])
 
   def isOOB(self):
-    # check ball x
-    #return self._ballPosition[0] < self._allowedBallX[0]
-    if (self._ballPosition[0] < self._allowedBallX[0]) or (self._ballPosition[0] > self._allowedBallX[1]):
-      return True
-    # check ball y
-    if (self._ballPosition[1] < self._allowedBallY[0]) or (self._ballPosition[1] > self._allowedBallY[1]):
-      return True
-    return False
+    """ Returns true if the ball is out of bounds. """
+    return self._ballPosition[0] < self._allowedBallX[0] \
+      or self._ballPosition[0] > self._allowedBallX[1] \
+      or self._ballPosition[1] < self._allowedBallY[0] \
+      or self._ballPosition[1] > self._allowedBallY[1]
 
-  def movePlayer(self,team,num,pos,convertToExt=True):
-    if convertToExt:
-      num = self.convertToExtPlayer(team,num)
-    self.send('(move (player %s %i) %f %f)' % (team,num,pos[0],pos[1]))
+  def movePlayer(self, team, internal_num, pos, convertToExt=True):
+    """ Move a player to a specified position.
 
-  def moveBall(self,pos):
+    Args:
+      team: the team name of the player
+      interal_num: the player's internal number
+      pos: position to move player to
+      convertToExt: convert interal player num to external
+    """
+    num = self.convertToExtPlayer(team, internal_num) if convertToExt \
+          else internal_num
+    self.send('(move (player %s %i) %f %f)' % (team, num, pos[0], pos[1]))
+
+  def moveBall(self, pos):
+    """ Moves the ball to a specified x,y position. """
     self.send('(move (ball) %f %f 0.0 0.0 0.0)' % tuple(pos))
 
-  def randomPosInBounds(self,xBounds,yBounds):
+  def randomPointInBounds(self, xBounds=None, yBounds=None):
+    """Returns a random point inside of the box defined by xBounds,
+    yBounds. Where xBounds=[x_min, x_max] and yBounds=[y_min,
+    y_max]. Defaults to the xy-bounds of the playable HFO area.
+
+    """
+    if xBounds is None:
+      xBounds = self.allowedBallX
+    if yBounds is None:
+      yBounds = self.allowedBallY
     pos = numpy.zeros(2)
-    bounds = [xBounds,yBounds]
+    bounds = [xBounds, yBounds]
     for i in range(2):
       pos[i] = self._rng.rand() * (bounds[i][1] - bounds[i][0]) + bounds[i][0]
     return pos
 
-  def boundPoint(self,pos):
-    # x
-    if pos[0] < self._allowedBallX[0]:
-      pos[0] = self._allowedBallX[0]
-    elif pos[0] > self._allowedBallX[1]:
-      pos[0] = self._allowedBallX[1]
-    # y
-    if pos[1] < self._allowedBallY[0]:
-      pos[1] = self._allowedBallY[0]
-    elif pos[1] > self._allowedBallY[1]:
-      pos[1] = self._allowedBallY[1]
+  def boundPoint(self, pos):
+    """Ensures a point is within the minimum and maximum bounds of the
+    HFO playing area.
+
+    """
+    pos[0] = min(max(pos[0], self._allowedBallX[0]), self._allowedBallX[1])
+    pos[1] = min(max(pos[1], self._allowedBallY[0]), self._allowedBallY[1])
     return pos
 
-  def reset(self,msg,inc=True,learnActionReset=False,adhocAgentHasBall=False):
-    if inc:
-      self._numTrials += 1
-      self._numFrames += self._frame - self._lastTrialStart
-    if not learnActionReset:
-      print '%2i /%2i %5i %s' % (self._numGoals,self._numTrials,self._frame,msg)
-    if (self._maxTrials > 0) and (self._numTrials >= self._maxTrials):
-      raise DoneError
-    if (self._maxFrames > 0) and (self._numFrames >= self._maxFrames):
-      raise DoneError
-
-    if learnActionReset:
-      self.resetPositionsActionLearning(adhocAgentHasBall)
-    else:
-      self.resetPositions()
+  def reset(self):
+    """ Resets the HFO domain by moving the ball and players. """
+    self.resetBallPosition()
+    self.resetPlayerPositions()
     self.send('(recover)')
     self.send('(change_mode play_on)')
     self.send('(say RESET)')
-    self._lastTrialStart = self._frame
 
-  def resetPositionsActionLearning(self,adhocAgentHasBall):
-    for i in range(1, self._numDefense):
-      if adhocAgentHasBall and (not self._options.adhocOffense) and (i == self._adhocNumInt): continue
-      pos = self.boundPoint(self.randomPosInBounds(self._allowedBallX,self._allowedBallY))
-      self.movePlayer(self._defenseTeam,i,pos)
-    for i in range(1, self._numOffense):
-      if adhocAgentHasBall and self._options.adhocOffense and (i == self._adhocNumInt): continue
-      pos = self.boundPoint(self.randomPosInBounds(self._allowedBallX,self._allowedBallY))
-      self.movePlayer(self._offenseTeam,i,pos)
-    self._ballPosition = self.boundPoint(self.randomPosInBounds(self._allowedBallX,self._allowedBallY))
+  def resetBallPosition(self):
+    """Reset the position of the ball for a new HFO trial. """
+    self._ballPosition = self.boundPoint(self.randomPointInBounds(
+      .2*self._allowedBallX+.05*self.PITCH_LENGTH, .8*self._allowedBallY))
     self.moveBall(self._ballPosition)
-    if adhocAgentHasBall:
-      # start the agent with the ball in the kickable margin
-      r = self._rng.rand() * self._SP['kickable_margin']
-      a = self._rng.rand() * 2 * numpy.pi
-      offset = r * numpy.array([numpy.cos(a),numpy.sin(a)])
-      self.movePlayer(self._adhocTeam,self._adhocNumExt,self._ballPosition + offset,convertToExt=False)
 
-  def resetPositions(self):
-    print 'in reset position'
-    self._ballPosition = self.boundPoint(self.randomPosInBounds(0.20 * self._allowedBallX + 0.05 * self.PITCH_LENGTH,0.8 * self._allowedBallY))
-    self.moveBall(self._ballPosition)
-    # set up offense
-    self.movePlayer(self._offenseTeam,0,[-0.5 * self.PITCH_LENGTH,0])
+  def getOffensiveResetPosition(self):
+    """ Returns a random position for an offensive player. """
     offsets = [
       [-1,-1],
       [-1,1],
@@ -456,77 +454,129 @@ class Trainer(object):
       [2,2],
       [2,-2],
     ]
-    for i,o in zip(range(1,self._numOffense),offsets):
-      offset = 0.1 * self.PITCH_LENGTH * self._rng.rand(2) + 0.1 * self.PITCH_LENGTH * numpy.array(o)
-      pos = self.boundPoint(self._ballPosition + offset)
-      self.movePlayer(self._offenseTeam,i,pos)
-    # set up defense
-    self.movePlayer(self._defenseTeam,0,[0.5 * self.PITCH_LENGTH,0])
-    for i in range(1,self._numDefense):
-      pos = self.boundPoint(self.randomPosInBounds([0.5 * 0.5 * self.PITCH_LENGTH,0.75 * 0.5 * self.PITCH_LENGTH],0.8 * self._allowedBallY))
-      self.movePlayer(self._defenseTeam,i,pos)
+    offset = offsets[self._rng.randint(len(offsets))]
+    offset_from_ball = 0.1 * self.PITCH_LENGTH * self._rng.rand(2) + \
+                       0.1 * self.PITCH_LENGTH * numpy.array(offset)
+    return self.boundPoint(self._ballPosition + offset_from_ball)
 
-  def nullifyOtherPlayers(self):
-    # offense
-    for i in range(self._numOffense,11):
-      self.movePlayer(self._offenseTeam,i,[-0.25 * self.PITCH_LENGTH,0])
-    # defense
-    for i in range(self._numDefense,11):
-      self.movePlayer(self._defenseTeam,i,[-0.25 * self.PITCH_LENGTH,0])
+  def getDefensiveResetPosition(self):
+    """ Returns a random position for a defensive player. """
+    return self.boundPoint(self.randomPointInBounds(
+      [0.5 * 0.5 * self.PITCH_LENGTH, 0.75 * 0.5 * self.PITCH_LENGTH],
+      0.8 * self._allowedBallY))
+
+  def resetPlayerPositions(self):
+    """Reset the positions of the players. This is called after a trial
+    ends to setup for the next trial.
+
+    """
+    # Always Move the offensive goalie
+    self.movePlayer(self._offenseTeam, 0, [-0.5 * self.PITCH_LENGTH, 0])
+    # Move the rest of the offense
+    for i in xrange(1, self._numOffense + 1):
+      self.movePlayer(self._offenseTeam, i, self.getOffensiveResetPosition())
+    # Move the defensive goalie
+    if self._numDefense > 0:
+      self.movePlayer(self._defenseTeam, 0, [0.5 * self.PITCH_LENGTH,0])
+    # Move the rest of the defense
+    for i in xrange(1, self._numDefense):
+      self.movePlayer(self._defenseTeam, i, self.getDefensiveResetPosition())
+
+  def removeNonHFOPlayers(self):
+    """Removes players that aren't involved in HFO game.
+
+    The players whose numbers are greater than numOffense/numDefense
+    are sent to left-field.
+
+    """
+    for i in xrange(self._numOffense + 1, 11):
+      # Don't remove the learning agent
+      if not self._agent or i != self._agentNumInt or \
+         self._agentTeam != self._offenseTeam:
+        self.movePlayer(self._offenseTeam, i, [-0.25 * self.PITCH_LENGTH, 0])
+    for i in xrange(self._numDefense, 11):
+      # Don't remove the learning agent
+      if not self._agent or i != self._agentNumInt or \
+         self._agentTeam != self._defenseTeam:
+        self.movePlayer(self._defenseTeam, i, [-0.25 * self.PITCH_LENGTH, 0])
 
   def step(self):
-    #print 'step',self._frame
-    #self.send('(check_ball)')
-    self.nullifyOtherPlayers()
-    heldTeam,heldPlayer = self.calcBallHolder()
-    if heldTeam is not None:
+    """ Takes a simulated step. """
+    # self.send('(check_ball)')
+    self.removeNonHFOPlayers()
+    team_holding_ball, player_holding_ball = self.calcBallHolder()
+    if team_holding_ball is not None:
       self._lastFrameBallTouched = self._frame
+    if self.trialOver(team_holding_ball):
+      self.updateResults(team_holding_ball)
+      self.reset()
 
-    # don't reset too fast, stuff is still happening
-    if self._frame - self._lastTrialStart < 5:
-      return
-    if not self._options.learnActions:
-      self.doResetIfNeeded(heldTeam)
-
-  def doResetIfNeeded(self,heldTeam):
+  def updateResults(self, team_holding_ball):
+    """ Updates the various members after a trial has ended. """
     if self.isGoal():
       self._numGoals += 1
-      self.reset('Goal')
-      return
-    if self.isOOB():
+      result = 'Goal'
+    elif self.isOOB():
       self._numBallsOOB += 1
-      self.reset('Out of bounds')
-      return
-    if heldTeam not in [None,self._offenseTeamInd]:
+      result = 'Out of Bounds'
+    elif team_holding_ball not in [None,self._offenseTeamInd]:
       self._numBallsCaptured += 1
-      self.reset('Defense captured')
-      return
-    if self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH:
+      result = 'Defense Captured'
+    elif self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH:
       self._lastFrameBallTouched = self._frame
-      self.reset('Untouched for too long',False)
-      return
+      result = 'Ball untouched for too long'
+    else:
+      print '[Trainer] Error: Unable to detect reason for End of Trial!'
+      sys.exit(1)
+    print '[Trainer] EndOfTrial: %2i /%2i %5i %s'%\
+      (self._numGoals, self._numTrials, self._frame, result)
+    self._numTrials += 1
+    self._numFrames += self._frame - self._lastTrialStart
+    self._lastTrialStart = self._frame
+    if (self._maxTrials > 0) and (self._numTrials >= self._maxTrials):
+      raise DoneError
+    if (self._maxFrames > 0) and (self._numFrames >= self._maxFrames):
+      raise DoneError
+
+  def trialOver(self, team_holding_ball):
+    """Returns true if the trial has ended for one of the following
+    reasons: Goal scored, out of bounds, captured by defense, or
+    untouched for too long.
+
+    """
+    # The trial is still being setup, it cannot be over.
+    if self._frame - self._lastTrialStart < 5:
+      return False
+    return self.isGoal() \
+      or self.isOOB() \
+      or (team_holding_ball not in [None, self._offenseTeamInd]) \
+      or (self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH)
 
   def printStats(self):
-    print ''
     print 'Num frames in completed trials : %i' % (self._numFrames)
     print 'Trials             : %i' % self._numTrials
     print 'Goals              : %i' % self._numGoals
     print 'Defense Captured   : %i' % self._numBallsCaptured
     print 'Balls Out of Bounds: %i' % self._numBallsOOB
 
-  def checkLive(self,necProcesses):
+  def checkLive(self, necProcesses):
+    """Returns true if each of the necessary processes is still alive and
+    running.
+
+    """
     for p,name in necProcesses:
       if p.poll() is not None:
-        print 'Something necessary closed (%s), exiting' % name
+        print '[Trainer] Something necessary closed (%s), exiting' % name
         return False
     return True
 
-  def run(self,necProcesses):
+  def run(self, necProcesses):
+    """ Run the trainer.
+    """
     try:
-      if self._options.useAdhoc:
-        self._adhocPopen = self.launchAdhoc()
-        necProcesses.append([self._adhocPopen,'adhoc'])
-      print 'starting game'
+      if self._agent:
+        self._agentPopen = self.launch_agent()
+        necProcesses.append([self._agentPopen,'agent'])
       self.startGame()
       while self.checkLive(necProcesses):
         prevFrame = self._frame
@@ -534,26 +584,15 @@ class Trainer(object):
         if self._frame != prevFrame:
           self.step()
     except TimeoutError:
-      print 'Haven\'t heard from the server for too long, Exiting'
+      print '[Trainer] Haven\'t heard from the server for too long, Exiting'
     except (KeyboardInterrupt, DoneError):
-      print 'Exiting'
+      print '[Trainer] Exiting'
     finally:
-      if self._adhocPopen is not None:
-        self._adhocPopen.send_signal(SIGINT)
+      if self._agentPopen is not None:
+        self._agentPopen.send_signal(SIGINT)
       try:
         self._comm.sendMsg('(bye)')
       except:
         pass
       self._comm.close()
-
       self.printStats()
-
-if __name__ == '__main__':
-  #seed = int(time.time())
-  assert(len(sys.argv) == 1)
-  #team1 = sys.argv[1]
-  #team2 = sys.argv[2]
-  seed = int(sys.argv[1])
-  print 'Random Seed:',seed
-  t = Trainer(seed=seed)
-  t.run()

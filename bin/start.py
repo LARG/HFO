@@ -1,42 +1,33 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import subprocess, os, time, numpy
+import subprocess, os, time, numpy, sys
 from signal import SIGINT
 
-# UT_AGENT_DIR    = '/u/mhauskn/projects/hfo/bin/'
-OTHER_AGENT_DIR = '/projects/agents2/villasim/opponents2D/'
-
-SERVER_CMD = 'rcssserver server::port=6000 server::coach_port=6001 server::olcoach_port=6002 server::coach=1 server::game_log_dir=/tmp server::text_log_dir=/tmp'
+# Global list of all/essential running processes
+processes, necProcesses = [], []
+# Command to run the rcssserver. Edit as needed.
+SERVER_CMD = 'rcssserver server::port=6000 server::coach_port=6001 \
+server::olcoach_port=6002 server::coach=1 server::game_log_dir=/tmp \
+server::text_log_dir=/tmp'
+# Command to run the monitor. Edit as needed.
 MONITOR_CMD = 'rcssmonitor'
 
-def getAgentDirCmd(name,first):
-  if name == 'ut':
-    if first:
-      name = 'ut1'
-    else:
-      name = 'ut2'
-    cmd = './start.sh -t %s' % name
-    dir = os.path.dirname(os.path.realpath(__file__))
-  elif name == 'base':
-    dir = os.path.join(OTHER_AGENT_DIR,name,'src')
-    if first:
-      name = 'base1'
-    else:
-      name = 'base2'
-    cmd = './start.sh -t %s' % name
-  else:
-    cmd = './start.sh'
-    dir = os.path.join(OTHER_AGENT_DIR,name)
-  return name,cmd,dir
+def getAgentDirCmd(name, first):
+  """ Returns the team name, command, and directory to run a team. """
+  cmd = './start.sh -t %s' % name
+  dir = os.path.dirname(os.path.realpath(__file__))
+  return name, cmd, dir
 
-#team2 = 'oxsy' # fcportugal2d, gdut-tiji, marlik, nadco-2d, warthog
+def launch(cmd, necessary=True, supressOutput=True, name='Unknown'):
+  """Launch a process.
 
+  Appends to list of processes and (optionally) necProcesses if
+  necessary flag is True.
 
-processes = []
-necProcesses = []
+  Returns: The launched process.
 
-def launch(cmd,necessary=True,supressOutput=True,name='Unknown'):
+  """
   kwargs = {}
   if supressOutput:
     kwargs = {'stdout':open('/dev/null','w'),'stderr':open('/dev/null','w')}
@@ -46,42 +37,39 @@ def launch(cmd,necessary=True,supressOutput=True,name='Unknown'):
     necProcesses.append([p,name])
   return p
 
-def main(team1,team2,rng,options):
+def main(team1, team2, rng, args):
+  """Sets up the teams, launches the server and monitor, starts the
+  trainer.
+  """
   serverOptions = ''
-  if options.sync:
+  if args.sync:
     serverOptions += ' server::synch_mode=on'
-    
-  team1,team1Cmd,team1Dir = getAgentDirCmd(team1,True)
-  team2,team2Cmd,team2Dir = getAgentDirCmd(team2,False)
-  if not os.path.isdir(team1Dir):
-    print 'Bad team 1: %s' % team1
-    sys.exit(1)
-  if not os.path.isdir(team2Dir):
-    print 'Bad team 2: %s' % team2
-    sys.exit(1)
+  team1, team1Cmd, team1Dir = getAgentDirCmd(team1, True)
+  team2, team2Cmd, team2Dir = getAgentDirCmd(team2, False)
+  assert os.path.isdir(team1Dir)
+  assert os.path.isdir(team2Dir)
   try:
-    launch(SERVER_CMD + serverOptions,name='server')
+    # Launch the Server
+    launch(SERVER_CMD + serverOptions, name='server')
     time.sleep(0.2)
-    if not options.headless:
+    if not args.headless:
       launch(MONITOR_CMD,name='monitor')
-    
-    # launch trainer
+    # Launch the Trainer
     from Trainer import Trainer
-    seed = rng.randint(numpy.iinfo('i').max)
-    trainer = Trainer(seed=seed,options=options)
+    trainer = Trainer(args=args, rng=rng)
     trainer.initComm()
-    # start team 1
+    # Start Team1
     os.chdir(team1Dir)
     launch(team1Cmd,False)
     trainer.waitOnTeam(True) # wait to make sure of team order
-    # start team 2
+    # Start Team2
     os.chdir(team2Dir)
     launch(team2Cmd,False)
     trainer.waitOnTeam(False)
-    # make sure all players are connected
+    # Make sure all players are connected
     trainer.checkIfAllPlayersConnected()
     trainer.setTeams()
-    # run
+    # Run HFO
     trainer.run(necProcesses)
   except KeyboardInterrupt:
     print 'Exiting for CTRL-C'
@@ -91,42 +79,27 @@ def main(team1,team2,rng,options):
         p.send_signal(SIGINT)
       except:
         pass
-    #print 'Done killing children (hopefully)'
     time.sleep(0.1)
 
 if __name__ == '__main__':
-  import sys
-  
-  from optparse import OptionParser
-
-  p = OptionParser('''Usage: ./startHFO.py [team1 [team2]]
-  teams are ut or the ones in the agents directory''')
-  p.add_option('-s','--no-sync',dest='sync',action='store_false',default=True,help='run server in non-sync mode')
-  p.add_option('--headless',dest='headless',action='store_true',default=False,help='run in headless mode')
-  p.add_option('-a','--adhoc',dest='useAdhoc',action='store_true',default=False,help='use an adhoc agent')
-  p.add_option('-d','--adhocDefense',dest='adhocOffense',action='store_false',default=True,help='put the ad hoc agent on defense')
-  p.add_option('-n','--numTrials',dest='numTrials',action='store',type='int',default=-1,help='number of trials to run')
-  p.add_option('-f','--frames',dest='numFrames',action='store',type='int',default=-1,help='number of frames to run for')
-  p.add_option('--offense',dest='numOffense',action='store',type='int',default=4,help='number of offensive players')
-  p.add_option('--defense',dest='numDefense',action='store',type='int',default=4,help='number of defensive players (excluding the goalie)')
-  p.add_option('--learn-actions',dest='numLearnActions',action='store',type='int',default=0,help='number of instances to learn actions instead of the regular behavior')
-
-  options,args = p.parse_args()
-  if len(args) > 2:
-    print 'Incorrect number of arguments'
-    p.parse_args(['--help'])
-    sys.exit(2)
-
-  options.learnActions = (options.numLearnActions > 0)
-    
-  team1 = 'ut'
-  team2 = 'ut'
-
-  if len(args) >= 1:
-    team1 = args[0]
-    if len(args) >= 2:
-      team2 = args[1]
-  seed = int(time.time())
-  rng = numpy.random.RandomState(seed)
-
-  main(team1,team2,rng,options)
+  import argparse
+  p = argparse.ArgumentParser(description='Start Half Field Offense.')
+  p.add_argument('--headless', dest='headless', action='store_true',
+                 help='Run without a monitor')
+  p.add_argument('--trials', dest='numTrials', type=int, default=-1,
+                 help='Number of trials to run')
+  p.add_argument('--frames', dest='numFrames', type=int, default=-1,
+                 help='Number of frames to run for')
+  p.add_argument('--offense', dest='numOffense', type=int, default=4,
+                 help='Number of offensive players')
+  p.add_argument('--defense', dest='numDefense', type=int, default=4,
+                 help='Number of defensive players')
+  p.add_argument('--play-defense', dest='play_offense',
+                 action='store_false', default=True,
+                 help='Put the learning agent on defensive team')
+  p.add_argument('--no-agent', dest='no_agent', action='store_true',
+                 help='Don\'t use a learning agent.')
+  p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
+                 help='Run server in non-sync mode')
+  args = p.parse_args()
+  main(team1='left', team2='right', rng=numpy.random.RandomState(), args=args)

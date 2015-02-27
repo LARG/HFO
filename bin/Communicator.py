@@ -40,7 +40,7 @@ class Communicator(object):
         pass
       finally:
         self._sock = None
-    
+
   def sendMsg(self,msg):
     #print 'sending',msg
     self._sock.sendto(msg + '\0',self._addr)
@@ -69,7 +69,7 @@ class Communicator(object):
     self._storedMsg = rest
     #print 'received',msg
     return msg
-    
+
   def send(self,obj):
     self.sendMsg(pickle.dumps(obj))
 
@@ -90,5 +90,3 @@ class ClientCommunicator(Communicator):
     except:
       print >>sys.stderr,'Error creating socket'
       raise
-
-# vim: ts=2:sw=2:expandtab:
