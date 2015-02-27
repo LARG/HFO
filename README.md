@@ -16,7 +16,7 @@ HFO
 ## (Optional) Patch rcssserver
 By default if your agent takes longer then two seconds to select an action it will be disconnected from the server. To enable longer wait times, apply the following patch and rebuild your rcssserver:
 
-`patch your_path/rcssserver-15.2.2/src/stadium.cpp < stadium.patch`.
+`patch your_path/rcssserver-15.2.2/src/stadium.cpp < stadium.patch`
 
 ## Run
 ```bash
