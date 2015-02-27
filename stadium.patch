@@ -1,0 +1,45 @@
+2527c2527
+<     const double max_msec_waited = 25 * 50;
+---
+>     const double max_msec_waited = 25 * 5000;
+2533a2534
+>     timeval tv_lastNotification;
+2638a2640,2677
+> 
+>         // Start modifcation to prevent timeouts
+>         // get time difference with start of loop, first get time difference in seconds
+>         gettimeofday( &tv_now, NULL );
+>         double time_diff_notification
+>             = ( static_cast< double >( tv_now.tv_sec )
+>                 + static_cast< double >( tv_now.tv_usec ) / 1000000 )
+>             - ( static_cast< double >( tv_lastNotification.tv_sec )
+>                 + static_cast< double >( tv_lastNotification.tv_usec ) / 1000000 );
+> 
+>         if ((done == DS_FALSE) && (time_diff_notification > 1.0))  {
+>           const char *aliveMsg = "(ok say)";
+>           for ( int i = 0; i < MAX_PLAYER*2; ++i ) {
+>             if ( wait_players[i] && M_players[i]->connected() && M_players[i]->doneReceived()) {
+>               M_players[i]->send( aliveMsg );
+>             }
+>           }
+> 
+>           for ( int i = 0; i < 2; ++i ) {
+>             if ( wait_coach[i] && M_olcoaches[i]->connected() && M_olcoaches[i]->doneReceived()) {
+>               M_olcoaches[i]->send( aliveMsg );
+>             }
+>           }
+> 
+>           if ( wait_trainer && M_coach->connected() && M_coach->doneReceived()) {
+>             M_coach->send( aliveMsg );
+>           }
+> 
+>           for ( MonitorCont::iterator i = M_monitors.begin();
+>                 i != M_monitors.end();
+>                 ++i )
+>           {
+>             (*i)->sendShow();
+>           }
+>           gettimeofday( &tv_lastNotification, NULL );
+> 
+>         }
+>         // end modification to prevent timeouts

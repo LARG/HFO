@@ -13,6 +13,9 @@ HFO
 2. `cmake .`
 3. `make`
 
+## (Optional) Patch rcssserver for longer decision making
+It's necessary to patch rcssserver if the agent takes longer then two seconds to select an action. To apply the patch, run `patch your_path/rcssserver-15.2.2/src/stadium.cpp < stadium.patch`.
+
 ## Run
 ```bash
 ./bin/start.py
