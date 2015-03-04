@@ -34,67 +34,44 @@
 #include <rcsc/player/player_agent.h>
 #include <vector>
 
-class Agent
-    : public rcsc::PlayerAgent {
-private:
-
-    Communication::Ptr M_communication;
-
-    FieldEvaluator::ConstPtr M_field_evaluator;
-    ActionGenerator::ConstPtr M_action_generator;
-
+class Agent : public rcsc::PlayerAgent {
 public:
-
-    Agent();
-
-    virtual
-    ~Agent();
+  Agent();
+  virtual ~Agent();
+  std::vector<float> getState();
+  virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
 
 protected:
+  // You can override this method. But you must call
+  // PlayerAgent::initImpl() in this method.
+  virtual bool initImpl(rcsc::CmdLineParser& cmd_parser);
 
-    /*!
-      You can override this method.
-      But you must call PlayerAgent::initImpl() in this method.
-    */
-    virtual
-    bool initImpl( rcsc::CmdLineParser & cmd_parser );
+  // main decision
+  virtual void actionImpl();
 
-    //! main decision
-    virtual
-    void actionImpl();
+  // communication decision
+  virtual void communicationImpl();
+  virtual void handleActionStart();
+  virtual void handleActionEnd();
+  virtual void handleServerParam();
+  virtual void handlePlayerParam();
+  virtual void handlePlayerType();
+  virtual FieldEvaluator::ConstPtr createFieldEvaluator() const;
+  virtual ActionGenerator::ConstPtr createActionGenerator() const;
 
-    //! communication decision
-    virtual
-    void communicationImpl();
+ private:
+  // Add the angle and distance to the landmark to the feature_vec
+  void addLandmarkFeature(const rcsc::Vector2D& landmark,
+                          const rcsc::Vector2D& self_pos,
+                          std::vector<float>& feature_vec);
+  bool doPreprocess();
+  bool doShoot();
+  bool doForceKick();
+  bool doHeardPassReceive();
 
-    virtual
-    void handleActionStart();
-    virtual
-    void handleActionEnd();
-
-    virtual
-    void handleServerParam();
-    virtual
-    void handlePlayerParam();
-    virtual
-    void handlePlayerType();
-
-    virtual
-    FieldEvaluator::ConstPtr createFieldEvaluator() const;
-
-    virtual
-    ActionGenerator::ConstPtr createActionGenerator() const;
-
-private:
-
-    bool doPreprocess();
-    bool doShoot();
-    bool doForceKick();
-    bool doHeardPassReceive();
-
-public:
-    virtual
-    FieldEvaluator::ConstPtr getFieldEvaluator() const;
+  Communication::Ptr M_communication;
+  FieldEvaluator::ConstPtr M_field_evaluator;
+  ActionGenerator::ConstPtr M_action_generator;
 };
 
 #endif

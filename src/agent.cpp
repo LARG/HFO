@@ -215,99 +215,225 @@ Agent::initImpl( CmdLineParser & cmd_parser )
     return true;
 }
 
+std::vector<float> Agent::getState() {
+  // TODO: Need to normalize these features
+  std::vector<float> feature_vec;
+  const ServerParam& SP = ServerParam::i();
+  const WorldModel& wm = this->world();
+
+  // ======================== SELF FEATURES ======================== //
+  const SelfObject& self = wm.self();
+  const Vector2D& self_pos = self.pos();
+
+  // Absolute (x,y) position of the agent.
+  feature_vec.push_back(self.posValid() ? 1. : 0.);
+  // feature_vec.push_back(self_pos.x);
+  // feature_vec.push_back(self_pos.y);
+
+  // Speed of the agent. Alternatively, (x,y) velocity could be used.
+  feature_vec.push_back(self.velValid() ? 1. : 0.);
+  feature_vec.push_back(self.speed());
+
+  // Global Body Angle -- 0:right -90:up 90:down 180/-180:left
+  feature_vec.push_back(self.body().degree());
+
+  // Neck Angle -- We probably don't need this unless we are
+  // controlling the neck manually.
+  // std::cout << "Face Error: " << self.faceError() << std::endl;
+  // if (self.faceValid()) {
+  //   std::cout << "FaceAngle: " << self.face() << std::endl;
+  // }
+
+  feature_vec.push_back(self.stamina());
+  feature_vec.push_back(self.isFrozen() ? 1. : 0.);
+
+  // Probabilities - Do we want these???
+  // std::cout << "catchProb: " << self.catchProbability() << std::endl;
+  // std::cout << "tackleProb: " << self.tackleProbability() << std::endl;
+  // std::cout << "fouldProb: " << self.foulProbability() << std::endl;
+
+  // Features indicating if we are colliding with an object
+  feature_vec.push_back(self.collidesWithBall()   ? 1. : 0.);
+  feature_vec.push_back(self.collidesWithPlayer() ? 1. : 0.);
+  feature_vec.push_back(self.collidesWithPost()   ? 1. : 0.);
+  feature_vec.push_back(self.isKickable()         ? 1. : 0.);
+
+  // inertiaPoint estimates the ball point after a number of steps
+  // self.inertiaPoint(n_steps);
+
+  // ======================== LANDMARK FEATURES ======================== //
+  // Maximum possible radius in HFO
+  float maxR = sqrtf(SP.pitchHalfLength()*SP.pitchHalfLength() +
+                     SP.pitchHalfWidth()*SP.pitchHalfWidth());
+  // Top Bottom Center of Goal
+  rcsc::Vector2D goalCenter(SP.pitchHalfLength(), 0);
+  addLandmarkFeature(goalCenter, self_pos, feature_vec);
+  rcsc::Vector2D goalPostTop(SP.pitchHalfLength(), -SP.goalHalfWidth());
+  addLandmarkFeature(goalPostTop, self_pos, feature_vec);
+  rcsc::Vector2D goalPostBot(SP.pitchHalfLength(), SP.goalHalfWidth());
+  addLandmarkFeature(goalPostBot, self_pos, feature_vec);
+
+  // Top Bottom Center of Penalty Box
+  rcsc::Vector2D penaltyBoxCenter(SP.pitchHalfLength() - SP.penaltyAreaLength(),
+                                  0);
+  addLandmarkFeature(penaltyBoxCenter, self_pos, feature_vec);
+  rcsc::Vector2D penaltyBoxTop(SP.pitchHalfLength() - SP.penaltyAreaLength(),
+                               -SP.penaltyAreaWidth()/2.);
+  addLandmarkFeature(penaltyBoxTop, self_pos, feature_vec);
+  rcsc::Vector2D penaltyBoxBot(SP.pitchHalfLength() - SP.penaltyAreaLength(),
+                               SP.penaltyAreaWidth()/2.);
+  addLandmarkFeature(penaltyBoxBot, self_pos, feature_vec);
+
+  // Corners of the Playable Area
+  rcsc::Vector2D centerField(0, 0);
+  addLandmarkFeature(centerField, self_pos, feature_vec);
+  rcsc::Vector2D cornerTopLeft(0, -SP.pitchHalfWidth());
+  addLandmarkFeature(cornerTopLeft, self_pos, feature_vec);
+  rcsc::Vector2D cornerTopRight(SP.pitchHalfLength(), -SP.pitchHalfWidth());
+  addLandmarkFeature(cornerTopRight, self_pos, feature_vec);
+  rcsc::Vector2D cornerBotRight(SP.pitchHalfLength(), SP.pitchHalfWidth());
+  addLandmarkFeature(cornerBotRight, self_pos, feature_vec);
+  rcsc::Vector2D cornerBotLeft(0, SP.pitchHalfWidth());
+  addLandmarkFeature(cornerBotLeft, self_pos, feature_vec);
+
+  // Distance to Left field line
+  feature_vec.push_back(self_pos.x);
+  // Distance to Right field line
+  feature_vec.push_back(SP.pitchHalfLength() - self.pos().x);
+  // Distance to Bottom field line
+  feature_vec.push_back(SP.pitchHalfWidth() - self.pos().y);
+  // Distance to Top field line
+  feature_vec.push_back(SP.pitchHalfWidth() + self.pos().y);
+
+  // ======================== BALL FEATURES ======================== //
+  const BallObject& ball = wm.ball();
+  feature_vec.push_back(ball.rposValid() ? 1. : 0.);
+  feature_vec.push_back(ball.angleFromSelf().degree());
+  feature_vec.push_back(ball.distFromSelf());
+  feature_vec.push_back(ball.velValid() ? 1. : 0.);
+  feature_vec.push_back(ball.vel().x);
+  feature_vec.push_back(ball.vel().y);
+  // std::cout << "DistFromBall: " << self.distFromBall() << std::endl;
+  // [0,180] Agent's left side from back to front
+  // [0,-180] Agent's right side from back to front
+  // std::cout << "AngleFromBall: " << self.angleFromBall() << std::endl;
+  // std::cout << "distFromSelf: " << self.distFromSelf() << std::endl;
+  // std::cout << "angleFromSelf: " << self.angleFromSelf() << std::endl;
+
+  // ======================== TEAMMATE FEATURES ======================== //
+  // Vector of PlayerObject pointers sorted by increasing distance from self
+  const PlayerPtrCont& teammates = wm.teammatesFromSelf();
+  for (PlayerPtrCont::const_iterator it = teammates.begin();
+       it != teammates.end(); ++it) {
+    PlayerObject* teammate = *it;
+    if (teammate->pos().x > 0 && teammate->unum() > 0) {
+      // Angle dist to teammate. Teammate's body angle and velocity.
+      feature_vec.push_back((teammate->pos()-self_pos).th().degree());
+      feature_vec.push_back(teammate->distFromSelf());
+      feature_vec.push_back(teammate->body().degree());
+      feature_vec.push_back(teammate->vel().x);
+      feature_vec.push_back(teammate->vel().y);
+    }
+  }
+
+  // ======================== OPPONENT FEATURES ======================== //
+  const PlayerPtrCont& opponents = wm.opponentsFromSelf();
+  for (PlayerPtrCont::const_iterator it = opponents.begin();
+       it != opponents.end(); ++it) {
+    PlayerObject* opponent = *it;
+    if (opponent->pos().x > 0 && opponent->unum() > 0) {
+      // Angle dist to opponent. Opponents's body angle and velocity.
+      feature_vec.push_back((opponent->pos()-self_pos).th().degree());
+      feature_vec.push_back(opponent->distFromSelf());
+      feature_vec.push_back(opponent->body().degree());
+      feature_vec.push_back(opponent->vel().x);
+      feature_vec.push_back(opponent->vel().y);
+    }
+  }
+
+  return feature_vec;
+}
+
+// Add the angle and distance to the landmark to the feature_vec
+void Agent::addLandmarkFeature(const rcsc::Vector2D& landmark,
+                               const rcsc::Vector2D& self_pos,
+                               std::vector<float>& feature_vec) {
+  Vector2D vec_to_landmark = landmark - self_pos;
+  feature_vec.push_back(vec_to_landmark.th().degree());
+  feature_vec.push_back(vec_to_landmark.r());
+}
+
 /*-------------------------------------------------------------------*/
 /*!
   main decision
   virtual method in super class
 */
-void
-Agent::actionImpl()
-{
-    //
-    // update strategy and analyzer
-    //
-    Strategy::instance().update( world() );
-    FieldAnalyzer::instance().update( world() );
+void Agent::actionImpl() {
+  std::vector<float> state = getState();
 
-    //
-    // prepare action chain
-    //
-    M_field_evaluator = createFieldEvaluator();
-    M_action_generator = createActionGenerator();
+  // Do decision making here
 
-    ActionChainHolder::instance().setFieldEvaluator( M_field_evaluator );
-    ActionChainHolder::instance().setActionGenerator( M_action_generator );
+  // TODO: How to get rewards?
 
-    //
-    // special situations (tackle, objects accuracy, intention...)
-    //
-    if ( doPreprocess() )
-    {
-        dlog.addText( Logger::TEAM,
-                      __FILE__": preprocess done" );
-        return;
-    }
+  // For now let's not worry about turning the neck or setting the vision.
+  this->setViewAction(new View_Tactical());
+  this->setNeckAction(new Neck_TurnToBallOrScan());
 
-    //
-    // update action chain
-    //
-    ActionChainHolder::instance().update( world() );
+  // Dash with power [-100,100]. Negative values move backwards. The
+  // relative_dir [-180,180] is the direction to dash in. This should
+  // be set every step.
+  // this->doDash(1., 0);
+  // std::cout << " DefaultDashPowerRate: " << SP.defaultDashPowerRate()
+  //           << " minDashAngle: " << SP.minDashAngle()
+  //           << " maxDashAngle: " << SP.maxDashAngle()
+  //           << " dashAngleStep: " << SP.dashAngleStep()
+  //           << " sideDashRate: " << SP.sideDashRate()
+  //           << " backDashRate: " << SP.backDashRate()
+  //           << " maxDashPower: " << SP.maxDashPower()
+  //           << " minDashPower: " << SP.minDashPower() << std::endl;
 
+  // Tackle player for ball. If player config version is greater than
+  // 12 (we are 14) then power_or_dir is actually just direction.
+  // Power_dir [-180,180] direction of tackle.
+  // Foul - should we intentionally foul? No for now...
+  // this->doTackle(0., false);
+  // std::cout << "PlayerConfigVersion: " << this->config().version() << std::endl;
+  // std::cout << " tackleDist: " << SP.tackleDist()
+  //           << " tackleBackDist: " << SP.tackleBackDist()
+  //           << " tackleWidth: " << SP.tackleWidth()
+  //           << " tackleExponent: " << SP.tackleExponent()
+  //           << " tackleCycles: " << SP.tackleCycles()
+  //           << " tacklePowerRate: " << SP.tacklePowerRate()
+  //           << " maxTacklePower: " << SP.maxTacklePower()
+  //           << " maxBackTacklePower: " << SP.maxBackTacklePower()
+  //           << " tackleRandFactor: " << SP.tackleRandFactor() << std::endl;
 
-    //
-    // create current role
-    //
-    SoccerRole::Ptr role_ptr;
-    {
-        role_ptr = Strategy::i().createRole( world().self().unum(), world() );
+  // Kick with power [0,100] and direction [-180,180] (left to right)
+  // this->doKick(100., 0);
 
-        if ( ! role_ptr )
-        {
-            std::cerr << config().teamName() << ": "
-                      << world().self().unum()
-                      << " Error. Role is not registerd.\nExit ..."
-                      << std::endl;
-            M_client->setServerAlive( false );
-            return;
-        }
-    }
+  // ======================== IGNORED ACTIONS ======================== //
+  // Only available to goalie.
+  // this->doCatch();
+  // Not sure if we want to point yet...
+  // this->doPointto(x,y);
+  // this->doPointtoOff();
+  // Attention is mainly used for communication. Lets not worry about it for now.
+  // this->doAttentionto(...);
+  // this->doAttentionOff();
+  // Intention seems to be a way of queing actions. Lets not worry about it.
+  // this->setInetion(...);
+  // this->doIntention();
+  // Dribble is omitted because it consists of dashes, turns, and kicks
 
-
-    //
-    // override execute if role accept
-    //
-    if ( role_ptr->acceptExecution( world() ) )
-    {
-        role_ptr->execute( this );
-        return;
-    }
-
-
-    //
-    // play_on mode
-    //
-    if ( world().gameMode().type() == GameMode::PlayOn )
-    {
-        role_ptr->execute( this );
-        return;
-    }
-
-
-    //
-    // penalty kick mode
-    //
-    if ( world().gameMode().isPenaltyKickMode() )
-    {
-        dlog.addText( Logger::TEAM,
-                      __FILE__": penalty kick" );
-        Bhv_PenaltyKick().execute( this );
-        return;
-    }
-
-    //
-    // other set play mode
-    //
-    Bhv_SetPlay().execute( this );
+  // sleep(1);
+  static int i=0;
+  i++;
+  if (i % 2 == 0) {
+    this->doDash(10., 0);
+  } else {
+    // this->doKick(2., 0);
+    // this->doTurn(5);
+  }
 }
 
 /*-------------------------------------------------------------------*/
