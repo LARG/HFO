@@ -37,8 +37,7 @@
 class Agent : public rcsc::PlayerAgent {
 public:
   Agent();
-  virtual ~Agent();
-  std::vector<float> getState();
+  virtual ~Agent() {};
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
 
 protected:
@@ -59,11 +58,24 @@ protected:
   virtual FieldEvaluator::ConstPtr createFieldEvaluator() const;
   virtual ActionGenerator::ConstPtr createActionGenerator() const;
 
- private:
+  // Updated the state features stored in feature_vec
+  void updateStateFeatures();
+
   // Add the angle and distance to the landmark to the feature_vec
   void addLandmarkFeature(const rcsc::Vector2D& landmark,
-                          const rcsc::Vector2D& self_pos,
-                          std::vector<float>& feature_vec);
+                          const rcsc::Vector2D& self_pos);
+
+  int numTeammates;
+  int numOpponents;
+  int numFeatures; // Total number of features
+  // Number of features for non-player objects. Clearly this is the answer.
+  const static int num_basic_features = 42;
+  // Number of features for each player or opponent in game.
+  const static int features_per_player = 5;
+  std::vector<float> feature_vec; // Contains the current features
+  int featIndx; // Feature being populated
+
+ private:
   bool doPreprocess();
   bool doShoot();
   bool doForceKick();

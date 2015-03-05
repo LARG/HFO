@@ -85,25 +85,26 @@
 #include <string>
 #include <cstdlib>
 
+#include <boost/interprocess/managed_shared_memory.hpp>
+
 using namespace rcsc;
 
-/*-------------------------------------------------------------------*/
-/*!
+#define ADD_FEATURE(val) \
+  assert(featIndx < numFeatures); \
+  feature_vec[featIndx++] = val;
 
- */
 Agent::Agent()
     : PlayerAgent(),
       M_communication(),
-      M_field_evaluator( createFieldEvaluator() ),
-      M_action_generator( createActionGenerator() )
+      M_field_evaluator(createFieldEvaluator()),
+      M_action_generator(createActionGenerator()),
+      numTeammates(-1), numOpponents(-1), numFeatures(-1)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
     M_worldmodel.setAudioMemory( audio_memory );
 
-    //
     // set communication message parser
-    //
     addSayMessageParser( SayMessageParser::Ptr( new BallMessageParser( audio_memory ) ) );
     addSayMessageParser( SayMessageParser::Ptr( new PassMessageParser( audio_memory ) ) );
     addSayMessageParser( SayMessageParser::Ptr( new InterceptMessageParser( audio_memory ) ) );
@@ -135,89 +136,65 @@ Agent::Agent()
     // addSayMessageParser( SayMessageParser::Ptr( new FreeMessageParser< 2 >( audio_memory ) ) );
     // addSayMessageParser( SayMessageParser::Ptr( new FreeMessageParser< 1 >( audio_memory ) ) );
 
-    //
     // set freeform message parser
-    //
-    setFreeformParser( FreeformParser::Ptr( new FreeformParser( M_worldmodel ) ) );
+    setFreeformParser(FreeformParser::Ptr(new FreeformParser(M_worldmodel)));
 
-    //
     // set action generators
-    //
     // M_action_generators.push_back( ActionGenerator::Ptr( new PassGenerator() ) );
 
-    //
     // set communication planner
-    //
-    M_communication = Communication::Ptr( new SampleCommunication() );
+    M_communication = Communication::Ptr(new SampleCommunication());
 }
 
-/*-------------------------------------------------------------------*/
-/*!
-
- */
-Agent::~Agent()
-{
-
-}
-
-/*-------------------------------------------------------------------*/
-/*!
-
- */
-bool
-Agent::initImpl( CmdLineParser & cmd_parser )
-{
-    bool result = PlayerAgent::initImpl( cmd_parser );
+bool Agent::initImpl(CmdLineParser & cmd_parser) {
+    bool result = PlayerAgent::initImpl(cmd_parser);
 
     // read additional options
-    result &= Strategy::instance().init( cmd_parser );
+    result &= Strategy::instance().init(cmd_parser);
 
-    rcsc::ParamMap my_params( "Additional options" );
-#if 0
-    std::string param_file_path = "params";
-    param_map.add()
-        ( "param-file", "", &param_file_path, "specified parameter file" );
-#endif
+    rcsc::ParamMap my_params("Additional options");
+    my_params.add()("numTeammates", "", &numTeammates, "number of teammates");
+    my_params.add()("numOpponents", "", &numOpponents, "number of opponents");
 
-    cmd_parser.parse( my_params );
-
-    if ( cmd_parser.count( "help" ) > 0 )
-    {
+    cmd_parser.parse(my_params);
+    if (cmd_parser.count("help") > 0) {
         my_params.printHelp( std::cout );
         return false;
     }
 
-    if ( cmd_parser.failed() )
-    {
+    if (cmd_parser.failed()) {
         std::cerr << "player: ***WARNING*** detected unsuppprted options: ";
         cmd_parser.print( std::cerr );
         std::cerr << std::endl;
     }
 
-    if ( ! result )
-    {
+    if (!result) {
         return false;
     }
 
-    if ( ! Strategy::instance().read( config().configDir() ) )
-    {
+    if (!Strategy::instance().read(config().configDir())) {
         std::cerr << "***ERROR*** Failed to read team strategy." << std::endl;
         return false;
     }
 
-    if ( KickTable::instance().read( config().configDir() + "/kick-table" ) )
-    {
+    if (KickTable::instance().read(config().configDir() + "/kick-table")) {
         std::cerr << "Loaded the kick table: ["
                   << config().configDir() << "/kick-table]"
                   << std::endl;
     }
 
+    assert(numTeammates >= 0);
+    assert(numOpponents >= 0);
+    numFeatures = num_basic_features +
+        features_per_player * (numTeammates + numOpponents);
+    feature_vec.resize(numFeatures);
+
     return true;
 }
 
-std::vector<float> Agent::getState() {
+void Agent::updateStateFeatures() {
   // TODO: Need to normalize these features
-  std::vector<float> feature_vec;
+  featIndx = 0;
   const ServerParam& SP = ServerParam::i();
   const WorldModel& wm = this->world();
 
@@ -226,16 +203,16 @@ std::vector<float> Agent::getState() {
   const Vector2D& self_pos = self.pos();
 
   // Absolute (x,y) position of the agent.
-  feature_vec.push_back(self.posValid() ? 1. : 0.);
-  // feature_vec.push_back(self_pos.x);
-  // feature_vec.push_back(self_pos.y);
+  ADD_FEATURE(self.posValid() ? 1. : 0.);
+  // ADD_FEATURE(self_pos.x);
+  // ADD_FEATURE(self_pos.y);
 
   // Speed of the agent. Alternatively, (x,y) velocity could be used.
-  feature_vec.push_back(self.velValid() ? 1. : 0.);
-  feature_vec.push_back(self.speed());
+  ADD_FEATURE(self.velValid() ? 1. : 0.);
+  ADD_FEATURE(self.speed());
 
   // Global Body Angle -- 0:right -90:up 90:down 180/-180:left
-  feature_vec.push_back(self.body().degree());
+  ADD_FEATURE(self.body().degree());
 
   // Neck Angle -- We probably don't need this unless we are
   // controlling the neck manually.
@@ -244,8 +221,8 @@ std::vector<float> Agent::getState() {
   //   std::cout << "FaceAngle: " << self.face() << std::endl;
   // }
 
-  feature_vec.push_back(self.stamina());
-  feature_vec.push_back(self.isFrozen() ? 1. : 0.);
+  ADD_FEATURE(self.stamina());
+  ADD_FEATURE(self.isFrozen() ? 1. : 0.);
 
   // Probabilities - Do we want these???
   // std::cout << "catchProb: " << self.catchProbability() << std::endl;
@@ -253,10 +230,10 @@ std::vector<float> Agent::getState() {
   // std::cout << "fouldProb: " << self.foulProbability() << std::endl;
 
   // Features indicating if we are colliding with an object
-  feature_vec.push_back(self.collidesWithBall()   ? 1. : 0.);
-  feature_vec.push_back(self.collidesWithPlayer() ? 1. : 0.);
-  feature_vec.push_back(self.collidesWithPost()   ? 1. : 0.);
-  feature_vec.push_back(self.isKickable()         ? 1. : 0.);
+  ADD_FEATURE(self.collidesWithBall()   ? 1. : 0.);
+  ADD_FEATURE(self.collidesWithPlayer() ? 1. : 0.);
+  ADD_FEATURE(self.collidesWithPost()   ? 1. : 0.);
+  ADD_FEATURE(self.isKickable()         ? 1. : 0.);
 
   // inertiaPoint estimates the ball point after a number of steps
   // self.inertiaPoint(n_steps);
@@ -267,52 +244,52 @@ std::vector<float> Agent::getState() {
                      SP.pitchHalfWidth()*SP.pitchHalfWidth());
   // Top Bottom Center of Goal
   rcsc::Vector2D goalCenter(SP.pitchHalfLength(), 0);
-  addLandmarkFeature(goalCenter, self_pos, feature_vec);
+  addLandmarkFeature(goalCenter, self_pos);
   rcsc::Vector2D goalPostTop(SP.pitchHalfLength(), -SP.goalHalfWidth());
-  addLandmarkFeature(goalPostTop, self_pos, feature_vec);
+  addLandmarkFeature(goalPostTop, self_pos);
   rcsc::Vector2D goalPostBot(SP.pitchHalfLength(), SP.goalHalfWidth());
-  addLandmarkFeature(goalPostBot, self_pos, feature_vec);
+  addLandmarkFeature(goalPostBot, self_pos);
 
   // Top Bottom Center of Penalty Box
   rcsc::Vector2D penaltyBoxCenter(SP.pitchHalfLength() - SP.penaltyAreaLength(),
                                   0);
-  addLandmarkFeature(penaltyBoxCenter, self_pos, feature_vec);
+  addLandmarkFeature(penaltyBoxCenter, self_pos);
   rcsc::Vector2D penaltyBoxTop(SP.pitchHalfLength() - SP.penaltyAreaLength(),
                                -SP.penaltyAreaWidth()/2.);
-  addLandmarkFeature(penaltyBoxTop, self_pos, feature_vec);
+  addLandmarkFeature(penaltyBoxTop, self_pos);
   rcsc::Vector2D penaltyBoxBot(SP.pitchHalfLength() - SP.penaltyAreaLength(),
                                SP.penaltyAreaWidth()/2.);
-  addLandmarkFeature(penaltyBoxBot, self_pos, feature_vec);
+  addLandmarkFeature(penaltyBoxBot, self_pos);
 
   // Corners of the Playable Area
   rcsc::Vector2D centerField(0, 0);
-  addLandmarkFeature(centerField, self_pos, feature_vec);
+  addLandmarkFeature(centerField, self_pos);
   rcsc::Vector2D cornerTopLeft(0, -SP.pitchHalfWidth());
-  addLandmarkFeature(cornerTopLeft, self_pos, feature_vec);
+  addLandmarkFeature(cornerTopLeft, self_pos);
   rcsc::Vector2D cornerTopRight(SP.pitchHalfLength(), -SP.pitchHalfWidth());
-  addLandmarkFeature(cornerTopRight, self_pos, feature_vec);
+  addLandmarkFeature(cornerTopRight, self_pos);
   rcsc::Vector2D cornerBotRight(SP.pitchHalfLength(), SP.pitchHalfWidth());
-  addLandmarkFeature(cornerBotRight, self_pos, feature_vec);
+  addLandmarkFeature(cornerBotRight, self_pos);
   rcsc::Vector2D cornerBotLeft(0, SP.pitchHalfWidth());
-  addLandmarkFeature(cornerBotLeft, self_pos, feature_vec);
+  addLandmarkFeature(cornerBotLeft, self_pos);
 
   // Distance to Left field line
-  feature_vec.push_back(self_pos.x);
+  ADD_FEATURE(self_pos.x);
   // Distance to Right field line
-  feature_vec.push_back(SP.pitchHalfLength() - self.pos().x);
+  ADD_FEATURE(SP.pitchHalfLength() - self.pos().x);
   // Distance to Bottom field line
-  feature_vec.push_back(SP.pitchHalfWidth() - self.pos().y);
+  ADD_FEATURE(SP.pitchHalfWidth() - self.pos().y);
   // Distance to Top field line
-  feature_vec.push_back(SP.pitchHalfWidth() + self.pos().y);
+  ADD_FEATURE(SP.pitchHalfWidth() + self.pos().y);
 
   // ======================== BALL FEATURES ======================== //
   const BallObject& ball = wm.ball();
-  feature_vec.push_back(ball.rposValid() ? 1. : 0.);
-  feature_vec.push_back(ball.angleFromSelf().degree());
-  feature_vec.push_back(ball.distFromSelf());
-  feature_vec.push_back(ball.velValid() ? 1. : 0.);
-  feature_vec.push_back(ball.vel().x);
-  feature_vec.push_back(ball.vel().y);
+  ADD_FEATURE(ball.rposValid() ? 1. : 0.);
+  ADD_FEATURE(ball.angleFromSelf().degree());
+  ADD_FEATURE(ball.distFromSelf());
+  ADD_FEATURE(ball.velValid() ? 1. : 0.);
+  ADD_FEATURE(ball.vel().x);
+  ADD_FEATURE(ball.vel().y);
   // std::cout << "DistFromBall: " << self.distFromBall() << std::endl;
   // [0,180] Agent's left side from back to front
   // [0,-180] Agent's right side from back to front
@@ -320,47 +297,60 @@ std::vector<float> Agent::getState() {
   // std::cout << "distFromSelf: " << self.distFromSelf() << std::endl;
   // std::cout << "angleFromSelf: " << self.angleFromSelf() << std::endl;
 
+  assert(featIndx == num_basic_features);
+
   // ======================== TEAMMATE FEATURES ======================== //
   // Vector of PlayerObject pointers sorted by increasing distance from self
+  int detected_teammates = 0;
   const PlayerPtrCont& teammates = wm.teammatesFromSelf();
   for (PlayerPtrCont::const_iterator it = teammates.begin();
        it != teammates.end(); ++it) {
     PlayerObject* teammate = *it;
-    if (teammate->pos().x > 0 && teammate->unum() > 0) {
+    if (teammate->pos().x > 0 && teammate->unum() > 0 &&
+        detected_teammates < numTeammates) {
       // Angle dist to teammate. Teammate's body angle and velocity.
-      feature_vec.push_back((teammate->pos()-self_pos).th().degree());
-      feature_vec.push_back(teammate->distFromSelf());
-      feature_vec.push_back(teammate->body().degree());
-      feature_vec.push_back(teammate->vel().x);
-      feature_vec.push_back(teammate->vel().y);
+      ADD_FEATURE((teammate->pos()-self_pos).th().degree());
+      ADD_FEATURE(teammate->distFromSelf());
+      ADD_FEATURE(teammate->body().degree());
+      ADD_FEATURE(teammate->vel().x);
+      ADD_FEATURE(teammate->vel().y);
+      detected_teammates++;
     }
   }
 
   // ======================== OPPONENT FEATURES ======================== //
+  int detected_opponents = 0;
   const PlayerPtrCont& opponents = wm.opponentsFromSelf();
   for (PlayerPtrCont::const_iterator it = opponents.begin();
        it != opponents.end(); ++it) {
     PlayerObject* opponent = *it;
-    if (opponent->pos().x > 0 && opponent->unum() > 0) {
+    if (opponent->pos().x > 0 && opponent->unum() > 0 &&
+        detected_opponents < numOpponents) {
       // Angle dist to opponent. Opponents's body angle and velocity.
-      feature_vec.push_back((opponent->pos()-self_pos).th().degree());
-      feature_vec.push_back(opponent->distFromSelf());
-      feature_vec.push_back(opponent->body().degree());
-      feature_vec.push_back(opponent->vel().x);
-      feature_vec.push_back(opponent->vel().y);
+      ADD_FEATURE((opponent->pos()-self_pos).th().degree());
+      ADD_FEATURE(opponent->distFromSelf());
+      ADD_FEATURE(opponent->body().degree());
+      ADD_FEATURE(opponent->vel().x);
+      ADD_FEATURE(opponent->vel().y);
+      detected_opponents++;
     }
   }
 
-  return feature_vec;
+  // Add zeros for missing teammates or opponents. This should only
+  // happen during initialization.
+  for (int i=featIndx; i<numFeatures; ++i) {
+    ADD_FEATURE(0);
+  }
+
+  assert(featIndx == numFeatures);
 }
 
 // Add the angle and distance to the landmark to the feature_vec
 void Agent::addLandmarkFeature(const rcsc::Vector2D& landmark,
-                               const rcsc::Vector2D& self_pos,
-                               std::vector<float>& feature_vec) {
+                               const rcsc::Vector2D& self_pos) {
   Vector2D vec_to_landmark = landmark - self_pos;
-  feature_vec.push_back(vec_to_landmark.th().degree());
-  feature_vec.push_back(vec_to_landmark.r());
+  ADD_FEATURE(vec_to_landmark.th().degree());
+  ADD_FEATURE(vec_to_landmark.r());
 }
 
 /*-------------------------------------------------------------------*/
@@ -369,7 +359,7 @@ void Agent::addLandmarkFeature(const rcsc::Vector2D& landmark,
   virtual method in super class
 */
 void Agent::actionImpl() {
-  std::vector<float> state = getState();
+  updateStateFeatures();
 
   // Do decision making here
 

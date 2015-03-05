@@ -85,14 +85,19 @@ class Trainer(object):
       self._agentTeam = self._offenseTeam
       self._agentNumInt = 1 if self._numOffense == 1 \
                           else self._rng.randint(1, self._numOffense)
+      numTeammates = self._numOffense - 1
+      numOpponents = self._numDefense
     else:
       assert self._numDefense > 0
       self._agentTeam = self._defenseTeam
       self._agentNumInt = 0 if self._numDefense == 1 \
                           else self._rng.randint(0, self._numDefense)
+      numTeammates = self._numOffense
+      numOpponents = self._numDefense - 1
     self._agentNumExt = self.convertToExtPlayer(self._agentTeam,
                                                 self._agentNumInt)
-    agentCmd = 'start_agent.sh -t %s -u %i'%(self._agentTeam, self._agentNumExt)
+    agentCmd = 'start_agent.sh -t %s -u %i --numTeammates %i --numOpponents %i'\
+               %(self._agentTeam, self._agentNumExt, numTeammates, numOpponents)
     agentCmd = agentCmd.split(' ')
     # Ignore stderr because librcsc continually prints to it
     kwargs = {'stderr':open('/dev/null','w')}
@@ -475,22 +480,23 @@ class Trainer(object):
 
   def getOffensiveResetPosition(self):
     """ Returns a random position for an offensive player. """
-    offsets = [
-      [-1,-1],
-      [-1,1],
-      [1,1],
-      [1,-1],
-      [0,2],
-      [0,-2],
-      [-2,-2],
-      [-2,2],
-      [2,2],
-      [2,-2],
-    ]
-    offset = offsets[self._rng.randint(len(offsets))]
-    offset_from_ball = 0.1 * self.PITCH_LENGTH * self._rng.rand(2) + \
-                       0.1 * self.PITCH_LENGTH * numpy.array(offset)
-    return self.boundPoint(self._ballPosition + offset_from_ball)
+    # offsets = [
+    #   [-1,-1],
+    #   [-1,1],
+    #   [1,1],
+    #   [1,-1],
+    #   [0,2],
+    #   [0,-2],
+    #   [-2,-2],
+    #   [-2,2],
+    #   [2,2],
+    #   [2,-2],
+    # ]
+    # offset = offsets[self._rng.randint(len(offsets))]
+    # offset_from_ball = 0.1 * self.PITCH_LENGTH * self._rng.rand(2) + \
+    #                    0.1 * self.PITCH_LENGTH * numpy.array(offset)
+    # return self.boundPoint(self._ballPosition + offset_from_ball)
+    return self._ballPosition
 
   def getDefensiveResetPosition(self):
     """ Returns a random position for a defensive player. """
