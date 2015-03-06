@@ -10,6 +10,7 @@ HFO
   - Only run single-threaded make. Multi-threaded make (eg `make -j4`) fails.
  - [librcsc-4.1.0](http://en.sourceforge.jp/projects/rctools/downloads/51941/librcsc-4.1.0.tar.gz/)
  - [soccerwindow2-5.1.0](http://en.sourceforge.jp/projects/rctools/downloads/51942/soccerwindow2-5.1.0.tar.gz/) (Optional)
+  - If -laudio is not found during make, it can be safely removed from the link command.
 
 ## Install
 1. Edit the `LIBRCSC_INCLUDE`/`LIBRCSC_LINK` variables in `CMakeLists.txt` to point to your librcsc include/lib directories. 

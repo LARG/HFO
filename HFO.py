@@ -1,7 +1,7 @@
 import socket, struct, thread, time
 
 class HFOEnvironment(object):
-  '''The HFOEnvironment is designed to be the single point of contact
+  '''The HFOEnvironment is designed to be the main point of contact
   between a learning agent and the Half-Field-Offense domain.
 
   '''
@@ -9,23 +9,7 @@ class HFOEnvironment(object):
   def __init__(self):
     self.socket = None # Socket connection to server
     self.numFeatures = None # Given by the server in handshake
-    self.trainerThreadID = None # Thread of the trainer process
     self.actions = ['DASH', 'TURN', 'TACKLE', 'KICK']
-
-  def startDomain(self, args=[]):
-    '''Covenience method to start the HFO domain by calling the
-    /bin/start.py script and providing it kwargs. Call this method
-    before connectToAgentServer.
-
-    args: a list of argument strings passed to the start script.
-    (e.g. ['--offense','3']). See ./bin/start.py -h for all args.
-    '''
-    # This method calls the trainer in bin directory
-    def runTrainer():
-      from bin import start
-      start.main(start.parseArgs(args))
-    self.trainerThreadID = thread.start_new_thread(runTrainer,())
-    time.sleep(2)
 
   def connectToAgentServer(self, server_port=6008):
     '''Connect to the server that controls the agent on the specified port. '''
@@ -72,20 +56,9 @@ class HFOEnvironment(object):
   def act(self, action_number):
     ''' Send an action and recieve the resulting reward from the environment.'''
     self.socket.send(struct.pack("i", action_number))
+    # TODO: Get the rewards from the domain
     return 0
 
   def cleanup(self):
     ''' Close the connection to the agent's server. '''
     self.socket.close()
-    if self.trainerThreadID is not None:
-      thread.interrupt_main()
-
-if __name__ == '__main__':
-  hfo = HFOEnvironment()
-  trainer_args = '--offense 1 --defense 0 --headless'.split(' ')
-  hfo.startDomain(trainer_args)
-  hfo.connectToAgentServer()
-  while True:
-    features = hfo.getState()
-    reward = hfo.act(0)
-  hfo.cleanup()
