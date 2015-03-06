@@ -5,9 +5,9 @@ HFO
 
 ## Dependencies
  - [rcssserver-15.2.2](http://sourceforge.net/projects/sserver/files/rcssserver/15.2.2/)
- - Note 1: If configure fails to detect boost libraries, set the flag --with-boost-libdir=your_boost_path.
- - Note 2: If make encounters lex errors, ensure you have [bison 2.7.1](http://www.gnu.org/software/bison/) installed.
- - Note 3: Only run single-threaded make. Multi-threaded make (eg make -j4) fails.
+ -  If configure fails to detect boost libraries, set the flag --with-boost-libdir=your_boost_path.
+ -  If make encounters lex errors, ensure you have [bison 2.7.1](http://www.gnu.org/software/bison/) installed.
+ -  Only run single-threaded make. Multi-threaded make (eg make -j4) fails.
  - [librcsc-4.1.0](http://en.sourceforge.jp/projects/rctools/downloads/51941/librcsc-4.1.0.tar.gz/)
  - [soccerwindow2-5.1.0](http://en.sourceforge.jp/projects/rctools/downloads/51942/soccerwindow2-5.1.0.tar.gz/) (Optional)
 
