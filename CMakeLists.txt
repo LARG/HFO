@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
+find_package(Threads REQUIRED)
+# find_package(XMLRPC REQUIRED c++)
 project(hfo)
 
 # Change these to reflect the location of your librcsc-4.1.0 install
@@ -12,6 +14,7 @@ include_directories(
   ${SOURCE_DIR}
   ${SOURCE_DIR}/chain_action
   ${LIBRCSC_INCLUDE}
+  # ${XMLRPC_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -30,6 +33,7 @@ list(APPEND LINK_LIBS
   rcsc_gz
   rcsc_time
   rcsc_rcg
+  ${CMAKE_THREAD_LIBS_INIT}
 )
 
 add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/sample_coach.cpp ${SOURCES})

@@ -100,7 +100,7 @@ class Trainer(object):
                %(self._agentTeam, self._agentNumExt, numTeammates, numOpponents)
     agentCmd = agentCmd.split(' ')
     # Ignore stderr because librcsc continually prints to it
-    kwargs = {'stderr':open('/dev/null','w')}
+    kwargs = {}#'stderr':open('/dev/null','w')}
     p = subprocess.Popen(agentCmd, **kwargs)
     p.wait()
     with open('/tmp/start%i' % p.pid,'r') as f:
@@ -480,23 +480,23 @@ class Trainer(object):
 
   def getOffensiveResetPosition(self):
     """ Returns a random position for an offensive player. """
-    # offsets = [
-    #   [-1,-1],
-    #   [-1,1],
-    #   [1,1],
-    #   [1,-1],
-    #   [0,2],
-    #   [0,-2],
-    #   [-2,-2],
-    #   [-2,2],
-    #   [2,2],
-    #   [2,-2],
-    # ]
-    # offset = offsets[self._rng.randint(len(offsets))]
-    # offset_from_ball = 0.1 * self.PITCH_LENGTH * self._rng.rand(2) + \
-    #                    0.1 * self.PITCH_LENGTH * numpy.array(offset)
-    # return self.boundPoint(self._ballPosition + offset_from_ball)
-    return self._ballPosition
+    offsets = [
+      [-1,-1],
+      [-1,1],
+      [1,1],
+      [1,-1],
+      [0,2],
+      [0,-2],
+      [-2,-2],
+      [-2,2],
+      [2,2],
+      [2,-2],
+    ]
+    offset = offsets[self._rng.randint(len(offsets))]
+    offset_from_ball = 0.1 * self.PITCH_LENGTH * self._rng.rand(2) + \
+                       0.1 * self.PITCH_LENGTH * numpy.array(offset)
+    return self.boundPoint(self._ballPosition + offset_from_ball)
+    # return self._ballPosition
 
   def getDefensiveResetPosition(self):
     """ Returns a random position for a defensive player. """

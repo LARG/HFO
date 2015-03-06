@@ -37,7 +37,7 @@ def launch(cmd, necessary=True, supressOutput=True, name='Unknown'):
     necProcesses.append([p,name])
   return p
 
-def main(team1, team2, rng, args):
+def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   """Sets up the teams, launches the server and monitor, starts the
   trainer.
   """
@@ -81,7 +81,7 @@ def main(team1, team2, rng, args):
         pass
     time.sleep(0.1)
 
-if __name__ == '__main__':
+def parseArgs(args=None):
   import argparse
   p = argparse.ArgumentParser(description='Start Half Field Offense.')
   p.add_argument('--headless', dest='headless', action='store_true',
@@ -101,5 +101,7 @@ if __name__ == '__main__':
                  help='Don\'t use a learning agent.')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
                  help='Run server in non-sync mode')
-  args = p.parse_args()
-  main(team1='left', team2='right', rng=numpy.random.RandomState(), args=args)
+  return p.parse_args(args=args)
+
+if __name__ == '__main__':
+  main(parseArgs())

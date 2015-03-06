@@ -37,8 +37,10 @@
 class Agent : public rcsc::PlayerAgent {
 public:
   Agent();
-  virtual ~Agent() {};
+  virtual ~Agent();
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
+
+  enum action_t { DASH, TURN, TACKLE, KICK };
 
 protected:
   // You can override this method. But you must call
@@ -74,6 +76,12 @@ protected:
   const static int features_per_player = 5;
   std::vector<float> feature_vec; // Contains the current features
   int featIndx; // Feature being populated
+  const static int server_port = 6008;
+
+  // Start the server and listen for a connection.
+  virtual void startServer();
+  // Transmit information to the client and ensure it can recieve.
+  virtual void clientHandshake();
 
  private:
   bool doPreprocess();
@@ -84,6 +92,8 @@ protected:
   Communication::Ptr M_communication;
   FieldEvaluator::ConstPtr M_field_evaluator;
   ActionGenerator::ConstPtr M_action_generator;
+  bool server_running; // Is the server running?
+  int sockfd, newsockfd; // Server sockets
 };
 
 #endif

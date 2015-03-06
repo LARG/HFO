@@ -84,10 +84,21 @@
 #include <sstream>
 #include <string>
 #include <cstdlib>
-
-#include <boost/interprocess/managed_shared_memory.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 using namespace rcsc;
+
+// Socket Error
+void error(const char *msg)
+{
+    perror(msg);
+    exit(1);
+}
 
 #define ADD_FEATURE(val) \
   assert(featIndx < numFeatures); \
@@ -98,7 +109,8 @@ Agent::Agent()
       M_communication(),
       M_field_evaluator(createFieldEvaluator()),
       M_action_generator(createActionGenerator()),
-      numTeammates(-1), numOpponents(-1), numFeatures(-1)
+      numTeammates(-1), numOpponents(-1), numFeatures(-1),
+      server_running(false)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
@@ -144,6 +156,12 @@ Agent::Agent()
 
     // set communication planner
     M_communication = Communication::Ptr(new SampleCommunication());
+}
+
+Agent::~Agent() {
+  std::cout << "[Agent Server] Closing Server." << std::endl;
+  close(newsockfd);
+  close(sockfd);
 }
 
 bool Agent::initImpl(CmdLineParser & cmd_parser) {
@@ -353,21 +371,120 @@ void Agent::addLandmarkFeature(const rcsc::Vector2D& landmark,
   ADD_FEATURE(vec_to_landmark.r());
 }
 
-/*-------------------------------------------------------------------*/
+void Agent::startServer() {
+  std::cout << "Starting Server on Port " << server_port << std::endl;
+  struct sockaddr_in serv_addr, cli_addr;
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockfd < 0) {
+    error("[Agent Server] ERROR opening socket");
+  }
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = INADDR_ANY;
+  serv_addr.sin_port = htons(server_port);
+  if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+    error("[Agent Server] ERROR on binding");
+  }
+  listen(sockfd, 5);
+  socklen_t clilen = sizeof(cli_addr);
+  std::cout << "[Agent Server] Waiting for client to connect... " << std::endl;
+  newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+  if (newsockfd < 0) {
+    error("[Agent Server] ERROR on accept");
+  }
+  std::cout << "[Agent Server] Connected" << std::endl;
+  server_running = true;
+}
+
+void Agent::clientHandshake() {
+  // Send float 123.2345
+  float f = 123.2345;
+  if (send(newsockfd, &f, sizeof(float), 0) < 0) {
+    error("[Agent Server] ERROR sending from socket");
+  }
+  // Recieve float 5432.321
+  if (recv(newsockfd, &f, sizeof(float), 0) < 0) {
+    error("[Agent Server] ERROR recv from socket");
+  }
+  // Check that error is within bounds
+  if (abs(f - 5432.321) > 1e-4) {
+    error("[Agent Server] Handshake failed. Improper float recieved.");
+  }
+  // Send the number of features
+  assert(numFeatures > 0);
+  if (send(newsockfd, &numFeatures, sizeof(int), 0) < 0) {
+    error("[Agent Server] ERROR sending from socket");
+  }
+  // Check that client has recieved correctly
+  int client_response = -1;
+  if (recv(newsockfd, &client_response, sizeof(int), 0) < 0) {
+    error("[Agent Server] ERROR recv from socket");
+  }
+  if (client_response != numFeatures) {
+    error("[Agent Server] Client incorrectly parsed the number of features.");
+  }
+  std::cout << "[Agent Server] Handshake complete" << std::endl;
+}
+
 /*!
   main decision
   virtual method in super class
 */
 void Agent::actionImpl() {
+  if (!server_running) {
+    startServer();
+    clientHandshake();
+  }
+
+  // Update the state features
   updateStateFeatures();
 
-  // Do decision making here
+  // Send the state features
+  if (send(newsockfd, &(feature_vec.front()),
+           numFeatures * sizeof(float), 0) < 0) {
+    error("[Agent Server] ERROR sending state features from socket");
+  }
+
+  // Get the action
+  action_t action;
+  if (recv(newsockfd, &action, sizeof(int), 0) < 0) {
+    error("[Agent Server] ERROR recv from socket");
+  }
+  switch(action) {
+    case DASH:
+      this->doDash(100., 0);
+      break;
+    case TURN:
+      this->doTurn(10);
+      break;
+    case TACKLE:
+      this->doTackle(0, false);
+      break;
+    case KICK:
+      this->doKick(100., 0);
+      break;
+    default:
+      error("[Agent Server] Unsupported Action!");
+  }
+
+  // char buffer[256];
+  // bzero(buffer,256);
+  // if (read(newsockfd,buffer,255) < 0) {
+  //   error("[Agent Server] ERROR reading from socket");
+  // }
+  // printf("Here is the message: %s\n",buffer);
 
   // TODO: How to get rewards?
 
   // For now let's not worry about turning the neck or setting the vision.
   this->setViewAction(new View_Tactical());
   this->setNeckAction(new Neck_TurnToBallOrScan());
+
+  // ======================== Actions ======================== //
+  // 0: Dash(power, relative_direction)
+  // 1: Turn(direction)
+  // 2: Tackle(direction)
+  // 3: Kick(power, direction)
 
   // Dash with power [-100,100]. Negative values move backwards. The
   // relative_dir [-180,180] is the direction to dash in. This should
@@ -416,14 +533,14 @@ void Agent::actionImpl() {
   // Dribble is omitted because it consists of dashes, turns, and kicks
 
   // sleep(1);
-  static int i=0;
-  i++;
-  if (i % 2 == 0) {
-    this->doDash(10., 0);
-  } else {
+  // static int i=0;
+  // i++;
+  // if (i % 2 == 0) {
+  //   this->doDash(10., 0);
+  // } else {
     // this->doKick(2., 0);
     // this->doTurn(5);
-  }
+  // }
 }
 
 /*-------------------------------------------------------------------*/
