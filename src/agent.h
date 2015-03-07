@@ -34,13 +34,26 @@
 #include <rcsc/player/player_agent.h>
 #include <vector>
 
+// The actions available to the agent
+enum action_t
+{
+  DASH,   // Dash(power, relative_direction)
+  TURN,   // Turn(direction)
+  TACKLE, // Tackle(direction)
+  KICK    // Kick(power, direction)
+};
+
+struct Action {
+  action_t action;
+  float arg1;
+  float arg2;
+};
+
 class Agent : public rcsc::PlayerAgent {
 public:
   Agent();
   virtual ~Agent();
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
-
-  enum action_t { DASH, TURN, TACKLE, KICK };
 
 protected:
   // You can override this method. But you must call

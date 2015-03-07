@@ -446,33 +446,28 @@ void Agent::actionImpl() {
   }
 
   // Get the action
-  action_t action;
-  if (recv(newsockfd, &action, sizeof(int), 0) < 0) {
+  Action action;
+  if (recv(newsockfd, &action, sizeof(Action), 0) < 0) {
     error("[Agent Server] ERROR recv from socket");
   }
-  switch(action) {
+  switch(action.action) {
     case DASH:
-      this->doDash(100., 0);
+      this->doDash(action.arg1, action.arg2);
       break;
     case TURN:
-      this->doTurn(10);
+      this->doTurn(action.arg1);
       break;
     case TACKLE:
-      this->doTackle(0, false);
+      this->doTackle(action.arg1, false);
       break;
     case KICK:
-      this->doKick(100., 0);
+      this->doKick(action.arg1, action.arg2);
       break;
     default:
-      error("[Agent Server] Unsupported Action!");
+      std::cerr << "[Agent Server] ERROR Unsupported Action: "
+                << action.action << std::endl;
+      exit(1);
   }
-
-  // char buffer[256];
-  // bzero(buffer,256);
-  // if (read(newsockfd,buffer,255) < 0) {
-  //   error("[Agent Server] ERROR reading from socket");
-  // }
-  // printf("Here is the message: %s\n",buffer);
 
   // TODO: How to get rewards?
 

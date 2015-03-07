@@ -1,7 +1,19 @@
 import socket, struct, thread, time
 
+class Actions:
+  ''' An enum of the possible HFO actions
+
+  Dash(power, relative_direction)
+  Turn(direction)
+  Tackle(direction)
+  Kick(power, direction)
+
+  '''
+  DASH, TURN, TACKLE, KICK = range(4)
+
+
 class HFOEnvironment(object):
-  '''The HFOEnvironment is designed to be the main point of contact
+  ''' The HFOEnvironment is designed to be the main point of contact
   between a learning agent and the Half-Field-Offense domain.
 
   '''
@@ -23,12 +35,11 @@ class HFOEnvironment(object):
         continue
       else:
         break
-    print '[Agent Client] Connected', server_port
+    print '[Agent Client] Connected'
     self.handshakeAgentServer()
 
   def handshakeAgentServer(self):
-    '''Handshake with the agent's server. Returns the number of state
-    features in the domain. '''
+    '''Handshake with the agent's server. '''
     # Recieve float 123.2345
     data = self.socket.recv(struct.calcsize("f"))
     f = struct.unpack("f", data)[0]
@@ -53,9 +64,9 @@ class HFOEnvironment(object):
     features = struct.unpack('f'*self.numFeatures, data)
     return features
 
-  def act(self, action_number):
+  def act(self, action):
     ''' Send an action and recieve the resulting reward from the environment.'''
-    self.socket.send(struct.pack("i", action_number))
+    self.socket.send(struct.pack("iff", *action))
     # TODO: Get the rewards from the domain
     return 0
 
