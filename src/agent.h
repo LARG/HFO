@@ -40,7 +40,18 @@ enum action_t
   DASH,   // Dash(power, relative_direction)
   TURN,   // Turn(direction)
   TACKLE, // Tackle(direction)
-  KICK    // Kick(power, direction)
+  KICK,   // Kick(power, direction)
+  QUIT    // Special action to quit the game
+};
+
+// The current status of the HFO game
+enum hfo_status_t
+{
+  IN_GAME,
+  GOAL,
+  CAPTURED_BY_DEFENSE,
+  OUT_OF_BOUNDS,
+  OUT_OF_TIME
 };
 
 struct Action {
@@ -76,12 +87,16 @@ protected:
   // Updated the state features stored in feature_vec
   void updateStateFeatures();
 
+  // Get the current game status
+  hfo_status_t getGameStatus();
+
   // Add the angle and distance to the landmark to the feature_vec
   void addLandmarkFeature(const rcsc::Vector2D& landmark,
                           const rcsc::Vector2D& self_pos);
 
   int numTeammates;
   int numOpponents;
+  bool playingOffense; // Are we playing offense or defense?
   int numFeatures; // Total number of features
   // Number of features for non-player objects. Clearly this is the answer.
   const static int num_basic_features = 42;
@@ -90,6 +105,8 @@ protected:
   std::vector<float> feature_vec; // Contains the current features
   int featIndx; // Feature being populated
   const static int server_port = 6008;
+  long lastTrainerMessageTime; // Last time the trainer sent a message
+  bool episode_start; // True only in the timestep that the game is starting
 
   // Start the server and listen for a connection.
   virtual void startServer();

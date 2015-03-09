@@ -16,6 +16,11 @@ void error(const char *msg) {
 
 HFOEnvironment::HFOEnvironment() {}
 HFOEnvironment::~HFOEnvironment() {
+  // Send a quit action and close the connection to the agent's server
+  action_t quit = QUIT;
+  if (send(sockfd, &quit, sizeof(int), 0) < 0) {
+    error("[Agent Client] ERROR sending from socket");
+  }
   close(sockfd);
 }
 
@@ -69,6 +74,15 @@ void HFOEnvironment::handshakeAgentServer() {
   if (send(sockfd, &numFeatures, sizeof(int), 0) < 0) {
     error("[Agent Client] ERROR sending from socket");
   }
+  // Recieve the game status
+  hfo_status_t status;
+  if (recv(sockfd, &status, sizeof(hfo_status_t), 0) < 0) {
+    error("[Agent Client] ERROR recv from socket");
+  }
+  if (status != IN_GAME) {
+    std::cout << "[Agent Client] Handshake failed: status check." << std::endl;
+    exit(1);
+  }
   std::cout << "[Agent Client] Handshake complete" << std::endl;
 }
 
@@ -82,9 +96,15 @@ const std::vector<float>& HFOEnvironment::getState() {
   return feature_vec;
 }
 
-float HFOEnvironment::act(Action action) {
+hfo_status_t HFOEnvironment::act(Action action) {
+  hfo_status_t game_status;
+  // Send the action
   if (send(sockfd, &action, sizeof(Action), 0) < 0) {
     error("[Agent Client] ERROR sending from socket");
   }
-  return 0.;
+  // Get the game status
+  if (recv(sockfd, &game_status, sizeof(hfo_status_t), 0) < 0) {
+    error("[Agent Client] ERROR recieving from socket");
+  }
+  return game_status;
 }

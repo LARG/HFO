@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 import subprocess, os, time, numpy, sys
-from signal import SIGINT
+from signal import SIGKILL
 
 # Global list of all/essential running processes
 processes, necProcesses = [], []
@@ -72,14 +72,14 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
     # Run HFO
     trainer.run(necProcesses)
   except KeyboardInterrupt:
-    print 'Exiting for CTRL-C'
+    print '[start.py] Exiting for CTRL-C'
   finally:
     for p in processes:
       try:
-        p.send_signal(SIGINT)
+        p.send_signal(SIGKILL)
       except:
         pass
-    time.sleep(0.1)
+      time.sleep(0.1)
 
 def parseArgs(args=None):
   import argparse

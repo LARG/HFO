@@ -23,9 +23,8 @@ class HFOEnvironment {
   //   TACKLE, // Tackle(direction)
   //   KICK    // Kick(power, direction)
   // };
-
-  // Take an action and recieve the resulting reward.
-  float act(Action action);
+  // Take an action and recieve the resulting game status
+  hfo_status_t act(Action action);
 
  protected:
   int numFeatures; // The number of features in this domain

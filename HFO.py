@@ -1,6 +1,6 @@
 import socket, struct, thread, time
 
-class Actions:
+class HFO_Actions:
   ''' An enum of the possible HFO actions
 
   Dash(power, relative_direction)
@@ -9,7 +9,11 @@ class Actions:
   Kick(power, direction)
 
   '''
-  DASH, TURN, TACKLE, KICK = range(4)
+  DASH, TURN, TACKLE, KICK, QUIT = range(5)
+
+class HFO_Status:
+  ''' Current status of the HFO game. '''
+  IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME = range(5)
 
 
 class HFOEnvironment(object):
@@ -17,11 +21,9 @@ class HFOEnvironment(object):
   between a learning agent and the Half-Field-Offense domain.
 
   '''
-
   def __init__(self):
     self.socket = None # Socket connection to server
     self.numFeatures = None # Given by the server in handshake
-    self.actions = ['DASH', 'TURN', 'TACKLE', 'KICK']
 
   def connectToAgentServer(self, server_port=6008):
     '''Connect to the server that controls the agent on the specified port. '''
@@ -51,6 +53,10 @@ class HFOEnvironment(object):
     self.numFeatures = struct.unpack("i", data)[0]
     # Send what we recieved
     self.socket.send(struct.pack("i", self.numFeatures))
+    # Get the current game status
+    data = self.socket.recv(struct.calcsize("i"))
+    status = struct.unpack("i", data)[0]
+    assert status == HFO_Status.IN_GAME, "Status check failed"
     print '[Agent Client] Handshake complete'
 
   def getState(self):
@@ -65,11 +71,14 @@ class HFOEnvironment(object):
     return features
 
   def act(self, action):
-    ''' Send an action and recieve the resulting reward from the environment.'''
+    ''' Send an action and recieve the game status.'''
     self.socket.send(struct.pack("iff", *action))
-    # TODO: Get the rewards from the domain
-    return 0
+    # Get the current game status
+    data = self.socket.recv(struct.calcsize("i"))
+    status = struct.unpack("i", data)[0]
+    return status
 
   def cleanup(self):
-    ''' Close the connection to the agent's server. '''
+    ''' Send a quit and close the connection to the agent's server. '''
+    self.socket.send(struct.pack("i", HFO_Actions.QUIT))
     self.socket.close()

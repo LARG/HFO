@@ -26,3 +26,7 @@ By default if your agent takes longer then two seconds to select an action it wi
 ```bash
 ./bin/start.py
 ```
+and in a seperate terminal
+```bash
+./examples/hfo_example_agent
+```

@@ -76,6 +76,7 @@ usage()
    echo "  --teammate STR               name of teammates"
    echo "  --numTeammates NUM           number of teammates"
    echo "  --numOpponents NUM           number of opponents"
+   echo "  --playingOffense [0|1]       are we playing offense or defense"
    echo "  --seed NUM                   seed for rng"
    echo "  --gdb                        runs with gdb on (default:off)"
    ) 1>&2
@@ -236,7 +237,7 @@ do
       opts="${opts} --teammate ${2}"
       shift 1
       ;;
-    
+
     --numTeammates)
       if [ $# -lt 2 ]; then
         usage
@@ -245,7 +246,7 @@ do
       opts="${opts} --numTeammates ${2}"
       shift 1
       ;;
-    
+
     --numOpponents)
       if [ $# -lt 2 ]; then
         usage
@@ -254,7 +255,16 @@ do
       opts="${opts} --numOpponents ${2}"
       shift 1
       ;;
-    
+
+    --playingOffense)
+      if [ $# -lt 2 ]; then
+        usage
+        exit 1
+      fi
+      opts="${opts} --playingOffense ${2}"
+      shift 1
+      ;;
+
     --seed)
       if [ $# -lt 2 ]; then
         usage

@@ -110,6 +110,8 @@ Agent::Agent()
       M_field_evaluator(createFieldEvaluator()),
       M_action_generator(createActionGenerator()),
       numTeammates(-1), numOpponents(-1), numFeatures(-1),
+      lastTrainerMessageTime(-1),
+      episode_start(true),
       server_running(false)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
@@ -173,6 +175,8 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
     rcsc::ParamMap my_params("Additional options");
     my_params.add()("numTeammates", "", &numTeammates, "number of teammates");
     my_params.add()("numOpponents", "", &numOpponents, "number of opponents");
+    my_params.add()("playingOffense", "", &playingOffense,
+                    "are we playing offense or defense");
 
     cmd_parser.parse(my_params);
     if (cmd_parser.count("help") > 0) {
@@ -426,6 +430,27 @@ void Agent::clientHandshake() {
   std::cout << "[Agent Server] Handshake complete" << std::endl;
 }
 
+hfo_status_t Agent::getGameStatus() {
+  hfo_status_t game_status = IN_GAME;
+  if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
+    lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
+    const std::string& message = audioSensor().trainerMessage();
+    if (message.compare("GOAL") == 0) {
+      game_status = GOAL;
+    } else if (message.compare("CAPTURED_BY_DEFENSE") == 0) {
+      game_status = CAPTURED_BY_DEFENSE;
+    } else if (message.compare("OUT_OF_BOUNDS") == 0) {
+      game_status = OUT_OF_BOUNDS;
+    } else if (message.compare("OUT_OF_TIME") == 0) {
+      game_status = OUT_OF_TIME;
+    } else {
+      std::cout << "[Agent Server] Unrecognized Trainer Message: " << message
+                << std::endl;
+    }
+  }
+  return game_status;
+}
+
 /*!
   main decision
   virtual method in super class
@@ -436,10 +461,14 @@ void Agent::actionImpl() {
     clientHandshake();
   }
 
-  // Update the state features
-  updateStateFeatures();
+  // Update and send the game status
+  hfo_status_t game_status = getGameStatus();
+  if (send(newsockfd, &game_status, sizeof(int), 0) < 0) {
+    error("[Agent Server] ERROR sending from socket");
+  }
 
-  // Send the state features
+  // Update and send the state features
+  updateStateFeatures();
   if (send(newsockfd, &(feature_vec.front()),
            numFeatures * sizeof(float), 0) < 0) {
     error("[Agent Server] ERROR sending state features from socket");
@@ -463,13 +492,14 @@ void Agent::actionImpl() {
     case KICK:
       this->doKick(action.arg1, action.arg2);
       break;
+    case QUIT:
+      std::cout << "[Agent Server] Got quit from agent." << std::endl;
+      exit(0);
     default:
       std::cerr << "[Agent Server] ERROR Unsupported Action: "
                 << action.action << std::endl;
       exit(1);
   }
-
-  // TODO: How to get rewards?
 
   // For now let's not worry about turning the neck or setting the vision.
   this->setViewAction(new View_Tactical());

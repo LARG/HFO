@@ -97,10 +97,12 @@ class Trainer(object):
     self._agentNumExt = self.convertToExtPlayer(self._agentTeam,
                                                 self._agentNumInt)
     agentCmd = 'start_agent.sh -t %s -u %i --numTeammates %i --numOpponents %i'\
-               %(self._agentTeam, self._agentNumExt, numTeammates, numOpponents)
+               ' --playingOffense %i'\
+               %(self._agentTeam, self._agentNumExt, numTeammates, numOpponents,
+                 self._agent_play_offense)
     agentCmd = agentCmd.split(' ')
     # Ignore stderr because librcsc continually prints to it
-    kwargs = {}#'stderr':open('/dev/null','w')}
+    kwargs = {'stderr':open('/dev/null','w')}
     p = subprocess.Popen(agentCmd, **kwargs)
     p.wait()
     with open('/tmp/start%i' % p.pid,'r') as f:
@@ -470,7 +472,7 @@ class Trainer(object):
     self.resetPlayerPositions()
     self.send('(recover)')
     self.send('(change_mode play_on)')
-    self.send('(say RESET)')
+    # self.send('(say RESET)')
 
   def resetBallPosition(self):
     """Reset the position of the ball for a new HFO trial. """
@@ -555,16 +557,20 @@ class Trainer(object):
     if self.isGoal():
       self._numGoals += 1
       result = 'Goal'
+      self.send('(say GOAL)')
     elif self.isOOB():
       self._numBallsOOB += 1
       result = 'Out of Bounds'
+      self.send('(say OUT_OF_BOUNDS)')
     elif team_holding_ball not in [None,self._offenseTeamInd]:
       self._numBallsCaptured += 1
       result = 'Defense Captured'
+      self.send('(say CAPTURED_BY_DEFENSE)')
     elif self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH:
       self._lastFrameBallTouched = self._frame
       self._numOutOfTime += 1
       result = 'Ball untouched for too long'
+      self.send('(say OUT_OF_TIME)')
     else:
       print '[Trainer] Error: Unable to detect reason for End of Trial!'
       sys.exit(1)
