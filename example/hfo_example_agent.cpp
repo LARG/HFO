@@ -19,7 +19,7 @@ int main() {
       const std::vector<float>& feature_vec = hfo.getState();
       // Create a dash action
       Action a = {DASH, 100., 0.};
-      // Perform the dash and recieve the reward
+      // Perform the dash and recieve the current game status
       status = hfo.act(a);
     }
     // Check what the outcome of the episode was
