@@ -26,6 +26,6 @@ By default if your agent takes longer then two seconds to select an action it wi
 Example C++ and Python agents are provided in the `example` directory.
 
 ## Run
-To start the HFO server `./bin/start.py` then start an example agent `./example/hfo_example_agent` or start them both at the same time: 
+To start the HFO server run: `./bin/start.py` then start an example agent: `./example/hfo_example_agent` or start them both at the same time: 
 
 `(./bin/start.py &) && ./example/hfo_example_agent`
