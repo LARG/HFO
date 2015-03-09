@@ -22,5 +22,8 @@ By default if your agent takes longer then two seconds to select an action it wi
 
 `patch your_path/rcssserver-15.2.2/src/stadium.cpp < stadium.patch`
 
+## Example Agents
+Example C++ and python agents are provided in the examples directory.
+
 ## Run
-To start the HFO server `./bin/start.py` then start the agent `./example/hfo_example_agent` or start them both at the same time: `(./bin/start.py &) && ./example/hfo_example_agent`
+To start the HFO server `./bin/start.py` then start an example agent `./example/hfo_example_agent` or start them both at the same time: `(./bin/start.py &) && ./example/hfo_example_agent`
