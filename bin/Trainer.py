@@ -63,6 +63,7 @@ class Trainer(object):
     self._agentTeam = '' # Name of the team the agent is playing for
     self._agentNumInt = -1 # Agent's internal team number
     self._agentNumExt = -1 # Agent's external team number
+    self._agentServerPort = args.serverPort # Port for agent's server
     # =============== MISC =============== #
     self._offenseTeam = '' # Name of the offensive team
     self._defenseTeam = '' # Name of the defensive team
@@ -97,12 +98,12 @@ class Trainer(object):
     self._agentNumExt = self.convertToExtPlayer(self._agentTeam,
                                                 self._agentNumInt)
     agentCmd = 'start_agent.sh -t %s -u %i --numTeammates %i --numOpponents %i'\
-               ' --playingOffense %i'\
+               ' --playingOffense %i --serverPort %i'\
                %(self._agentTeam, self._agentNumExt, numTeammates, numOpponents,
-                 self._agent_play_offense)
+                 self._agent_play_offense, self._agentServerPort)
     agentCmd = agentCmd.split(' ')
     # Ignore stderr because librcsc continually prints to it
-    kwargs = {'stderr':open('/dev/null','w')}
+    kwargs = {}#{'stderr':open('/dev/null','w')}
     p = subprocess.Popen(agentCmd, **kwargs)
     p.wait()
     with open('/tmp/start%i' % p.pid,'r') as f:

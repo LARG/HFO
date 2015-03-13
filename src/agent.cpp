@@ -93,6 +93,9 @@
 
 using namespace rcsc;
 
+float min_feat_val = 1e8;
+float max_feat_val = -1e8;
+
 // Socket Error
 void error(const char *msg)
 {
@@ -100,9 +103,30 @@ void error(const char *msg)
     exit(1);
 }
 
+// Minimium and feature values
+#define FEAT_MIN -1.
+#define FEAT_MAX 1.
+
+// Add a feature without normalizing
 #define ADD_FEATURE(val) \
   assert(featIndx < numFeatures); \
   feature_vec[featIndx++] = val;
+
+// Add a feature and normalize to the range [FEAT_MIN, FEAT_MAX]
+#define ADD_NORM_FEATURE(val, min_val, max_val) \
+  assert(featIndx < numFeatures); \
+  if (val < min_val || val > max_val) { std::cout << "Violated Feature Bounds: " << val << " Expected min/max: [" << min_val << ", " << max_val << "]" << std::endl;} \
+  assert(val >= min_val); \
+  assert(val <= max_val); \
+  feature_vec[featIndx++] = ((val - min_val) / (max_val - min_val)) \
+      * (FEAT_MAX - FEAT_MIN) + FEAT_MIN;
+
+#define LOG_FEATURE(val) \
+  if (val <= min_feat_val) \
+    min_feat_val = val; \
+  if (val >= max_feat_val) \
+    max_feat_val = val; \
+  std::cout << "FEATURE " << val << " [" << min_feat_val << ", " << max_feat_val << "]" << std::endl;
 
 Agent::Agent()
     : PlayerAgent(),
@@ -111,7 +135,8 @@ Agent::Agent()
       M_action_generator(createActionGenerator()),
       numTeammates(-1), numOpponents(-1), numFeatures(-1),
       lastTrainerMessageTime(-1),
-      episode_start(true),
+      maxHFORadius(-1),
+      server_port(6008),
       server_running(false)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
@@ -177,6 +202,7 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
     my_params.add()("numOpponents", "", &numOpponents, "number of opponents");
     my_params.add()("playingOffense", "", &playingOffense,
                     "are we playing offense or defense");
+    my_params.add()("serverPort", "", &server_port, "Port to start server on");
 
     cmd_parser.parse(my_params);
     if (cmd_parser.count("help") > 0) {
@@ -211,11 +237,26 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
         features_per_player * (numTeammates + numOpponents);
     feature_vec.resize(numFeatures);
 
+
+    const ServerParam& SP = ServerParam::i();
+
+    // Grab the field dimensions
+    pitchLength = SP.pitchLength();
+    pitchWidth = SP.pitchWidth();
+    pitchHalfLength = SP.pitchHalfLength();
+    pitchHalfWidth = SP.pitchHalfWidth();
+    goalHalfWidth = SP.goalHalfWidth();
+    penaltyAreaLength = SP.penaltyAreaLength();
+    penaltyAreaWidth = SP.penaltyAreaWidth();
+
+    // Maximum possible radius in HFO
+    maxHFORadius = sqrtf(pitchHalfLength * pitchHalfLength +
+                         pitchHalfWidth * pitchHalfWidth);
+
     return true;
 }
 
 void Agent::updateStateFeatures() {
-  // TODO: Need to normalize these features
   featIndx = 0;
   const ServerParam& SP = ServerParam::i();
   const WorldModel& wm = this->world();
@@ -223,18 +264,26 @@ void Agent::updateStateFeatures() {
   // ======================== SELF FEATURES ======================== //
   const SelfObject& self = wm.self();
   const Vector2D& self_pos = self.pos();
+  const AngleDeg& self_ang = self.body();
 
   // Absolute (x,y) position of the agent.
-  ADD_FEATURE(self.posValid() ? 1. : 0.);
+  ADD_FEATURE(self.posValid() ? FEAT_MAX : FEAT_MIN);
   // ADD_FEATURE(self_pos.x);
   // ADD_FEATURE(self_pos.y);
 
-  // Speed of the agent. Alternatively, (x,y) velocity could be used.
-  ADD_FEATURE(self.velValid() ? 1. : 0.);
-  ADD_FEATURE(self.speed());
+  // Direction and speed of the agent.
+  ADD_FEATURE(self.velValid() ? FEAT_MAX : FEAT_MIN);
+  if (self.velValid()) {
+    addAngFeature(self_ang - self.vel().th());
+    ADD_NORM_FEATURE(self.speed(), 0., observedSelfSpeedMax);
+  } else {
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+  }
 
   // Global Body Angle -- 0:right -90:up 90:down 180/-180:left
-  ADD_FEATURE(self.body().degree());
+  addAngFeature(self_ang);
 
   // Neck Angle -- We probably don't need this unless we are
   // controlling the neck manually.
@@ -243,8 +292,8 @@ void Agent::updateStateFeatures() {
   //   std::cout << "FaceAngle: " << self.face() << std::endl;
   // }
 
-  ADD_FEATURE(self.stamina());
-  ADD_FEATURE(self.isFrozen() ? 1. : 0.);
+  ADD_NORM_FEATURE(self.stamina(), 0., observedStaminaMax);
+  ADD_FEATURE(self.isFrozen() ? FEAT_MAX : FEAT_MIN);
 
   // Probabilities - Do we want these???
   // std::cout << "catchProb: " << self.catchProbability() << std::endl;
@@ -252,72 +301,85 @@ void Agent::updateStateFeatures() {
   // std::cout << "fouldProb: " << self.foulProbability() << std::endl;
 
   // Features indicating if we are colliding with an object
-  ADD_FEATURE(self.collidesWithBall()   ? 1. : 0.);
-  ADD_FEATURE(self.collidesWithPlayer() ? 1. : 0.);
-  ADD_FEATURE(self.collidesWithPost()   ? 1. : 0.);
-  ADD_FEATURE(self.isKickable()         ? 1. : 0.);
+  ADD_FEATURE(self.collidesWithBall()   ? FEAT_MAX : FEAT_MIN);
+  ADD_FEATURE(self.collidesWithPlayer() ? FEAT_MAX : FEAT_MIN);
+  ADD_FEATURE(self.collidesWithPost()   ? FEAT_MAX : FEAT_MIN);
+  ADD_FEATURE(self.isKickable()         ? FEAT_MAX : FEAT_MIN);
 
   // inertiaPoint estimates the ball point after a number of steps
   // self.inertiaPoint(n_steps);
 
   // ======================== LANDMARK FEATURES ======================== //
-  // Maximum possible radius in HFO
-  float maxR = sqrtf(SP.pitchHalfLength()*SP.pitchHalfLength() +
-                     SP.pitchHalfWidth()*SP.pitchHalfWidth());
   // Top Bottom Center of Goal
-  rcsc::Vector2D goalCenter(SP.pitchHalfLength(), 0);
-  addLandmarkFeature(goalCenter, self_pos);
-  rcsc::Vector2D goalPostTop(SP.pitchHalfLength(), -SP.goalHalfWidth());
-  addLandmarkFeature(goalPostTop, self_pos);
-  rcsc::Vector2D goalPostBot(SP.pitchHalfLength(), SP.goalHalfWidth());
-  addLandmarkFeature(goalPostBot, self_pos);
+  rcsc::Vector2D goalCenter(pitchHalfLength, 0);
+  addLandmarkFeatures(goalCenter, self_pos, self_ang);
+  rcsc::Vector2D goalPostTop(pitchHalfLength, -goalHalfWidth);
+  addLandmarkFeatures(goalPostTop, self_pos, self_ang);
+  rcsc::Vector2D goalPostBot(pitchHalfLength, goalHalfWidth);
+  addLandmarkFeatures(goalPostBot, self_pos, self_ang);
 
   // Top Bottom Center of Penalty Box
-  rcsc::Vector2D penaltyBoxCenter(SP.pitchHalfLength() - SP.penaltyAreaLength(),
-                                  0);
-  addLandmarkFeature(penaltyBoxCenter, self_pos);
-  rcsc::Vector2D penaltyBoxTop(SP.pitchHalfLength() - SP.penaltyAreaLength(),
-                               -SP.penaltyAreaWidth()/2.);
-  addLandmarkFeature(penaltyBoxTop, self_pos);
-  rcsc::Vector2D penaltyBoxBot(SP.pitchHalfLength() - SP.penaltyAreaLength(),
-                               SP.penaltyAreaWidth()/2.);
-  addLandmarkFeature(penaltyBoxBot, self_pos);
+  rcsc::Vector2D penaltyBoxCenter(pitchHalfLength - penaltyAreaLength, 0);
+  addLandmarkFeatures(penaltyBoxCenter, self_pos, self_ang);
+  rcsc::Vector2D penaltyBoxTop(pitchHalfLength - penaltyAreaLength,
+                               -penaltyAreaWidth / 2.);
+  addLandmarkFeatures(penaltyBoxTop, self_pos, self_ang);
+  rcsc::Vector2D penaltyBoxBot(pitchHalfLength - penaltyAreaLength,
+                               penaltyAreaWidth / 2.);
+  addLandmarkFeatures(penaltyBoxBot, self_pos, self_ang);
 
   // Corners of the Playable Area
   rcsc::Vector2D centerField(0, 0);
-  addLandmarkFeature(centerField, self_pos);
-  rcsc::Vector2D cornerTopLeft(0, -SP.pitchHalfWidth());
-  addLandmarkFeature(cornerTopLeft, self_pos);
-  rcsc::Vector2D cornerTopRight(SP.pitchHalfLength(), -SP.pitchHalfWidth());
-  addLandmarkFeature(cornerTopRight, self_pos);
-  rcsc::Vector2D cornerBotRight(SP.pitchHalfLength(), SP.pitchHalfWidth());
-  addLandmarkFeature(cornerBotRight, self_pos);
-  rcsc::Vector2D cornerBotLeft(0, SP.pitchHalfWidth());
-  addLandmarkFeature(cornerBotLeft, self_pos);
+  addLandmarkFeatures(centerField, self_pos, self_ang);
+  rcsc::Vector2D cornerTopLeft(0, -pitchHalfWidth);
+  addLandmarkFeatures(cornerTopLeft, self_pos, self_ang);
+  rcsc::Vector2D cornerTopRight(pitchHalfLength, -pitchHalfWidth);
+  addLandmarkFeatures(cornerTopRight, self_pos, self_ang);
+  rcsc::Vector2D cornerBotRight(pitchHalfLength, pitchHalfWidth);
+  addLandmarkFeatures(cornerBotRight, self_pos, self_ang);
+  rcsc::Vector2D cornerBotLeft(0, pitchHalfWidth);
+  addLandmarkFeatures(cornerBotLeft, self_pos, self_ang);
 
-  // Distance to Left field line
-  ADD_FEATURE(self_pos.x);
-  // Distance to Right field line
-  ADD_FEATURE(SP.pitchHalfLength() - self.pos().x);
-  // Distance to Bottom field line
-  ADD_FEATURE(SP.pitchHalfWidth() - self.pos().y);
-  // Distance to Top field line
-  ADD_FEATURE(SP.pitchHalfWidth() + self.pos().y);
+  // Distances to the edges of the playable area
+  if (self.posValid()) {
+    // Distance to Left field line
+    addDistFeature(self_pos.x, pitchHalfLength);
+    // Distance to Right field line
+    addDistFeature(pitchHalfLength - self_pos.x, pitchHalfLength);
+    // Distance to top field line
+    addDistFeature(pitchHalfWidth + self_pos.y, pitchWidth);
+    // Distance to Bottom field line
+    addDistFeature(pitchHalfWidth - self_pos.y, pitchWidth);
+  } else {
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+  }
 
   // ======================== BALL FEATURES ======================== //
   const BallObject& ball = wm.ball();
-  ADD_FEATURE(ball.rposValid() ? 1. : 0.);
-  ADD_FEATURE(ball.angleFromSelf().degree());
-  ADD_FEATURE(ball.distFromSelf());
-  ADD_FEATURE(ball.velValid() ? 1. : 0.);
-  ADD_FEATURE(ball.vel().x);
-  ADD_FEATURE(ball.vel().y);
-  // std::cout << "DistFromBall: " << self.distFromBall() << std::endl;
-  // [0,180] Agent's left side from back to front
-  // [0,-180] Agent's right side from back to front
-  // std::cout << "AngleFromBall: " << self.angleFromBall() << std::endl;
-  // std::cout << "distFromSelf: " << self.distFromSelf() << std::endl;
-  // std::cout << "angleFromSelf: " << self.angleFromSelf() << std::endl;
+  // Angle and distance to the ball
+  ADD_FEATURE(ball.rposValid() ? FEAT_MAX : FEAT_MIN);
+  if (ball.rposValid()) {
+    addAngFeature(ball.angleFromSelf());
+    addDistFeature(ball.distFromSelf(), maxHFORadius);
+  } else {
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+  }
+  // Velocity and direction of the ball
+  ADD_FEATURE(ball.velValid() ? FEAT_MAX : FEAT_MIN);
+  if (ball.velValid()) {
+    // SeverParam lists ballSpeedMax a 2.7 which is too low
+    ADD_NORM_FEATURE(ball.vel().r(), 0., observedBallSpeedMax);
+    addAngFeature(ball.vel().th());
+  } else {
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+  }
 
   assert(featIndx == num_basic_features);
 
@@ -330,13 +392,14 @@ void Agent::updateStateFeatures() {
     PlayerObject* teammate = *it;
     if (teammate->pos().x > 0 && teammate->unum() > 0 &&
         detected_teammates < numTeammates) {
-      // Angle dist to teammate. Teammate's body angle and velocity.
-      ADD_FEATURE((teammate->pos()-self_pos).th().degree());
-      ADD_FEATURE(teammate->distFromSelf());
-      ADD_FEATURE(teammate->body().degree());
-      ADD_FEATURE(teammate->vel().x);
-      ADD_FEATURE(teammate->vel().y);
+      addPlayerFeatures(*teammate, self_pos, self_ang);
       detected_teammates++;
+    }
+  }
+  // Add zero features for any missing teammates
+  for (int i=detected_teammates; i<numTeammates; ++i) {
+    for (int j=0; j<features_per_player; ++j) {
+      ADD_FEATURE(0);
     }
   }
 
@@ -348,34 +411,72 @@ void Agent::updateStateFeatures() {
     PlayerObject* opponent = *it;
     if (opponent->pos().x > 0 && opponent->unum() > 0 &&
         detected_opponents < numOpponents) {
-      // Angle dist to opponent. Opponents's body angle and velocity.
-      ADD_FEATURE((opponent->pos()-self_pos).th().degree());
-      ADD_FEATURE(opponent->distFromSelf());
-      ADD_FEATURE(opponent->body().degree());
-      ADD_FEATURE(opponent->vel().x);
-      ADD_FEATURE(opponent->vel().y);
+      addPlayerFeatures(*opponent, self_pos, self_ang);
       detected_opponents++;
     }
   }
-
-  // Add zeros for missing teammates or opponents. This should only
-  // happen during initialization.
-  for (int i=featIndx; i<numFeatures; ++i) {
-    ADD_FEATURE(0);
+  // Add zero features for any missing opponents
+  for (int i=detected_opponents; i<numOpponents; ++i) {
+    for (int j=0; j<features_per_player; ++j) {
+      ADD_FEATURE(0);
+    }
   }
 
   assert(featIndx == numFeatures);
+  for (int i=0; i<numFeatures; ++i) {
+    if (feature_vec[i] < FEAT_MIN || feature_vec[i] > FEAT_MAX) {
+      std::cout << "Invalid Feature! Indx:" << i << " Val:" << feature_vec[i] << std::endl;
+      exit(1);
+    }
+  }
+}
+
+void Agent::addAngFeature(const rcsc::AngleDeg& ang) {
+  ADD_FEATURE(ang.sin());
+  ADD_FEATURE(ang.cos());
+}
+
+void Agent::addDistFeature(float dist, float maxDist) {
+  float proximity = 1.f - std::max(0.f, std::min(1.f, dist/maxDist));
+  ADD_NORM_FEATURE(proximity, 0., 1.);
 }
 
 // Add the angle and distance to the landmark to the feature_vec
-void Agent::addLandmarkFeature(const rcsc::Vector2D& landmark,
-                               const rcsc::Vector2D& self_pos) {
-  Vector2D vec_to_landmark = landmark - self_pos;
-  ADD_FEATURE(vec_to_landmark.th().degree());
-  ADD_FEATURE(vec_to_landmark.r());
+void Agent::addLandmarkFeatures(const rcsc::Vector2D& landmark,
+                                const rcsc::Vector2D& self_pos,
+                                const rcsc::AngleDeg& self_ang) {
+  if (self_pos == Vector2D::INVALIDATED) {
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+  } else {
+    Vector2D vec_to_landmark = landmark - self_pos;
+    addAngFeature(self_ang - vec_to_landmark.th());
+    addDistFeature(vec_to_landmark.r(), maxHFORadius);
+  }
 }
 
-void Agent::startServer() {
+void Agent::addPlayerFeatures(rcsc::PlayerObject& player,
+                              const rcsc::Vector2D& self_pos,
+                              const rcsc::AngleDeg& self_ang) {
+  assert(player.posValid());
+  // Angle dist to player.
+  addLandmarkFeatures(player.pos(), self_pos, self_ang);
+  // Player's body angle
+  addAngFeature(player.body());
+  if (player.velValid()) {
+    // Player's speed
+    ADD_NORM_FEATURE(player.vel().r(), 0., observedPlayerSpeedMax);
+    // Player's velocity direction
+    addAngFeature(player.vel().th());
+  } else {
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+    ADD_FEATURE(0);
+  }
+}
+
+void Agent::startServer(int server_port) {
   std::cout << "Starting Server on Port " << server_port << std::endl;
   struct sockaddr_in serv_addr, cli_addr;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -457,7 +558,7 @@ hfo_status_t Agent::getGameStatus() {
 */
 void Agent::actionImpl() {
   if (!server_running) {
-    startServer();
+    startServer(server_port);
     clientHandshake();
   }
 

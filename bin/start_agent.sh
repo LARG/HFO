@@ -77,6 +77,7 @@ usage()
    echo "  --numTeammates NUM           number of teammates"
    echo "  --numOpponents NUM           number of opponents"
    echo "  --playingOffense [0|1]       are we playing offense or defense"
+   echo "  --serverPort   NUM           port for server to list on"
    echo "  --seed NUM                   seed for rng"
    echo "  --gdb                        runs with gdb on (default:off)"
    ) 1>&2
@@ -262,6 +263,15 @@ do
         exit 1
       fi
       opts="${opts} --playingOffense ${2}"
+      shift 1
+      ;;
+
+    --serverPort)
+      if [ $# -lt 2 ]; then
+        usage
+        exit 1
+      fi
+      opts="${opts} --serverPort ${2}"
       shift 1
       ;;
 

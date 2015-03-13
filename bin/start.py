@@ -101,6 +101,8 @@ def parseArgs(args=None):
                  help='Don\'t use a learning agent.')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
                  help='Run server in non-sync mode')
+  p.add_argument('--server-port', dest='serverPort', type=int, default=6008,
+                 help='Port to run agent server on.')
   return p.parse_args(args=args)
 
 if __name__ == '__main__':
