@@ -8,8 +8,8 @@ from signal import SIGKILL
 processes, necProcesses = [], []
 # Command to run the rcssserver. Edit as needed.
 SERVER_CMD = 'rcssserver server::port=6000 server::coach_port=6001 \
-server::olcoach_port=6002 server::coach=1 server::game_log_dir=/tmp \
-server::text_log_dir=/tmp'
+server::olcoach_port=6002 server::coach=1 server::game_log_dir=log \
+server::text_log_dir=log'
 # Command to run the monitor. Edit as needed.
 MONITOR_CMD = 'rcssmonitor'
 
@@ -50,8 +50,10 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   assert os.path.isdir(team2Dir)
   try:
     # Launch the Server
-    launch(SERVER_CMD + serverOptions, name='server')
+    server = launch(SERVER_CMD + serverOptions, name='server')
     time.sleep(0.2)
+    assert server.poll() is None,\
+      'Failed to launch Server with command: \"%s\"'%(SERVER_CMD)
     if not args.headless:
       launch(MONITOR_CMD,name='monitor')
     # Launch the Trainer
