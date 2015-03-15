@@ -7,17 +7,16 @@ from signal import SIGKILL
 # Global list of all/essential running processes
 processes, necProcesses = [], []
 # Command to run the rcssserver. Edit as needed.
-SERVER_CMD = 'rcssserver server::port=6000 server::coach_port=6001 \
-server::olcoach_port=6002 server::coach=1 server::game_log_dir=log \
-server::text_log_dir=log'
+SERVER_CMD = 'rcssserver'
 # Command to run the monitor. Edit as needed.
 MONITOR_CMD = 'rcssmonitor'
 
-def getAgentDirCmd(name, first):
+def getAgentDirCmd(binary_dir, teamname, server_port=6000, coach_port=6002, logDir='/tmp'):
   """ Returns the team name, command, and directory to run a team. """
-  cmd = './start.sh -t %s' % name
-  dir = os.path.dirname(os.path.realpath(__file__))
-  return name, cmd, dir
+  cmd = 'start.sh -t %s -p %i -P %i --log-dir %s'%(teamname, server_port,
+                                                   coach_port, logDir)
+  cmd = os.path.join(binary_dir, cmd)
+  return teamname, cmd
 
 def launch(cmd, necessary=True, supressOutput=True, name='Unknown'):
   """Launch a process.
@@ -41,13 +40,21 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   """Sets up the teams, launches the server and monitor, starts the
   trainer.
   """
-  serverOptions = ''
+  if not os.path.exists(args.logDir):
+    os.makedirs(args.logDir)
+  binary_dir   = os.path.dirname(os.path.realpath(__file__))
+  server_port  = args.basePort
+  coach_port   = args.basePort + 1
+  olcoach_port = args.basePort + 2
+  serverOptions = ' server::port=%i server::coach_port=%i ' \
+                  'server::olcoach_port=%i server::coach=1 ' \
+                  'server::game_log_dir=%s server::text_log_dir=%s' \
+                  %(server_port, coach_port, olcoach_port,
+                    args.logDir, args.logDir)
   if args.sync:
     serverOptions += ' server::synch_mode=on'
-  team1, team1Cmd, team1Dir = getAgentDirCmd(team1, True)
-  team2, team2Cmd, team2Dir = getAgentDirCmd(team2, False)
-  assert os.path.isdir(team1Dir)
-  assert os.path.isdir(team2Dir)
+  team1, team1Cmd = getAgentDirCmd(binary_dir, team1, server_port, coach_port, args.logDir)
+  team2, team2Cmd = getAgentDirCmd(binary_dir, team2, server_port, coach_port, args.logDir)
   try:
     # Launch the Server
     server = launch(SERVER_CMD + serverOptions, name='server')
@@ -55,17 +62,15 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
     assert server.poll() is None,\
       'Failed to launch Server with command: \"%s\"'%(SERVER_CMD)
     if not args.headless:
-      launch(MONITOR_CMD,name='monitor')
+      launch(MONITOR_CMD, name='monitor')
     # Launch the Trainer
     from Trainer import Trainer
     trainer = Trainer(args=args, rng=rng)
     trainer.initComm()
     # Start Team1
-    os.chdir(team1Dir)
     launch(team1Cmd,False)
     trainer.waitOnTeam(True) # wait to make sure of team order
     # Start Team2
-    os.chdir(team2Dir)
     launch(team2Cmd,False)
     trainer.waitOnTeam(False)
     # Make sure all players are connected
@@ -103,8 +108,11 @@ def parseArgs(args=None):
                  help='Don\'t use a learning agent.')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
                  help='Run server in non-sync mode')
-  p.add_argument('--server-port', dest='serverPort', type=int, default=6008,
-                 help='Port to run agent server on.')
+  p.add_argument('--base-port', dest='basePort', type=int, default=6000,
+                 help='Base port for communications. rcssserver will use this \
+                 port and all other ports will be allocated incrementally.')
+  p.add_argument('--log-dir', dest='logDir', default='log/',
+                 help='Directory to store logs.')
   return p.parse_args(args=args)
 
 if __name__ == '__main__':

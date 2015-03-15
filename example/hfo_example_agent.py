@@ -1,22 +1,17 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import imp
-
 # First Start the server: $> bin/start.py
 
 if __name__ == '__main__':
-  # Load the HFO library
   try:
-    hfo_module = imp.load_source('HFO', '../HFO.py')
+    from hfo import *
   except:
-    hfo_module = imp.load_source('HFO', 'HFO.py')
-  # Get the possible actions
-  HFO_Actions = hfo_module.HFO_Actions
-  # Get the possible outcomes
-  HFO_Status = hfo_module.HFO_Status
+    print 'Failed to import hfo. To install hfo, in the HFO directory'\
+      ' run: \"pip install .\"'
+    exit()
   # Create the HFO Environment
-  hfo = hfo_module.HFOEnvironment()
+  hfo = hfo.HFOEnvironment()
   # Connect to the agent server
   hfo.connectToAgentServer()
   # Play 5 episodes

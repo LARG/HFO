@@ -33,6 +33,9 @@ class Trainer(object):
   """
   def __init__(self, args, rng=numpy.random.RandomState()):
     self._rng = rng # The Random Number Generator
+    self._serverPort = args.basePort # The port the server is listening on
+    self._coachPort = args.basePort + 1 # The coach port to talk with the server
+    self._logDir = args.logDir # Directory to store logs
     self._numOffense = args.numOffense # Number offensive players
     self._numDefense = args.numDefense # Number defensive players
     self._maxTrials = args.numTrials # Maximum number of trials to play
@@ -63,7 +66,7 @@ class Trainer(object):
     self._agentTeam = '' # Name of the team the agent is playing for
     self._agentNumInt = -1 # Agent's internal team number
     self._agentNumExt = -1 # Agent's external team number
-    self._agentServerPort = args.serverPort # Port for agent's server
+    self._agentServerPort = args.basePort + 8 # Port for agent's server
     # =============== MISC =============== #
     self._offenseTeam = '' # Name of the offensive team
     self._defenseTeam = '' # Name of the defensive team
@@ -97,16 +100,23 @@ class Trainer(object):
       numOpponents = self._numDefense - 1
     self._agentNumExt = self.convertToExtPlayer(self._agentTeam,
                                                 self._agentNumInt)
-    agentCmd = 'start_agent.sh -t %s -u %i --numTeammates %i --numOpponents %i'\
+    binary_dir = os.path.dirname(os.path.realpath(__file__))
+    agentCmd = 'start_agent.sh -t %s -u %i -p %i -P %i --log-dir %s'\
+               ' --numTeammates %i --numOpponents %i'\
                ' --playingOffense %i --serverPort %i'\
-               %(self._agentTeam, self._agentNumExt, numTeammates, numOpponents,
+               %(self._agentTeam, self._agentNumExt, self._serverPort,
+                 self._coachPort, self._logDir, numTeammates, numOpponents,
                  self._agent_play_offense, self._agentServerPort)
+    agentCmd = os.path.join(binary_dir, agentCmd)
     agentCmd = agentCmd.split(' ')
     # Ignore stderr because librcsc continually prints to it
     kwargs = {}#{'stderr':open('/dev/null','w')}
     p = subprocess.Popen(agentCmd, **kwargs)
     p.wait()
-    with open('/tmp/start%i' % p.pid,'r') as f:
+    pid_file = os.path.join(self._logDir, 'start%i'%p.pid)
+    print '[Trainer] Parsing agent\'s pid from file:', pid_file
+    assert os.path.isfile(pid_file)
+    with open(pid_file,'r') as f:
       output = f.read()
     pid = int(re.findall('PID: (\d+)',output)[0])
     return DummyPopen(pid)
@@ -184,9 +194,9 @@ class Trainer(object):
 
   def initComm(self):
     """ Initialize communication to server. """
-    self._comm = ClientCommunicator(port=6001)
+    self._comm = ClientCommunicator(port=self._coachPort)
     self.send('(init (version 8.0))')
-    self.checkMsg('(init ok)',retryCount=5)
+    self.checkMsg('(init ok)', retryCount=5)
     # self.send('(eye on)')
     self.send('(ear on)')
 
@@ -243,7 +253,7 @@ class Trainer(object):
       print >>sys.stderr,'[Trainer] Error with message'
       print >>sys.stderr,'  expected: %s' % expectedMsg
       print >>sys.stderr,'  received: %s' % msg
-      print >>sys.stderr,len(expectedMsg),len(msg)
+      # print >>sys.stderr,len(expectedMsg),len(msg)
       raise ValueError
 
   def extractPoint(self, msg):

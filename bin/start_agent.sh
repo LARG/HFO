@@ -347,6 +347,7 @@ do
         exit 1
       fi
       debugopt="${debugopt} --log_dir ${2}"
+      LOG_DIR=${2}
       shift 1
       ;;
 
@@ -445,7 +446,7 @@ while [ $i -le ${number} ] ; do
     cmd="${player} ${opt} ${opts} ${offline_number} ${goalie} --reconnect $i"
     if [ X"${use_gdb}" = X'' ]; then
       ${cmd} &
-      echo "PID: $!" > /tmp/start$BASHPID
+      echo "PID: $!" > ${LOG_DIR}/start$BASHPID
     else
       gdb -ex run --args  ${cmd}
     fi
