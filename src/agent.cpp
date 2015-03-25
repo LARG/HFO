@@ -93,6 +93,7 @@
 
 using namespace rcsc;
 
+// Debugging tools to check for proper feature normalization
 float min_feat_val = 1e8;
 float max_feat_val = -1e8;
 
