@@ -2,7 +2,32 @@
 #define __HFO_HPP__
 
 #include <vector>
-#include "agent.h"
+
+// The actions available to the agent
+enum action_t
+{
+  DASH,   // Dash(power, relative_direction)
+  TURN,   // Turn(direction)
+  TACKLE, // Tackle(direction)
+  KICK,   // Kick(power, direction)
+  QUIT    // Special action to quit the game
+};
+
+// The current status of the HFO game
+enum hfo_status_t
+{
+  IN_GAME,
+  GOAL,
+  CAPTURED_BY_DEFENSE,
+  OUT_OF_BOUNDS,
+  OUT_OF_TIME
+};
+
+struct Action {
+  action_t action;
+  float arg1;
+  float arg2;
+};
 
 class HFOEnvironment {
  public:
@@ -15,14 +40,6 @@ class HFOEnvironment {
   // Get the current state of the domain. Returns a reference to feature_vec.
   const std::vector<float>& getState();
 
-  // The actions available to the agent
-  // enum action_t
-  // {
-  //   DASH,   // Dash(power, relative_direction)
-  //   TURN,   // Turn(direction)
-  //   TACKLE, // Tackle(direction)
-  //   KICK    // Kick(power, direction)
-  // };
   // Take an action and recieve the resulting game status
   hfo_status_t act(Action action);
 

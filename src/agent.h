@@ -30,35 +30,10 @@
 #include "action_generator.h"
 #include "field_evaluator.h"
 #include "communication.h"
+#include "HFO.hpp"
 
 #include <rcsc/player/player_agent.h>
 #include <vector>
-
-// The actions available to the agent
-enum action_t
-{
-  DASH,   // Dash(power, relative_direction)
-  TURN,   // Turn(direction)
-  TACKLE, // Tackle(direction)
-  KICK,   // Kick(power, direction)
-  QUIT    // Special action to quit the game
-};
-
-// The current status of the HFO game
-enum hfo_status_t
-{
-  IN_GAME,
-  GOAL,
-  CAPTURED_BY_DEFENSE,
-  OUT_OF_BOUNDS,
-  OUT_OF_TIME
-};
-
-struct Action {
-  action_t action;
-  float arg1;
-  float arg2;
-};
 
 class Agent : public rcsc::PlayerAgent {
 public:

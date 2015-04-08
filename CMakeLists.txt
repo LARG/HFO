@@ -9,7 +9,6 @@ set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin)
 
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${SOURCE_DIR}
   ${SOURCE_DIR}/chain_action
   ${LIBRCSC_INCLUDE}
@@ -37,7 +36,7 @@ add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/sample_co
 add_executable(sample_player ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCES})
 add_executable(sample_trainer ${SOURCE_DIR}/main_trainer.cpp ${SOURCE_DIR}/sample_trainer.cpp ${SOURCES})
 add_executable(agent ${SOURCE_DIR}/main_agent.cpp ${SOURCE_DIR}/agent.cpp ${SOURCES})
-add_library(hfo-lib SHARED ${CMAKE_CURRENT_SOURCE_DIR}/include/HFO.hpp ${SOURCE_DIR}/HFO.cpp)
+add_library(hfo-lib SHARED ${SOURCE_DIR}/HFO.hpp ${SOURCE_DIR}/HFO.cpp)
 set_target_properties(hfo-lib PROPERTIES OUTPUT_NAME hfo)
 set_target_properties(hfo-lib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
