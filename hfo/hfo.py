@@ -7,6 +7,7 @@ class HFO_Actions:
   Turn(direction)
   Tackle(direction)
   Kick(power, direction)
+  QUIT
 
   '''
   DASH, TURN, TACKLE, KICK, QUIT = range(5)
