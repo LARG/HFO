@@ -21,7 +21,7 @@ if __name__ == '__main__':
       # Grab the state features from the environment
       features = hfo.getState()
       # Take an action and get the current game status
-      status = hfo.act((HFO_Actions.KICK, 100, 12.3))
+      status = hfo.act((HFO_Actions.DASH, 100, 0))
     print 'Episode', episode, 'ended with',
     # Check what the outcome of the episode was
     if status == HFO_Status.GOAL:

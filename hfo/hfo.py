@@ -25,6 +25,7 @@ class HFOEnvironment(object):
   def __init__(self):
     self.socket = None # Socket connection to server
     self.numFeatures = None # Given by the server in handshake
+    self.features = None # The state features
 
   def connectToAgentServer(self, server_port=6008):
     '''Connect to the server that controls the agent on the specified port. '''
@@ -40,6 +41,13 @@ class HFOEnvironment(object):
         break
     print '[Agent Client] Connected'
     self.handshakeAgentServer()
+    # Get the initial state
+    state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
+    if not state_data:
+      print '[Agent Client] ERROR Recieved bad data from Server. Perhaps server closed?'
+      self.cleanup()
+      exit(1)
+    self.features = struct.unpack('f'*self.numFeatures, state_data)
 
   def handshakeAgentServer(self):
     '''Handshake with the agent's server. '''
@@ -63,13 +71,7 @@ class HFOEnvironment(object):
   def getState(self):
     '''Get the current state of the world. Returns a list of floats with
     size numFeatures. '''
-    data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
-    if not data:
-      print '[Agent Client] ERROR Recieved bad data from Server. Perhaps server closed?'
-      self.cleanup()
-      exit(1)
-    features = struct.unpack('f'*self.numFeatures, data)
-    return features
+    return self.features
 
   def act(self, action):
     ''' Send an action and recieve the game status.'''
@@ -77,6 +79,13 @@ class HFOEnvironment(object):
     # Get the current game status
     data = self.socket.recv(struct.calcsize("i"))
     status = struct.unpack("i", data)[0]
+    # Get the next state features
+    state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
+    if not state_data:
+      print '[Agent Client] ERROR Recieved bad data from Server. Perhaps server closed?'
+      self.cleanup()
+      exit(1)
+    self.features = struct.unpack('f'*self.numFeatures, state_data)
     return status
 
   def cleanup(self):

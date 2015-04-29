@@ -50,6 +50,11 @@ void HFOEnvironment::connectToAgentServer(int server_port) {
   }
   std::cout << "[Agent Client] Connected" << std::endl;
   handshakeAgentServer();
+  // Get the initial game state
+  feature_vec.resize(numFeatures);
+  if (recv(sockfd, &(feature_vec.front()), numFeatures*sizeof(float), 0) < 0) {
+    error("[Agent Client] ERROR recieving state features from socket");
+  }
 }
 
 void HFOEnvironment::handshakeAgentServer() {
@@ -87,12 +92,6 @@ void HFOEnvironment::handshakeAgentServer() {
 }
 
 const std::vector<float>& HFOEnvironment::getState() {
-  if (feature_vec.size() != numFeatures) {
-    feature_vec.resize(numFeatures);
-  }
-  if (recv(sockfd, &(feature_vec.front()), numFeatures*sizeof(float), 0) < 0) {
-    error("[Agent Client] ERROR recieving state features from socket");
-  }
   return feature_vec;
 }
 
@@ -105,6 +104,10 @@ hfo_status_t HFOEnvironment::act(Action action) {
   // Get the game status
   if (recv(sockfd, &game_status, sizeof(hfo_status_t), 0) < 0) {
     error("[Agent Client] ERROR recieving from socket");
+  }
+  // Get the next game state
+  if (recv(sockfd, &(feature_vec.front()), numFeatures*sizeof(float), 0) < 0) {
+    error("[Agent Client] ERROR recieving state features from socket");
   }
   return game_status;
 }
