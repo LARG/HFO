@@ -43,9 +43,9 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   if not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
   binary_dir   = os.path.dirname(os.path.realpath(__file__))
-  server_port  = args.basePort
-  coach_port   = args.basePort + 1
-  olcoach_port = args.basePort + 2
+  server_port  = args.port + 1
+  coach_port   = args.port + 2
+  olcoach_port = args.port + 3
   serverOptions = ' server::port=%i server::coach_port=%i ' \
                   'server::olcoach_port=%i server::coach=1 ' \
                   'server::game_log_dir=%s server::text_log_dir=%s' \
@@ -108,9 +108,9 @@ def parseArgs(args=None):
                  help='Don\'t use a learning agent.')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
                  help='Run server in non-sync mode')
-  p.add_argument('--base-port', dest='basePort', type=int, default=6000,
-                 help='Base port for communications. rcssserver will use this \
-                 port and all other ports will be allocated incrementally.')
+  p.add_argument('--port', dest='port', type=int, default=6000,
+                 help='Agent server\'s port. rcssserver, coach, and ol_coach'\
+                 ' will be incrementally allocated the following ports.')
   p.add_argument('--log-dir', dest='logDir', default='log/',
                  help='Directory to store logs.')
   return p.parse_args(args=args)

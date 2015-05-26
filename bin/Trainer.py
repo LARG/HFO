@@ -33,8 +33,8 @@ class Trainer(object):
   """
   def __init__(self, args, rng=numpy.random.RandomState()):
     self._rng = rng # The Random Number Generator
-    self._serverPort = args.basePort # The port the server is listening on
-    self._coachPort = args.basePort + 1 # The coach port to talk with the server
+    self._serverPort = args.port + 1 # The port the server is listening on
+    self._coachPort = args.port + 2 # The coach port to talk with the server
     self._logDir = args.logDir # Directory to store logs
     self._numOffense = args.numOffense # Number offensive players
     self._numDefense = args.numDefense # Number defensive players
@@ -66,7 +66,7 @@ class Trainer(object):
     self._agentTeam = '' # Name of the team the agent is playing for
     self._agentNumInt = -1 # Agent's internal team number
     self._agentNumExt = -1 # Agent's external team number
-    self._agentServerPort = args.basePort + 8 # Port for agent's server
+    self._agentServerPort = args.port # Port for agent's server
     # =============== MISC =============== #
     self._offenseTeam = '' # Name of the offensive team
     self._defenseTeam = '' # Name of the defensive team

@@ -117,10 +117,11 @@ void error(const char *msg)
 #define ADD_NORM_FEATURE(val, min_val, max_val) \
   assert(featIndx < numFeatures); \
   if (val < min_val || val > max_val) { std::cout << "Violated Feature Bounds: " << val << " Expected min/max: [" << min_val << ", " << max_val << "]" << std::endl;} \
-  assert(val >= min_val); \
-  assert(val <= max_val); \
   feature_vec[featIndx++] = ((val - min_val) / (max_val - min_val)) \
       * (FEAT_MAX - FEAT_MIN) + FEAT_MIN;
+  // assert(val >= min_val); \
+  // assert(val <= max_val); \
+
 
 #define LOG_FEATURE(val) \
   if (val <= min_feat_val) \

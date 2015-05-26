@@ -107,7 +107,7 @@ protected:
   const static float observedSelfSpeedMax   = 0.46;
   const static float observedPlayerSpeedMax = 0.75;
   const static float observedStaminaMax     = 8000.;
-  const static float observedBallSpeedMax   = 3.0;
+  const static float observedBallSpeedMax   = 5.0;
   float maxHFORadius; // Maximum possible distance in HFO playable region
   // Useful measures defined by the Server Parameters
   float pitchLength, pitchWidth, pitchHalfLength, pitchHalfWidth,
