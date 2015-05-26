@@ -91,6 +91,11 @@ protected:
   // Transmit information to the client and ensure it can recieve.
   void clientHandshake();
 
+  // Add a feature without normalizing
+  void addFeature(float val);
+  // Add a feature and normalize to the range [FEAT_MIN, FEAT_MAX]
+  void addNormFeature(float val, float min_val, float max_val);
+
  protected:
   int numTeammates; // Number of teammates in HFO
   int numOpponents; // Number of opponents in HFO

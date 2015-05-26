@@ -108,21 +108,6 @@ void error(const char *msg)
 #define FEAT_MIN -1.
 #define FEAT_MAX 1.
 
-// Add a feature without normalizing
-#define ADD_FEATURE(val) \
-  assert(featIndx < numFeatures); \
-  feature_vec[featIndx++] = val;
-
-// Add a feature and normalize to the range [FEAT_MIN, FEAT_MAX]
-#define ADD_NORM_FEATURE(val, min_val, max_val) \
-  assert(featIndx < numFeatures); \
-  if (val < min_val || val > max_val) { std::cout << "Violated Feature Bounds: " << val << " Expected min/max: [" << min_val << ", " << max_val << "]" << std::endl;} \
-  feature_vec[featIndx++] = ((val - min_val) / (max_val - min_val)) \
-      * (FEAT_MAX - FEAT_MIN) + FEAT_MIN;
-  // assert(val >= min_val); \
-  // assert(val <= max_val); \
-
-
 #define LOG_FEATURE(val) \
   if (val <= min_feat_val) \
     min_feat_val = val; \
@@ -269,19 +254,19 @@ void Agent::updateStateFeatures() {
   const AngleDeg& self_ang = self.body();
 
   // Absolute (x,y) position of the agent.
-  ADD_FEATURE(self.posValid() ? FEAT_MAX : FEAT_MIN);
+  addFeature(self.posValid() ? FEAT_MAX : FEAT_MIN);
   // ADD_FEATURE(self_pos.x);
   // ADD_FEATURE(self_pos.y);
 
   // Direction and speed of the agent.
-  ADD_FEATURE(self.velValid() ? FEAT_MAX : FEAT_MIN);
+  addFeature(self.velValid() ? FEAT_MAX : FEAT_MIN);
   if (self.velValid()) {
     addAngFeature(self_ang - self.vel().th());
-    ADD_NORM_FEATURE(self.speed(), 0., observedSelfSpeedMax);
+    addNormFeature(self.speed(), 0., observedSelfSpeedMax);
   } else {
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
+    addFeature(0);
+    addFeature(0);
+    addFeature(0);
   }
 
   // Global Body Angle -- 0:right -90:up 90:down 180/-180:left
@@ -294,8 +279,8 @@ void Agent::updateStateFeatures() {
   //   std::cout << "FaceAngle: " << self.face() << std::endl;
   // }
 
-  ADD_NORM_FEATURE(self.stamina(), 0., observedStaminaMax);
-  ADD_FEATURE(self.isFrozen() ? FEAT_MAX : FEAT_MIN);
+  addNormFeature(self.stamina(), 0., observedStaminaMax);
+  addFeature(self.isFrozen() ? FEAT_MAX : FEAT_MIN);
 
   // Probabilities - Do we want these???
   // std::cout << "catchProb: " << self.catchProbability() << std::endl;
@@ -303,10 +288,10 @@ void Agent::updateStateFeatures() {
   // std::cout << "fouldProb: " << self.foulProbability() << std::endl;
 
   // Features indicating if we are colliding with an object
-  ADD_FEATURE(self.collidesWithBall()   ? FEAT_MAX : FEAT_MIN);
-  ADD_FEATURE(self.collidesWithPlayer() ? FEAT_MAX : FEAT_MIN);
-  ADD_FEATURE(self.collidesWithPost()   ? FEAT_MAX : FEAT_MIN);
-  ADD_FEATURE(self.isKickable()         ? FEAT_MAX : FEAT_MIN);
+  addFeature(self.collidesWithBall()   ? FEAT_MAX : FEAT_MIN);
+  addFeature(self.collidesWithPlayer() ? FEAT_MAX : FEAT_MIN);
+  addFeature(self.collidesWithPost()   ? FEAT_MAX : FEAT_MIN);
+  addFeature(self.isKickable()         ? FEAT_MAX : FEAT_MIN);
 
   // inertiaPoint estimates the ball point after a number of steps
   // self.inertiaPoint(n_steps);
@@ -353,34 +338,34 @@ void Agent::updateStateFeatures() {
     // Distance to Bottom field line
     addDistFeature(pitchHalfWidth - self_pos.y, pitchWidth);
   } else {
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
+    addFeature(0);
+    addFeature(0);
+    addFeature(0);
+    addFeature(0);
   }
 
   // ======================== BALL FEATURES ======================== //
   const BallObject& ball = wm.ball();
   // Angle and distance to the ball
-  ADD_FEATURE(ball.rposValid() ? FEAT_MAX : FEAT_MIN);
+  addFeature(ball.rposValid() ? FEAT_MAX : FEAT_MIN);
   if (ball.rposValid()) {
     addAngFeature(ball.angleFromSelf());
     addDistFeature(ball.distFromSelf(), maxHFORadius);
   } else {
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
+    addFeature(0);
+    addFeature(0);
+    addFeature(0);
   }
   // Velocity and direction of the ball
-  ADD_FEATURE(ball.velValid() ? FEAT_MAX : FEAT_MIN);
+  addFeature(ball.velValid() ? FEAT_MAX : FEAT_MIN);
   if (ball.velValid()) {
     // SeverParam lists ballSpeedMax a 2.7 which is too low
-    ADD_NORM_FEATURE(ball.vel().r(), 0., observedBallSpeedMax);
+    addNormFeature(ball.vel().r(), 0., observedBallSpeedMax);
     addAngFeature(ball.vel().th());
   } else {
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
+    addFeature(0);
+    addFeature(0);
+    addFeature(0);
   }
 
   assert(featIndx == num_basic_features);
@@ -401,7 +386,7 @@ void Agent::updateStateFeatures() {
   // Add zero features for any missing teammates
   for (int i=detected_teammates; i<numTeammates; ++i) {
     for (int j=0; j<features_per_player; ++j) {
-      ADD_FEATURE(0);
+      addFeature(0);
     }
   }
 
@@ -420,7 +405,7 @@ void Agent::updateStateFeatures() {
   // Add zero features for any missing opponents
   for (int i=detected_opponents; i<numOpponents; ++i) {
     for (int j=0; j<features_per_player; ++j) {
-      ADD_FEATURE(0);
+      addFeature(0);
     }
   }
 
@@ -434,13 +419,13 @@ void Agent::updateStateFeatures() {
 }
 
 void Agent::addAngFeature(const rcsc::AngleDeg& ang) {
-  ADD_FEATURE(ang.sin());
-  ADD_FEATURE(ang.cos());
+  addFeature(ang.sin());
+  addFeature(ang.cos());
 }
 
 void Agent::addDistFeature(float dist, float maxDist) {
   float proximity = 1.f - std::max(0.f, std::min(1.f, dist/maxDist));
-  ADD_NORM_FEATURE(proximity, 0., 1.);
+  addNormFeature(proximity, 0., 1.);
 }
 
 // Add the angle and distance to the landmark to the feature_vec
@@ -448,9 +433,9 @@ void Agent::addLandmarkFeatures(const rcsc::Vector2D& landmark,
                                 const rcsc::Vector2D& self_pos,
                                 const rcsc::AngleDeg& self_ang) {
   if (self_pos == Vector2D::INVALIDATED) {
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
+    addFeature(0);
+    addFeature(0);
+    addFeature(0);
   } else {
     Vector2D vec_to_landmark = landmark - self_pos;
     addAngFeature(self_ang - vec_to_landmark.th());
@@ -468,13 +453,13 @@ void Agent::addPlayerFeatures(rcsc::PlayerObject& player,
   addAngFeature(player.body());
   if (player.velValid()) {
     // Player's speed
-    ADD_NORM_FEATURE(player.vel().r(), 0., observedPlayerSpeedMax);
+    addNormFeature(player.vel().r(), 0., observedPlayerSpeedMax);
     // Player's velocity direction
     addAngFeature(player.vel().th());
   } else {
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
-    ADD_FEATURE(0);
+    addFeature(0);
+    addFeature(0);
+    addFeature(0);
   }
 }
 
@@ -531,6 +516,22 @@ void Agent::clientHandshake() {
     error("[Agent Server] Client incorrectly parsed the number of features.");
   }
   std::cout << "[Agent Server] Handshake complete" << std::endl;
+}
+
+void Agent::addFeature(float val) {
+  assert(featIndx < numFeatures);
+  feature_vec[featIndx++] = val;
+}
+
+void Agent::addNormFeature(float val, float min_val, float max_val) {
+  assert(featIndx < numFeatures);
+  if (val < min_val || val > max_val) {
+    std::cout << "Feature " << featIndx << " Violated Feature Bounds: " << val
+              << " Expected min/max: [" << min_val << ", " << max_val << "]" << std::endl;
+    val = std::min(std::max(val, min_val), max_val);
+  }
+  feature_vec[featIndx++] = ((val - min_val) / (max_val - min_val))
+      * (FEAT_MAX - FEAT_MIN) + FEAT_MIN;
 }
 
 hfo_status_t Agent::getGameStatus() {
