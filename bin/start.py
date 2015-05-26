@@ -62,7 +62,8 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
     assert server.poll() is None,\
       'Failed to launch Server with command: \"%s\"'%(SERVER_CMD)
     if not args.headless:
-      launch(MONITOR_CMD, name='monitor')
+      monitorOptions = ' --port=%i'%(server_port)
+      launch(MONITOR_CMD + monitorOptions, name='monitor')
     # Launch the Trainer
     from Trainer import Trainer
     trainer = Trainer(args=args, rng=rng)
