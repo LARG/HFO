@@ -11,7 +11,7 @@ int main() {
   // Create the HFO environment
   HFOEnvironment hfo;
   // Connect the agent's server
-  hfo.connectToAgentServer(6008);
+  hfo.connectToAgentServer(6000);
   // Play 5 episodes
   for (int episode=0; episode<5; episode++) {
     hfo_status_t status = IN_GAME;

@@ -27,7 +27,7 @@ class HFOEnvironment(object):
     self.numFeatures = None # Given by the server in handshake
     self.features = None # The state features
 
-  def connectToAgentServer(self, server_port=6008):
+  def connectToAgentServer(self, server_port=6000):
     '''Connect to the server that controls the agent on the specified port. '''
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print '[Agent Client] Connecting to Agent Server on port', server_port
