@@ -14,7 +14,7 @@ class HFO_Actions:
   QUIT
 
   '''
-  DASH, TURN, TACKLE, KICK, MOVE, SHOOT, PASS, DRIBBLE, QUIT = range(8)
+  DASH, TURN, TACKLE, KICK, MOVE, SHOOT, PASS, DRIBBLE, QUIT = range(9)
 
 class HFO_Status:
   ''' Current status of the HFO game. '''
