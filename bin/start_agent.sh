@@ -64,6 +64,7 @@ usage()
    echo "  --log-dir DIRECTORY          specifies debug log directory (default: /tmp)"
    echo "  --debug-log-ext EXTENSION    specifies debug log file extension (default: .log)"
    echo "  --fullstate FULLSTATE_TYPE   specifies fullstate model handling"
+   echo "  --record                     records actions (default: off)"
    echo "                               FULLSTATE_TYPE is one of [ignore|reference|override]."
    echo "  --offensePlayers player1 ... specifies the numbers of the offense players"
    echo "  --defensePlayers player1 ... specifies the numbers of the defense players"
@@ -176,6 +177,10 @@ do
       offline_mode="on"
       ;;
 
+    --record)
+      record="--record"
+      ;;
+
     --record_stats_file)
       if [ $# -lt 2 ]; then
         usage
@@ -202,7 +207,7 @@ do
       opts="${opts} --learn-index ${2}"
       shift 1
       ;;
-    
+
     --learn-path)
       if [ $# -lt 2 ]; then
         usage
@@ -211,7 +216,7 @@ do
       opts="${opts} --learn-path ${2}"
       shift 1
       ;;
-    
+
     --model-path)
       if [ $# -lt 2 ]; then
         usage
@@ -283,7 +288,7 @@ do
       opts="${opts} --seed ${2}"
       shift 1
       ;;
-    
+
     --trainer)
       if [ $# -lt 2 ]; then
         usage
@@ -301,11 +306,11 @@ do
       opts="${opts} --save-path ${2}"
       shift 1
       ;;
-    
+
     --gdb)
       use_gdb="true"
       ;;
-    
+
     --run-debug-version)
       run_debug_version="true"
       ;;
@@ -426,6 +431,7 @@ opt="${opt} --debug_server_host ${debug_server_host}"
 opt="${opt} --debug_server_port ${debug_server_port}"
 opt="${opt} ${offline_logging}"
 opt="${opt} ${debugopt}"
+opt="${opt} ${record}"
 
 ping -c 1 $host
 

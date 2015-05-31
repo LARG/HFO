@@ -6,11 +6,15 @@
 // The actions available to the agent
 enum action_t
 {
-  DASH,   // Dash(power, relative_direction)
-  TURN,   // Turn(direction)
-  TACKLE, // Tackle(direction)
-  KICK,   // Kick(power, direction)
-  QUIT    // Special action to quit the game
+  DASH,    // [Low-Level] Dash(power, relative_direction)
+  TURN,    // [Low-Level] Turn(direction)
+  TACKLE,  // [Low-Level] Tackle(direction)
+  KICK,    // [Low-Level] Kick(power, direction)
+  MOVE,    // [High-Level] Move(): Reposition player according to strategy
+  SHOOT,   // [High-Level] Shoot(): Shoot the ball
+  PASS,    // [High-Level] Pass(): Pass to the most open teammate
+  DRIBBLE, // [High-Level] Dribble(): Offensive dribble
+  QUIT     // Special action to quit the game
 };
 
 // The current status of the HFO game

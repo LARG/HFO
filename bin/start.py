@@ -11,10 +11,13 @@ SERVER_CMD = 'rcssserver'
 # Command to run the monitor. Edit as needed.
 MONITOR_CMD = 'rcssmonitor'
 
-def getAgentDirCmd(binary_dir, teamname, server_port=6000, coach_port=6002, logDir='/tmp'):
+def getAgentDirCmd(binary_dir, teamname, server_port=6000, coach_port=6002,
+                   logDir='log', record=False):
   """ Returns the team name, command, and directory to run a team. """
   cmd = 'start.sh -t %s -p %i -P %i --log-dir %s'%(teamname, server_port,
                                                    coach_port, logDir)
+  if record:
+    cmd += ' --record'
   cmd = os.path.join(binary_dir, cmd)
   return teamname, cmd
 
@@ -53,8 +56,10 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
                     args.logDir, args.logDir)
   if args.sync:
     serverOptions += ' server::synch_mode=on'
-  team1, team1Cmd = getAgentDirCmd(binary_dir, team1, server_port, coach_port, args.logDir)
-  team2, team2Cmd = getAgentDirCmd(binary_dir, team2, server_port, coach_port, args.logDir)
+  team1, team1Cmd = getAgentDirCmd(binary_dir, team1, server_port, coach_port,
+                                   args.logDir, args.record)
+  team2, team2Cmd = getAgentDirCmd(binary_dir, team2, server_port, coach_port,
+                                   args.logDir, args.record)
   try:
     # Launch the Server
     server = launch(SERVER_CMD + serverOptions, name='server')
@@ -114,6 +119,10 @@ def parseArgs(args=None):
                  ' will be incrementally allocated the following ports.')
   p.add_argument('--log-dir', dest='logDir', default='log/',
                  help='Directory to store logs.')
+  p.add_argument('--record', dest='record', action='store_true',
+                 help='Record logs of states and actions.')
+  p.add_argument('--agent-on-ball', dest='agent_on_ball', action='store_true',
+                 help='Agent starts with the ball.')
   return p.parse_args(args=args)
 
 if __name__ == '__main__':

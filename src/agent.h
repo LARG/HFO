@@ -31,6 +31,7 @@
 #include "field_evaluator.h"
 #include "communication.h"
 #include "HFO.hpp"
+#include "feature_extractor.h"
 
 #include <rcsc/player/player_agent.h>
 #include <vector>
@@ -59,31 +60,8 @@ protected:
   virtual FieldEvaluator::ConstPtr createFieldEvaluator() const;
   virtual ActionGenerator::ConstPtr createActionGenerator() const;
 
-  // Updated the state features stored in feature_vec
-  void updateStateFeatures();
-
   // Get the current game status
   hfo_status_t getGameStatus();
-
-  // Encodes an angle feature as the sin and cosine of that angle,
-  // effectively transforming a single angle into two features.
-  void addAngFeature(const rcsc::AngleDeg& ang);
-
-  // Encodes a proximity feature which is defined by a distance as
-  // well as a maximum possible distance, which acts as a
-  // normalizer. Encodes the distance as [0-far, 1-close]. Ignores
-  // distances greater than maxDist or less than 0.
-  void addDistFeature(float dist, float maxDist);
-
-  // Add the angle and distance to the landmark to the feature_vec
-  void addLandmarkFeatures(const rcsc::Vector2D& landmark,
-                           const rcsc::Vector2D& self_pos,
-                           const rcsc::AngleDeg& self_ang);
-
-  // Add features corresponding to another player.
-  void addPlayerFeatures(rcsc::PlayerObject& player,
-                         const rcsc::Vector2D& self_pos,
-                         const rcsc::AngleDeg& self_ang);
 
   // Start the server and listen for a connection.
   void startServer(int server_port=6008);
@@ -91,40 +69,20 @@ protected:
   // Transmit information to the client and ensure it can recieve.
   void clientHandshake();
 
-  // Add a feature without normalizing
-  void addFeature(float val);
-  // Add a feature and normalize to the range [FEAT_MIN, FEAT_MAX]
-  void addNormFeature(float val, float min_val, float max_val);
-
  protected:
-  int numTeammates; // Number of teammates in HFO
-  int numOpponents; // Number of opponents in HFO
-  bool playingOffense; // Are we playing offense or defense?
-  int numFeatures; // Total number of features
-  // Number of features for non-player objects.
-  const static int num_basic_features = 58;
-  // Number of features for each player or opponent in game.
-  const static int features_per_player = 8;
-  int featIndx; // Feature being populated
-  std::vector<float> feature_vec; // Contains the current features
-
-  // Observed values of some parameters.
-  const static float observedSelfSpeedMax   = 0.46;
-  const static float observedPlayerSpeedMax = 0.75;
-  const static float observedStaminaMax     = 8000.;
-  const static float observedBallSpeedMax   = 5.0;
-  float maxHFORadius; // Maximum possible distance in HFO playable region
-  // Useful measures defined by the Server Parameters
-  float pitchLength, pitchWidth, pitchHalfLength, pitchHalfWidth,
-    goalHalfWidth, penaltyAreaLength, penaltyAreaWidth;
+  FeatureExtractor* feature_extractor;
   long lastTrainerMessageTime; // Last time the trainer sent a message
   int server_port; // Port to start the server on
   bool server_running; // Is the server running?
   int sockfd, newsockfd; // Server sockets
+  bool record; // Record states + actions
 
  private:
   bool doPreprocess();
   bool doShoot();
+  bool doPass();
+  bool doDribble();
+  bool doMove();
   bool doForceKick();
   bool doHeardPassReceive();
 

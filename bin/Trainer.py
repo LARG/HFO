@@ -36,6 +36,7 @@ class Trainer(object):
     self._serverPort = args.port + 1 # The port the server is listening on
     self._coachPort = args.port + 2 # The coach port to talk with the server
     self._logDir = args.logDir # Directory to store logs
+    self._record = args.record # Record states + actions
     self._numOffense = args.numOffense # Number offensive players
     self._numDefense = args.numDefense # Number defensive players
     self._maxTrials = args.numTrials # Maximum number of trials to play
@@ -67,6 +68,7 @@ class Trainer(object):
     self._agentNumInt = -1 # Agent's internal team number
     self._agentNumExt = -1 # Agent's external team number
     self._agentServerPort = args.port # Port for agent's server
+    self._agentOnBall = args.agent_on_ball # If true, agent starts with the ball
     # =============== MISC =============== #
     self._offenseTeam = '' # Name of the offensive team
     self._defenseTeam = '' # Name of the defensive team
@@ -107,6 +109,8 @@ class Trainer(object):
                %(self._agentTeam, self._agentNumExt, self._serverPort,
                  self._coachPort, self._logDir, numTeammates, numOpponents,
                  self._agent_play_offense, self._agentServerPort)
+    if self._record:
+      agentCmd += ' --record'
     agentCmd = os.path.join(binary_dir, agentCmd)
     agentCmd = agentCmd.split(' ')
     # Ignore stderr because librcsc continually prints to it
@@ -527,6 +531,9 @@ class Trainer(object):
     # Move the rest of the offense
     for i in xrange(1, self._numOffense + 1):
       self.movePlayer(self._offenseTeam, i, self.getOffensiveResetPosition())
+    # Move the agent to the ball
+    if self._agent and self._agentOnBall:
+      self.movePlayer(self._offenseTeam, 1, self._ballPosition)
     # Move the defensive goalie
     if self._numDefense > 0:
       self.movePlayer(self._defenseTeam, 0, [0.5 * self.PITCH_LENGTH,0])

@@ -66,6 +66,7 @@ usage()
    echo "  --log-dir DIRECTORY          specifies debug log directory (default: /tmp)"
    echo "  --debug-log-ext EXTENSION    specifies debug log file extension (default: .log)"
    echo "  --fullstate FULLSTATE_TYPE   specifies fullstate model handling"
+   echo "  --record                     records actions (default: off)"
    echo "                               FULLSTATE_TYPE is one of [ignore|reference|override].") 1>&2
 }
 
@@ -160,6 +161,10 @@ do
 
     --offline-client-mode)
       offline_mode="on"
+      ;;
+
+    --record)
+      record="--record"
       ;;
 
     --debug)
@@ -277,6 +282,7 @@ opt="${opt} --debug_server_host ${debug_server_host}"
 opt="${opt} --debug_server_port ${debug_server_port}"
 opt="${opt} ${offline_logging}"
 opt="${opt} ${debugopt}"
+opt="${opt} ${record}"
 
 ping -c 1 $host
 

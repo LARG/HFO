@@ -3,14 +3,18 @@ import socket, struct, thread, time
 class HFO_Actions:
   ''' An enum of the possible HFO actions
 
-  Dash(power, relative_direction)
-  Turn(direction)
-  Tackle(direction)
-  Kick(power, direction)
+  [Low-Level] Dash(power, relative_direction)
+  [Low-Level] Turn(direction)
+  [Low-Level] Tackle(direction)
+  [Low-Level] Kick(power, direction)
+  [High-Level] Move(): Reposition player according to strategy
+  [High-Level] Shoot(): Shoot the ball
+  [High-Level] Pass(): Pass to the most open teammate
+  [High-Level] Dribble(): Offensive dribble
   QUIT
 
   '''
-  DASH, TURN, TACKLE, KICK, QUIT = range(5)
+  DASH, TURN, TACKLE, KICK, MOVE, SHOOT, PASS, DRIBBLE, QUIT = range(8)
 
 class HFO_Status:
   ''' Current status of the HFO game. '''

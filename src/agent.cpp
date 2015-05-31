@@ -41,6 +41,7 @@
 #include "sample_communication.h"
 #include "keepaway_communication.h"
 
+#include "bhv_chain_action.h"
 #include "bhv_penalty_kick.h"
 #include "bhv_set_play.h"
 #include "bhv_set_play_kick_in.h"
@@ -48,16 +49,30 @@
 
 #include "bhv_custom_before_kick_off.h"
 #include "bhv_strict_check_shoot.h"
+#include "bhv_basic_move.h"
 
 #include "view_tactical.h"
 
 #include "intention_receive.h"
+#include "lowlevel_feature_extractor.h"
+#include "highlevel_feature_extractor.h"
+
+#include "actgen_cross.h"
+#include "actgen_direct_pass.h"
+#include "actgen_self_pass.h"
+#include "actgen_strict_check_pass.h"
+#include "actgen_short_dribble.h"
+#include "actgen_simple_dribble.h"
+#include "actgen_shoot.h"
+#include "actgen_action_chain_length_filter.h"
 
 #include <rcsc/action/basic_actions.h>
 #include <rcsc/action/bhv_emergency.h>
 #include <rcsc/action/body_go_to_point.h>
 #include <rcsc/action/body_intercept.h>
 #include <rcsc/action/body_kick_one_step.h>
+#include <rcsc/action/body_pass.h>
+#include <rcsc/action/body_dribble.h>
 #include <rcsc/action/neck_scan_field.h>
 #include <rcsc/action/neck_turn_to_ball_or_scan.h>
 #include <rcsc/action/view_synch.h>
@@ -120,11 +135,10 @@ Agent::Agent()
       M_communication(),
       M_field_evaluator(createFieldEvaluator()),
       M_action_generator(createActionGenerator()),
-      numTeammates(-1), numOpponents(-1), numFeatures(-1),
       lastTrainerMessageTime(-1),
-      maxHFORadius(-1),
       server_port(6008),
-      server_running(false)
+      server_running(false),
+      record(false)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
@@ -173,6 +187,7 @@ Agent::Agent()
 }
 
 Agent::~Agent() {
+  delete feature_extractor;
   std::cout << "[Agent Server] Closing Server." << std::endl;
   close(newsockfd);
   close(sockfd);
@@ -184,12 +199,15 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
     // read additional options
     result &= Strategy::instance().init(cmd_parser);
 
+    int numTeammates, numOpponents;
+    bool playingOffense;
     rcsc::ParamMap my_params("Additional options");
     my_params.add()("numTeammates", "", &numTeammates, "number of teammates");
     my_params.add()("numOpponents", "", &numOpponents, "number of opponents");
     my_params.add()("playingOffense", "", &playingOffense,
                     "are we playing offense or defense");
     my_params.add()("serverPort", "", &server_port, "Port to start server on");
+    record = cmd_parser.count("record") > 0;
 
     cmd_parser.parse(my_params);
     if (cmd_parser.count("help") > 0) {
@@ -220,247 +238,10 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
 
     assert(numTeammates >= 0);
     assert(numOpponents >= 0);
-    numFeatures = num_basic_features +
-        features_per_player * (numTeammates + numOpponents);
-    feature_vec.resize(numFeatures);
-
-
-    const ServerParam& SP = ServerParam::i();
-
-    // Grab the field dimensions
-    pitchLength = SP.pitchLength();
-    pitchWidth = SP.pitchWidth();
-    pitchHalfLength = SP.pitchHalfLength();
-    pitchHalfWidth = SP.pitchHalfWidth();
-    goalHalfWidth = SP.goalHalfWidth();
-    penaltyAreaLength = SP.penaltyAreaLength();
-    penaltyAreaWidth = SP.penaltyAreaWidth();
-
-    // Maximum possible radius in HFO
-    maxHFORadius = sqrtf(pitchHalfLength * pitchHalfLength +
-                         pitchHalfWidth * pitchHalfWidth);
-
+    feature_extractor = new LowLevelFeatureExtractor(numTeammates,
+                                                     numOpponents,
+                                                     playingOffense);
     return true;
-}
-
-void Agent::updateStateFeatures() {
-  featIndx = 0;
-  const ServerParam& SP = ServerParam::i();
-  const WorldModel& wm = this->world();
-
-  // ======================== SELF FEATURES ======================== //
-  const SelfObject& self = wm.self();
-  const Vector2D& self_pos = self.pos();
-  const AngleDeg& self_ang = self.body();
-
-  // Absolute (x,y) position of the agent.
-  addFeature(self.posValid() ? FEAT_MAX : FEAT_MIN);
-  // ADD_FEATURE(self_pos.x);
-  // ADD_FEATURE(self_pos.y);
-
-  // Direction and speed of the agent.
-  addFeature(self.velValid() ? FEAT_MAX : FEAT_MIN);
-  if (self.velValid()) {
-    addAngFeature(self_ang - self.vel().th());
-    addNormFeature(self.speed(), 0., observedSelfSpeedMax);
-  } else {
-    addFeature(0);
-    addFeature(0);
-    addFeature(0);
-  }
-
-  // Global Body Angle -- 0:right -90:up 90:down 180/-180:left
-  addAngFeature(self_ang);
-
-  // Neck Angle -- We probably don't need this unless we are
-  // controlling the neck manually.
-  // std::cout << "Face Error: " << self.faceError() << std::endl;
-  // if (self.faceValid()) {
-  //   std::cout << "FaceAngle: " << self.face() << std::endl;
-  // }
-
-  addNormFeature(self.stamina(), 0., observedStaminaMax);
-  addFeature(self.isFrozen() ? FEAT_MAX : FEAT_MIN);
-
-  // Probabilities - Do we want these???
-  // std::cout << "catchProb: " << self.catchProbability() << std::endl;
-  // std::cout << "tackleProb: " << self.tackleProbability() << std::endl;
-  // std::cout << "fouldProb: " << self.foulProbability() << std::endl;
-
-  // Features indicating if we are colliding with an object
-  addFeature(self.collidesWithBall()   ? FEAT_MAX : FEAT_MIN);
-  addFeature(self.collidesWithPlayer() ? FEAT_MAX : FEAT_MIN);
-  addFeature(self.collidesWithPost()   ? FEAT_MAX : FEAT_MIN);
-  addFeature(self.isKickable()         ? FEAT_MAX : FEAT_MIN);
-
-  // inertiaPoint estimates the ball point after a number of steps
-  // self.inertiaPoint(n_steps);
-
-  // ======================== LANDMARK FEATURES ======================== //
-  // Top Bottom Center of Goal
-  rcsc::Vector2D goalCenter(pitchHalfLength, 0);
-  addLandmarkFeatures(goalCenter, self_pos, self_ang);
-  rcsc::Vector2D goalPostTop(pitchHalfLength, -goalHalfWidth);
-  addLandmarkFeatures(goalPostTop, self_pos, self_ang);
-  rcsc::Vector2D goalPostBot(pitchHalfLength, goalHalfWidth);
-  addLandmarkFeatures(goalPostBot, self_pos, self_ang);
-
-  // Top Bottom Center of Penalty Box
-  rcsc::Vector2D penaltyBoxCenter(pitchHalfLength - penaltyAreaLength, 0);
-  addLandmarkFeatures(penaltyBoxCenter, self_pos, self_ang);
-  rcsc::Vector2D penaltyBoxTop(pitchHalfLength - penaltyAreaLength,
-                               -penaltyAreaWidth / 2.);
-  addLandmarkFeatures(penaltyBoxTop, self_pos, self_ang);
-  rcsc::Vector2D penaltyBoxBot(pitchHalfLength - penaltyAreaLength,
-                               penaltyAreaWidth / 2.);
-  addLandmarkFeatures(penaltyBoxBot, self_pos, self_ang);
-
-  // Corners of the Playable Area
-  rcsc::Vector2D centerField(0, 0);
-  addLandmarkFeatures(centerField, self_pos, self_ang);
-  rcsc::Vector2D cornerTopLeft(0, -pitchHalfWidth);
-  addLandmarkFeatures(cornerTopLeft, self_pos, self_ang);
-  rcsc::Vector2D cornerTopRight(pitchHalfLength, -pitchHalfWidth);
-  addLandmarkFeatures(cornerTopRight, self_pos, self_ang);
-  rcsc::Vector2D cornerBotRight(pitchHalfLength, pitchHalfWidth);
-  addLandmarkFeatures(cornerBotRight, self_pos, self_ang);
-  rcsc::Vector2D cornerBotLeft(0, pitchHalfWidth);
-  addLandmarkFeatures(cornerBotLeft, self_pos, self_ang);
-
-  // Distances to the edges of the playable area
-  if (self.posValid()) {
-    // Distance to Left field line
-    addDistFeature(self_pos.x, pitchHalfLength);
-    // Distance to Right field line
-    addDistFeature(pitchHalfLength - self_pos.x, pitchHalfLength);
-    // Distance to top field line
-    addDistFeature(pitchHalfWidth + self_pos.y, pitchWidth);
-    // Distance to Bottom field line
-    addDistFeature(pitchHalfWidth - self_pos.y, pitchWidth);
-  } else {
-    addFeature(0);
-    addFeature(0);
-    addFeature(0);
-    addFeature(0);
-  }
-
-  // ======================== BALL FEATURES ======================== //
-  const BallObject& ball = wm.ball();
-  // Angle and distance to the ball
-  addFeature(ball.rposValid() ? FEAT_MAX : FEAT_MIN);
-  if (ball.rposValid()) {
-    addAngFeature(ball.angleFromSelf());
-    addDistFeature(ball.distFromSelf(), maxHFORadius);
-  } else {
-    addFeature(0);
-    addFeature(0);
-    addFeature(0);
-  }
-  // Velocity and direction of the ball
-  addFeature(ball.velValid() ? FEAT_MAX : FEAT_MIN);
-  if (ball.velValid()) {
-    // SeverParam lists ballSpeedMax a 2.7 which is too low
-    addNormFeature(ball.vel().r(), 0., observedBallSpeedMax);
-    addAngFeature(ball.vel().th());
-  } else {
-    addFeature(0);
-    addFeature(0);
-    addFeature(0);
-  }
-
-  assert(featIndx == num_basic_features);
-
-  // ======================== TEAMMATE FEATURES ======================== //
-  // Vector of PlayerObject pointers sorted by increasing distance from self
-  int detected_teammates = 0;
-  const PlayerPtrCont& teammates = wm.teammatesFromSelf();
-  for (PlayerPtrCont::const_iterator it = teammates.begin();
-       it != teammates.end(); ++it) {
-    PlayerObject* teammate = *it;
-    if (teammate->pos().x > 0 && teammate->unum() > 0 &&
-        detected_teammates < numTeammates) {
-      addPlayerFeatures(*teammate, self_pos, self_ang);
-      detected_teammates++;
-    }
-  }
-  // Add zero features for any missing teammates
-  for (int i=detected_teammates; i<numTeammates; ++i) {
-    for (int j=0; j<features_per_player; ++j) {
-      addFeature(0);
-    }
-  }
-
-  // ======================== OPPONENT FEATURES ======================== //
-  int detected_opponents = 0;
-  const PlayerPtrCont& opponents = wm.opponentsFromSelf();
-  for (PlayerPtrCont::const_iterator it = opponents.begin();
-       it != opponents.end(); ++it) {
-    PlayerObject* opponent = *it;
-    if (opponent->pos().x > 0 && opponent->unum() > 0 &&
-        detected_opponents < numOpponents) {
-      addPlayerFeatures(*opponent, self_pos, self_ang);
-      detected_opponents++;
-    }
-  }
-  // Add zero features for any missing opponents
-  for (int i=detected_opponents; i<numOpponents; ++i) {
-    for (int j=0; j<features_per_player; ++j) {
-      addFeature(0);
-    }
-  }
-
-  assert(featIndx == numFeatures);
-  for (int i=0; i<numFeatures; ++i) {
-    if (feature_vec[i] < FEAT_MIN || feature_vec[i] > FEAT_MAX) {
-      std::cout << "Invalid Feature! Indx:" << i << " Val:" << feature_vec[i] << std::endl;
-      exit(1);
-    }
-  }
-}
-
-void Agent::addAngFeature(const rcsc::AngleDeg& ang) {
-  addFeature(ang.sin());
-  addFeature(ang.cos());
-}
-
-void Agent::addDistFeature(float dist, float maxDist) {
-  float proximity = 1.f - std::max(0.f, std::min(1.f, dist/maxDist));
-  addNormFeature(proximity, 0., 1.);
-}
-
-// Add the angle and distance to the landmark to the feature_vec
-void Agent::addLandmarkFeatures(const rcsc::Vector2D& landmark,
-                                const rcsc::Vector2D& self_pos,
-                                const rcsc::AngleDeg& self_ang) {
-  if (self_pos == Vector2D::INVALIDATED) {
-    addFeature(0);
-    addFeature(0);
-    addFeature(0);
-  } else {
-    Vector2D vec_to_landmark = landmark - self_pos;
-    addAngFeature(self_ang - vec_to_landmark.th());
-    addDistFeature(vec_to_landmark.r(), maxHFORadius);
-  }
-}
-
-void Agent::addPlayerFeatures(rcsc::PlayerObject& player,
-                              const rcsc::Vector2D& self_pos,
-                              const rcsc::AngleDeg& self_ang) {
-  assert(player.posValid());
-  // Angle dist to player.
-  addLandmarkFeatures(player.pos(), self_pos, self_ang);
-  // Player's body angle
-  addAngFeature(player.body());
-  if (player.velValid()) {
-    // Player's speed
-    addNormFeature(player.vel().r(), 0., observedPlayerSpeedMax);
-    // Player's velocity direction
-    addAngFeature(player.vel().th());
-  } else {
-    addFeature(0);
-    addFeature(0);
-    addFeature(0);
-  }
 }
 
 void Agent::startServer(int server_port) {
@@ -503,6 +284,7 @@ void Agent::clientHandshake() {
     error("[Agent Server] Handshake failed. Improper float recieved.");
   }
   // Send the number of features
+  int numFeatures = feature_extractor->getNumFeatures();
   assert(numFeatures > 0);
   if (send(newsockfd, &numFeatures, sizeof(int), 0) < 0) {
     error("[Agent Server] ERROR sending from socket");
@@ -516,22 +298,6 @@ void Agent::clientHandshake() {
     error("[Agent Server] Client incorrectly parsed the number of features.");
   }
   std::cout << "[Agent Server] Handshake complete" << std::endl;
-}
-
-void Agent::addFeature(float val) {
-  assert(featIndx < numFeatures);
-  feature_vec[featIndx++] = val;
-}
-
-void Agent::addNormFeature(float val, float min_val, float max_val) {
-  assert(featIndx < numFeatures);
-  if (val < min_val || val > max_val) {
-    std::cout << "Feature " << featIndx << " Violated Feature Bounds: " << val
-              << " Expected min/max: [" << min_val << ", " << max_val << "]" << std::endl;
-    val = std::min(std::max(val, min_val), max_val);
-  }
-  feature_vec[featIndx++] = ((val - min_val) / (max_val - min_val))
-      * (FEAT_MAX - FEAT_MIN) + FEAT_MIN;
 }
 
 hfo_status_t Agent::getGameStatus() {
@@ -572,9 +338,15 @@ void Agent::actionImpl() {
   }
 
   // Update and send the state features
-  updateStateFeatures();
-  if (send(newsockfd, &(feature_vec.front()),
-           numFeatures * sizeof(float), 0) < 0) {
+  const std::vector<float>& features =
+      feature_extractor->ExtractFeatures(this->world());
+  if (record) {
+    elog.addText(Logger::WORLD, "GameStatus %d", game_status);
+    elog.flush();
+    feature_extractor->LogFeatures();
+  }
+  if (send(newsockfd, &(features.front()),
+           features.size() * sizeof(float), 0) < 0) {
     error("[Agent Server] ERROR sending state features from socket");
   }
 
@@ -596,6 +368,18 @@ void Agent::actionImpl() {
     case KICK:
       this->doKick(action.arg1, action.arg2);
       break;
+    case MOVE:
+      this->doMove();
+      break;
+    case SHOOT:
+      this->doShoot();
+      break;
+    case PASS:
+      this->doPass();
+      break;
+    case DRIBBLE:
+      this->doDribble();
+      break;
     case QUIT:
       std::cout << "[Agent Server] Got quit from agent." << std::endl;
       exit(0);
@@ -608,68 +392,6 @@ void Agent::actionImpl() {
   // For now let's not worry about turning the neck or setting the vision.
   this->setViewAction(new View_Tactical());
   this->setNeckAction(new Neck_TurnToBallOrScan());
-
-  // ======================== Actions ======================== //
-  // 0: Dash(power, relative_direction)
-  // 1: Turn(direction)
-  // 2: Tackle(direction)
-  // 3: Kick(power, direction)
-
-  // Dash with power [-100,100]. Negative values move backwards. The
-  // relative_dir [-180,180] is the direction to dash in. This should
-  // be set every step.
-  // this->doDash(1., 0);
-  // std::cout << " DefaultDashPowerRate: " << SP.defaultDashPowerRate()
-  //           << " minDashAngle: " << SP.minDashAngle()
-  //           << " maxDashAngle: " << SP.maxDashAngle()
-  //           << " dashAngleStep: " << SP.dashAngleStep()
-  //           << " sideDashRate: " << SP.sideDashRate()
-  //           << " backDashRate: " << SP.backDashRate()
-  //           << " maxDashPower: " << SP.maxDashPower()
-  //           << " minDashPower: " << SP.minDashPower() << std::endl;
-
-  // Tackle player for ball. If player config version is greater than
-  // 12 (we are 14) then power_or_dir is actually just direction.
-  // Power_dir [-180,180] direction of tackle.
-  // Foul - should we intentionally foul? No for now...
-  // this->doTackle(0., false);
-  // std::cout << "PlayerConfigVersion: " << this->config().version() << std::endl;
-  // std::cout << " tackleDist: " << SP.tackleDist()
-  //           << " tackleBackDist: " << SP.tackleBackDist()
-  //           << " tackleWidth: " << SP.tackleWidth()
-  //           << " tackleExponent: " << SP.tackleExponent()
-  //           << " tackleCycles: " << SP.tackleCycles()
-  //           << " tacklePowerRate: " << SP.tacklePowerRate()
-  //           << " maxTacklePower: " << SP.maxTacklePower()
-  //           << " maxBackTacklePower: " << SP.maxBackTacklePower()
-  //           << " tackleRandFactor: " << SP.tackleRandFactor() << std::endl;
-
-  // Kick with power [0,100] and direction [-180,180] (left to right)
-  // this->doKick(100., 0);
-
-  // ======================== IGNORED ACTIONS ======================== //
-  // Only available to goalie.
-  // this->doCatch();
-  // Not sure if we want to point yet...
-  // this->doPointto(x,y);
-  // this->doPointtoOff();
-  // Attention is mainly used for communication. Lets not worry about it for now.
-  // this->doAttentionto(...);
-  // this->doAttentionOff();
-  // Intention seems to be a way of queing actions. Lets not worry about it.
-  // this->setInetion(...);
-  // this->doIntention();
-  // Dribble is omitted because it consists of dashes, turns, and kicks
-
-  // sleep(1);
-  // static int i=0;
-  // i++;
-  // if (i % 2 == 0) {
-  //   this->doDash(10., 0);
-  // } else {
-    // this->doKick(2., 0);
-    // this->doTurn(5);
-  // }
 }
 
 /*-------------------------------------------------------------------*/
@@ -1004,6 +726,53 @@ Agent::doShoot()
     return false;
 }
 
+
+/*-------------------------------------------------------------------*/
+/*!
+
+*/
+bool
+Agent::doPass()
+{
+    rcsc::Body_Pass pass;
+    pass.get_best_pass(this->world(), NULL, NULL, NULL);
+    pass.execute(this);
+    return true;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+*/
+bool
+Agent::doDribble()
+{
+  Strategy::instance().update( world() );
+  M_field_evaluator = createFieldEvaluator();
+  CompositeActionGenerator * g = new CompositeActionGenerator();
+  g->addGenerator(new ActGen_MaxActionChainLengthFilter(new ActGen_ShortDribble(), 1));
+  M_action_generator = ActionGenerator::ConstPtr(g);
+  ActionChainHolder::instance().setFieldEvaluator( M_field_evaluator );
+  ActionChainHolder::instance().setActionGenerator( M_action_generator );
+  doPreprocess();
+  ActionChainHolder::instance().update( world() );
+  Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this);
+  return true;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+
+*/
+bool
+Agent::doMove()
+{
+  Strategy::instance().update( world() );
+  int role_num = Strategy::i().roleNumber(world().self().unum());
+  Bhv_BasicMove().execute(this);
+  return true;
+}
+
 /*-------------------------------------------------------------------*/
 /*!
 
@@ -1127,15 +896,6 @@ Agent::createFieldEvaluator() const
 /*-------------------------------------------------------------------*/
 /*!
 */
-#include "actgen_cross.h"
-#include "actgen_direct_pass.h"
-#include "actgen_self_pass.h"
-#include "actgen_strict_check_pass.h"
-#include "actgen_short_dribble.h"
-#include "actgen_simple_dribble.h"
-#include "actgen_shoot.h"
-#include "actgen_action_chain_length_filter.h"
-
 ActionGenerator::ConstPtr
 Agent::createActionGenerator() const
 {
