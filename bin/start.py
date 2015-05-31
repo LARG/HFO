@@ -104,9 +104,9 @@ def parseArgs(args=None):
   p.add_argument('--frames', dest='numFrames', type=int, default=-1,
                  help='Number of frames to run for')
   p.add_argument('--offense', dest='numOffense', type=int, default=4,
-                 help='Number of offensive players')
+                 choices=xrange(1,11), help='Number of offensive players')
   p.add_argument('--defense', dest='numDefense', type=int, default=4,
-                 help='Number of defensive players')
+                 choices=xrange(0,12), help='Number of defensive players')
   p.add_argument('--play-defense', dest='play_offense',
                  action='store_false', default=True,
                  help='Put the learning agent on defensive team')
