@@ -56,6 +56,8 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
                     args.logDir, args.logDir)
   if args.sync:
     serverOptions += ' server::synch_mode=on'
+  if args.fullstate:
+    serverOptions += ' server::fullstate_l=on server::fullstate_r=on'
   team1, team1Cmd = getAgentDirCmd(binary_dir, team1, server_port, coach_port,
                                    args.logDir, args.record)
   team2, team2Cmd = getAgentDirCmd(binary_dir, team2, server_port, coach_port,
@@ -123,6 +125,8 @@ def parseArgs(args=None):
                  help='Record logs of states and actions.')
   p.add_argument('--agent-on-ball', dest='agent_on_ball', action='store_true',
                  help='Agent starts with the ball.')
+  p.add_argument('--fullstate', dest='fullstate', action='store_true',
+                 help='Server provides full-state information to agents.')
   return p.parse_args(args=args)
 
 if __name__ == '__main__':
