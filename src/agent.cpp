@@ -137,8 +137,7 @@ Agent::Agent()
       M_action_generator(createActionGenerator()),
       lastTrainerMessageTime(-1),
       server_port(6008),
-      server_running(false),
-      record(false)
+      server_running(false)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
@@ -202,24 +201,34 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
     int numTeammates, numOpponents;
     bool playingOffense;
     rcsc::ParamMap my_params("Additional options");
-    my_params.add()("numTeammates", "", &numTeammates, "number of teammates");
-    my_params.add()("numOpponents", "", &numOpponents, "number of opponents");
-    my_params.add()("playingOffense", "", &playingOffense,
-                    "are we playing offense or defense");
-    my_params.add()("serverPort", "", &server_port, "Port to start server on");
-    record = cmd_parser.count("record") > 0;
-
+    my_params.add()
+        ("numTeammates", "", &numTeammates)
+        ("numOpponents", "", &numOpponents)
+        ("playingOffense", "", &playingOffense)
+        ("serverPort", "", &server_port);
     cmd_parser.parse(my_params);
     if (cmd_parser.count("help") > 0) {
-        my_params.printHelp( std::cout );
+        my_params.printHelp(std::cout);
         return false;
     }
-
     if (cmd_parser.failed()) {
         std::cerr << "player: ***WARNING*** detected unsuppprted options: ";
         cmd_parser.print( std::cerr );
         std::cerr << std::endl;
     }
+
+#ifdef ELOG
+#else
+    const std::list<std::string>& args = cmd_parser.args();
+    if (std::find(args.begin(), args.end(), "--record") != args.end()) {
+      std::cerr
+          << "[Agent Client] ERROR: Action recording requested but no supported."
+          << " To enable action recording, install https://github.com/mhauskn/librcsc"
+          << " and recompile with -DELOG. See CMakeLists.txt"
+          << std::endl;
+      return false;
+    }
+#endif
 
     if (!result) {
         return false;
@@ -340,11 +349,15 @@ void Agent::actionImpl() {
   // Update and send the state features
   const std::vector<float>& features =
       feature_extractor->ExtractFeatures(this->world());
-  if (record) {
+
+#ifdef ELOG
+  if (config().record()) {
     elog.addText(Logger::WORLD, "GameStatus %d", game_status);
     elog.flush();
     feature_extractor->LogFeatures();
   }
+#endif
+
   if (send(newsockfd, &(features.front()),
            features.size() * sizeof(float), 0) < 0) {
     error("[Agent Server] ERROR sending state features from socket");

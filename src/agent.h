@@ -75,7 +75,6 @@ protected:
   int server_port; // Port to start the server on
   bool server_running; // Is the server running?
   int sockfd, newsockfd; // Server sockets
-  bool record; // Record states + actions
 
  private:
   bool doPreprocess();

@@ -4,6 +4,8 @@ project(hfo)
 # Change these to reflect the location of your librcsc-4.1.0 install
 set(LIBRCSC_INCLUDE ~/.local/include)
 set(LIBRCSC_LINK ~/.local/lib)
+# Add this definition if using Librcsc from https://github.com/mhauskn/librcsc
+# add_definitions(-DELOG)
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin)

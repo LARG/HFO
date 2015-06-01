@@ -31,6 +31,7 @@ FeatureExtractor::FeatureExtractor() :
 FeatureExtractor::~FeatureExtractor() {}
 
 void FeatureExtractor::LogFeatures() {
+#ifdef ELOG
   assert(feature_vec.size() == numFeatures);
   std::stringstream ss;
   for (int i=0; i<numFeatures; ++i) {
@@ -38,6 +39,7 @@ void FeatureExtractor::LogFeatures() {
   }
   elog.addText(Logger::WORLD, "StateFeatures %s", ss.str().c_str());
   elog.flush();
+#endif
 }
 
 void FeatureExtractor::addAngFeature(const rcsc::AngleDeg& ang) {
