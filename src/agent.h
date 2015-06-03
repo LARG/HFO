@@ -69,12 +69,17 @@ protected:
   // Transmit information to the client and ensure it can recieve.
   void clientHandshake();
 
+  // Returns the feature extractor corresponding to the feature_set_t
+  FeatureExtractor* getFeatureExtractor(feature_set_t feature_set);
+
  protected:
   FeatureExtractor* feature_extractor;
   long lastTrainerMessageTime; // Last time the trainer sent a message
   int server_port; // Port to start the server on
   bool server_running; // Is the server running?
   int sockfd, newsockfd; // Server sockets
+  int num_teammates, num_opponents;
+  bool playing_offense;
 
  private:
   bool doPreprocess();

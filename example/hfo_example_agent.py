@@ -12,8 +12,9 @@ if __name__ == '__main__':
     exit()
   # Create the HFO Environment
   hfo = hfo.HFOEnvironment()
-  # Connect to the agent server
-  hfo.connectToAgentServer()
+  # Connect to the agent server on port 6000 with the specified
+  # feature set. See feature sets in hfo.py/hfo.hpp.
+  hfo.connectToAgentServer(6000, HFO_Features.HIGH_LEVEL_FEATURE_SET)
   # Play 5 episodes
   for episode in xrange(5):
     status = HFO_Status.IN_GAME
@@ -21,7 +22,7 @@ if __name__ == '__main__':
       # Grab the state features from the environment
       features = hfo.getState()
       # Take an action and get the current game status
-      status = hfo.act((HFO_Actions.DASH, 100, 0))
+      status = hfo.act((HFO_Actions.DASH, 0, 0))
     print 'Episode', episode, 'ended with',
     # Check what the outcome of the episode was
     if status == HFO_Status.GOAL:

@@ -137,7 +137,10 @@ Agent::Agent()
       M_action_generator(createActionGenerator()),
       lastTrainerMessageTime(-1),
       server_port(6008),
-      server_running(false)
+      server_running(false),
+      num_teammates(-1),
+      num_opponents(-1),
+      playing_offense(false)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
@@ -198,13 +201,11 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
     // read additional options
     result &= Strategy::instance().init(cmd_parser);
 
-    int numTeammates, numOpponents;
-    bool playingOffense;
     rcsc::ParamMap my_params("Additional options");
     my_params.add()
-        ("numTeammates", "", &numTeammates)
-        ("numOpponents", "", &numOpponents)
-        ("playingOffense", "", &playingOffense)
+        ("numTeammates", "", &num_teammates)
+        ("numOpponents", "", &num_opponents)
+        ("playingOffense", "", &playing_offense)
         ("serverPort", "", &server_port);
     cmd_parser.parse(my_params);
     if (cmd_parser.count("help") > 0) {
@@ -245,11 +246,8 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
                   << std::endl;
     }
 
-    assert(numTeammates >= 0);
-    assert(numOpponents >= 0);
-    feature_extractor = new LowLevelFeatureExtractor(numTeammates,
-                                                     numOpponents,
-                                                     playingOffense);
+    assert(num_teammates >= 0);
+    assert(num_opponents >= 0);
     return true;
 }
 
@@ -292,6 +290,13 @@ void Agent::clientHandshake() {
   if (abs(f - 5432.321) > 1e-4) {
     error("[Agent Server] Handshake failed. Improper float recieved.");
   }
+  // Recieve the feature set to use
+  feature_set_t feature_set;
+  if (recv(newsockfd, &feature_set, sizeof(int), 0) < 0) {
+    error("[Agent Server] ERROR recv from socket");
+  }
+  // Create the corresponding FeatureExtractor
+  feature_extractor = getFeatureExtractor(feature_set);
   // Send the number of features
   int numFeatures = feature_extractor->getNumFeatures();
   assert(numFeatures > 0);
@@ -307,6 +312,27 @@ void Agent::clientHandshake() {
     error("[Agent Server] Client incorrectly parsed the number of features.");
   }
   std::cout << "[Agent Server] Handshake complete" << std::endl;
+}
+
+FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx) {
+  if (feature_extractor != NULL) {
+    delete feature_extractor;
+  }
+
+  switch (feature_set_indx) {
+    case LOW_LEVEL_FEATURE_SET:
+      return new LowLevelFeatureExtractor(num_teammates, num_opponents,
+                                          playing_offense);
+      break;
+    case HIGH_LEVEL_FEATURE_SET:
+      return new HighLevelFeatureExtractor(num_teammates, num_opponents,
+                                           playing_offense);
+      break;
+    default:
+      std::cerr << "[Feature Extractor] ERROR Unrecognized Feature set index: "
+                << feature_set_indx << std::endl;
+      exit(1);
+  }
 }
 
 hfo_status_t Agent::getGameStatus() {

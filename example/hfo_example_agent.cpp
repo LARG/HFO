@@ -10,8 +10,9 @@ using namespace std;
 int main() {
   // Create the HFO environment
   HFOEnvironment hfo;
-  // Connect the agent's server
-  hfo.connectToAgentServer(6000);
+  // Connect the agent's server on the given port with the given
+  // feature set.  See possible feature sets in src/HFO.hpp.
+  hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
   // Play 5 episodes
   for (int episode=0; episode<5; episode++) {
     hfo_status_t status = IN_GAME;
@@ -19,7 +20,7 @@ int main() {
       // Grab the vector of state features for the current state
       const std::vector<float>& feature_vec = hfo.getState();
       // Create a dash action
-      Action a = {DASH, 100., 0.};
+      Action a = {DASH, 0., 0.};
       // Perform the dash and recieve the current game status
       status = hfo.act(a);
     }

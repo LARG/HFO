@@ -24,7 +24,8 @@ HFOEnvironment::~HFOEnvironment() {
   close(sockfd);
 }
 
-void HFOEnvironment::connectToAgentServer(int server_port) {
+  void HFOEnvironment::connectToAgentServer(int server_port,
+                                            feature_set_t feature_set) {
   std::cout << "[Agent Client] Connecting to Agent Server on port "
             << server_port << std::endl;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,7 +50,7 @@ void HFOEnvironment::connectToAgentServer(int server_port) {
     sleep(1);
   }
   std::cout << "[Agent Client] Connected" << std::endl;
-  handshakeAgentServer();
+  handshakeAgentServer(feature_set);
   // Get the initial game state
   feature_vec.resize(numFeatures);
   if (recv(sockfd, &(feature_vec.front()), numFeatures*sizeof(float), 0) < 0) {
@@ -57,7 +58,7 @@ void HFOEnvironment::connectToAgentServer(int server_port) {
   }
 }
 
-void HFOEnvironment::handshakeAgentServer() {
+void HFOEnvironment::handshakeAgentServer(feature_set_t feature_set) {
   // Recieve float 123.2345
   float f;
   if (recv(sockfd, &f, sizeof(float), 0) < 0) {
@@ -70,6 +71,10 @@ void HFOEnvironment::handshakeAgentServer() {
   // Send float 5432.321
   f = 5432.321;
   if (send(sockfd, &f, sizeof(float), 0) < 0) {
+    error("[Agent Client] ERROR sending from socket");
+  }
+  // Send the feature set request
+  if (send(sockfd, &feature_set, sizeof(int), 0) < 0) {
     error("[Agent Client] ERROR sending from socket");
   }
   // Recieve the number of features

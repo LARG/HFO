@@ -1,5 +1,12 @@
 import socket, struct, thread, time
 
+class HFO_Features:
+  ''' An enum of the possible HFO feature sets. For descriptions see
+  https://github.com/mhauskn/HFO/blob/master/doc/manual.pdf
+  '''
+  LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = range(2)
+
+
 class HFO_Actions:
   ''' An enum of the possible HFO actions
 
@@ -31,7 +38,8 @@ class HFOEnvironment(object):
     self.numFeatures = None # Given by the server in handshake
     self.features = None # The state features
 
-  def connectToAgentServer(self, server_port=6000):
+  def connectToAgentServer(self, server_port=6000,
+                           feature_set=HFO_Features.HIGH_LEVEL_FEATURE_SET):
     '''Connect to the server that controls the agent on the specified port. '''
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print '[Agent Client] Connecting to Agent Server on port', server_port
@@ -44,7 +52,7 @@ class HFOEnvironment(object):
       else:
         break
     print '[Agent Client] Connected'
-    self.handshakeAgentServer()
+    self.handshakeAgentServer(feature_set)
     # Get the initial state
     state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
     if not state_data:
@@ -53,7 +61,7 @@ class HFOEnvironment(object):
       exit(1)
     self.features = struct.unpack('f'*self.numFeatures, state_data)
 
-  def handshakeAgentServer(self):
+  def handshakeAgentServer(self, feature_set):
     '''Handshake with the agent's server. '''
     # Recieve float 123.2345
     data = self.socket.recv(struct.calcsize("f"))
@@ -61,6 +69,8 @@ class HFOEnvironment(object):
     assert abs(f - 123.2345) < 1e-4, "Float handshake failed"
     # Send float 5432.321
     self.socket.send(struct.pack("f", 5432.321))
+    # Send the feature set request
+    self.socket.send(struct.pack("i", feature_set))
     # Recieve the number of features
     data = self.socket.recv(struct.calcsize("i"))
     self.numFeatures = struct.unpack("i", data)[0]

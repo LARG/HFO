@@ -5,6 +5,12 @@
 #include "feature_extractor.h"
 #include <vector>
 
+/**
+ * This feature extractor creates the high level feature set used by
+ * Barrett et al.
+ * (http://www.cs.utexas.edu/~sbarrett/publications/details-THESIS14-Barrett.html)
+ * pages 159-160.
+ */
 class HighLevelFeatureExtractor : public FeatureExtractor {
 public:
   HighLevelFeatureExtractor(int num_teammates, int num_opponents,
