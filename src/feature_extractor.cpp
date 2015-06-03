@@ -106,9 +106,138 @@ void FeatureExtractor::addNormFeature(float val, float min_val, float max_val) {
 void FeatureExtractor::checkFeatures() {
   assert(feature_vec.size() == numFeatures);
   for (int i=0; i<numFeatures; ++i) {
+    if (feature_vec[i] == FEAT_INVALID) {
+      continue;
+    }
     if (feature_vec[i] < FEAT_MIN || feature_vec[i] > FEAT_MAX) {
       std::cout << "Invalid Feature! Indx:" << i << " Val:" << feature_vec[i] << std::endl;
       exit(1);
     }
   }
+}
+
+bool FeatureExtractor::valid(const rcsc::PlayerObject& player) {
+  // Check if the player is too far left
+  const rcsc::Vector2D& pos = player.pos();
+  if (!player.posValid() ||
+      pos.x < -ALLOWED_PITCH_FRAC * rcsc::ServerParam::i().pitchHalfLength()) {
+    return false;
+  }
+  return player.unum() > 0 && pos.isValid();
+}
+
+float FeatureExtractor::angleToPoint(const rcsc::Vector2D &self,
+                                     const rcsc::Vector2D &point) {
+  return (point - self).th().radian();
+}
+
+void FeatureExtractor::angleDistToPoint(const rcsc::Vector2D &self,
+                                        const rcsc::Vector2D &point,
+                                        float &ang, float &dist) {
+  Vector2D d = point - self;
+  ang = d.th().radian();
+  dist = d.r();
+}
+
+float FeatureExtractor::angleBetween3Points(const rcsc::Vector2D &point1,
+                                            const rcsc::Vector2D &centerPoint,
+                                            const rcsc::Vector2D &point2) {
+  Vector2D diff1 = point1 - centerPoint;
+  Vector2D diff2 = point2 - centerPoint;
+  float angle1 = atan2(diff1.y,diff1.x);
+  float angle2 = atan2(diff2.y,diff2.x);
+  return fabs(angle1 - angle2);
+}
+
+void FeatureExtractor::calcClosestOpp(const rcsc::WorldModel &wm,
+                                      const rcsc::Vector2D &point,
+                                      float &ang, float &minDist) {
+  minDist = std::numeric_limits<float>::max();
+  const PlayerCont& opps = wm.opponents();
+  for (PlayerCont::const_iterator it=opps.begin(); it != opps.end(); ++it) {
+    const PlayerObject& opponent = *it;
+    if (valid(opponent)) {
+      float dist;
+      float th;
+      angleDistToPoint(point, opponent.pos(), th, dist);
+      if (dist < minDist) {
+        minDist = dist;
+        ang = th;
+      }
+    }
+  }
+}
+
+float FeatureExtractor::calcLargestTeammateAngle(const rcsc::WorldModel &wm,
+                                                 const rcsc::Vector2D &self,
+                                                 const Vector2D &teammate) {
+  float angTeammate = angleToPoint(self, teammate);
+  float angTop = angTeammate + M_PI / 4;
+  float angBot = angTeammate - M_PI / 4;
+  return calcLargestOpenAngle(wm, self, angTop, angBot, (self - teammate).r());
+}
+
+float FeatureExtractor::calcLargestGoalAngle(const rcsc::WorldModel &wm,
+                                             const rcsc::Vector2D &self) {
+  const rcsc::ServerParam & SP = rcsc::ServerParam::i();
+  Vector2D goalPostTop(SP.pitchHalfLength(), SP.goalHalfWidth());
+  Vector2D goalPostBot(SP.pitchHalfLength(), -SP.goalHalfWidth());
+  float angTop = angleToPoint(self, goalPostTop);
+  float angBot = angleToPoint(self, goalPostBot);
+  //std::cout << "starting: " << RAD_T_DEG * angTop << " " << RAD_T_DEG * angBot << std::endl;
+  float res = calcLargestOpenAngle(wm, self, angTop, angBot, 99999);
+  //std::cout << angTop << " " << angBot << " | " << res << std::endl;
+  return res;
+}
+
+float FeatureExtractor::calcLargestOpenAngle(const rcsc::WorldModel &wm,
+                                             const rcsc::Vector2D &self,
+                                             float angTop, float angBot,
+                                             float maxDist) {
+  const rcsc::ServerParam & SP = rcsc::ServerParam::i();
+  std::vector<OpenAngle> openAngles;
+  openAngles.push_back(OpenAngle(angBot,angTop));
+  const PlayerCont& opps = wm.opponents();
+  for (PlayerCont::const_iterator it=opps.begin(); it != opps.end(); ++it) {
+    const PlayerObject& opp = *it;
+    if (valid(opp)) {
+      float oppAngle, oppDist;
+      angleDistToPoint(self, opp.pos(), oppAngle, oppDist);
+      // theta = arctan (opponentWidth / opponentDist)
+      float halfWidthAngle = atan2(SP.defaultKickableArea() * 0.5, oppDist);
+      //float oppAngleBottom = oppAngle;
+      //float oppAngleTop = oppAngle;
+      float oppAngleBottom = oppAngle - halfWidthAngle;
+      float oppAngleTop = oppAngle + halfWidthAngle;
+      //std::cout << "    to split? " << oppDist << " " << maxDist << std::endl;
+      if (oppDist < maxDist) {
+        splitAngles(openAngles,oppAngleBottom,oppAngleTop);
+      }
+    }
+  }
+  float largestOpening = 0;
+  for (uint i = 0; i < openAngles.size(); ++i) {
+    OpenAngle &open = openAngles[i];
+    //std::cout << "  opening: " << RAD_T_DEG * open.first << " " << RAD_T_DEG * open.second << std::endl;
+    float opening = open.second - open.first;
+    if (opening > largestOpening) {
+      largestOpening = opening;
+    }
+  }
+  return largestOpening;
+}
+
+void FeatureExtractor::splitAngles(std::vector<OpenAngle> &openAngles,
+                                   float oppAngleBottom, float oppAngleTop) {
+  std::vector<OpenAngle> resAngles;
+  for (uint i = 0; i < resAngles.size(); ++i) {
+    OpenAngle& open = resAngles[i];
+    if ((oppAngleTop < open.first) || (oppAngleBottom > open.second)) {
+      resAngles.push_back(open);
+    } else {
+      resAngles.push_back(OpenAngle(open.first, oppAngleBottom));
+      resAngles.push_back(OpenAngle(oppAngleTop, open.second));
+    }
+  }
+  openAngles = resAngles;
 }

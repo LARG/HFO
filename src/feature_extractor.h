@@ -4,6 +4,8 @@
 #include <rcsc/player/player_agent.h>
 #include <vector>
 
+typedef std::pair<float, float> OpenAngle;
+
 class FeatureExtractor {
 public:
   FeatureExtractor();
@@ -17,6 +19,54 @@ public:
 
   // How many features are there?
   inline int getNumFeatures() { return numFeatures; }
+
+public:
+  // Determines if a player is a part of the HFO game or is inactive.
+  static bool valid(const rcsc::PlayerObject& player);
+
+  // Returns the angle (in radians) from self to a given point
+  static float angleToPoint(const rcsc::Vector2D &self,
+                            const rcsc::Vector2D &point);
+
+  // Returns the angle (in radians) and distance from self to a given point
+  static void angleDistToPoint(const rcsc::Vector2D &self,
+                               const rcsc::Vector2D &point,
+                               float &ang, float &dist);
+
+  // Returns the angle between three points: Example opponent, self,
+  // goal center
+  static float angleBetween3Points(const rcsc::Vector2D &point1,
+                                   const rcsc::Vector2D &centerPoint,
+                                   const rcsc::Vector2D &point2);
+
+  // Find the opponent closest to the given point. Returns the
+  // distance and angle (in radians) from point to the closest
+  // opponent.
+  static void calcClosestOpp(const rcsc::WorldModel &wm,
+                             const rcsc::Vector2D &point,
+                             float &ang, float &dist);
+
+  // Returns the largest open (in terms of opponents) angle (radians)
+  // from self to the slice defined by [angBot, angTop].
+  static float calcLargestOpenAngle(const rcsc::WorldModel &wm,
+                                    const rcsc::Vector2D &self,
+                                    float angTop, float angBot, float maxDist);
+
+  // Returns the angle (in radians) corresponding to largest open shot
+  // on the goal.
+  static float calcLargestGoalAngle(const rcsc::WorldModel &wm,
+                                    const rcsc::Vector2D &self);
+
+  // Returns the largest open angle from self to a given teammate's
+  // position.
+  static float calcLargestTeammateAngle(const rcsc::WorldModel &wm,
+                                        const rcsc::Vector2D &self,
+                                        const rcsc::Vector2D &teammate);
+
+  // Helper function to split the open angles by the opponent angles
+  static void splitAngles(std::vector<OpenAngle> &openAngles,
+                          float oppAngleBottom,
+                          float oppAngleTop);
 
 protected:
   // Encodes an angle feature as the sin and cosine of that angle,
@@ -49,10 +99,15 @@ protected:
   void checkFeatures();
 
 protected:
+  const static float RAD_T_DEG = 180.0 / M_PI;
+  const static float ALLOWED_PITCH_FRAC = 0.33;
+
   int featIndx;
   std::vector<float> feature_vec; // Contains the current features
   const static float FEAT_MIN = -1;
   const static float FEAT_MAX = 1;
+  const static float FEAT_INVALID = -2;
+
   int numFeatures; // Total number of features
   // Observed values of some parameters.
   const static float observedSelfSpeedMax   = 0.46;
