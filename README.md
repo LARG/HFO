@@ -29,3 +29,6 @@ Example C++ and Python agents are provided in the `example` directory.
 To start the HFO server run: `./bin/start.py` then start an example agent: `./example/hfo_example_agent` or start them both at the same time: 
 
 `(./bin/start.py &) && ./example/hfo_example_agent`
+
+## Documentation
+The state and action spaces provided by the HFO domain are documented in the [manual](doc/manual.pdf).
