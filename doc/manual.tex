@@ -1,6 +1,6 @@
 \documentclass[12pt]{article}
 
-\usepackage{hyperref}
+\usepackage{hyperref,graphicx}
 \usepackage{fullpage}
 
 \title{Half Field Offense \\ Technical Manual}
@@ -15,8 +15,55 @@
 
 This document describes the state and action spaces of the HFO domain.
 
-\section{State Space}
+\section{State Spaces}
 
+The HFO domains provides a choice between a low-level feature set and
+a higher-level feature set. Selecting between the different feature
+sets is accomplished when connecting to the agent server. See
+\verb|examples/hfo_example_agent.cpp| and 
+\verb|examples/hfo_example_agent.py| for examples.
+
+\subsection{High Level Feature Set}
+A set of high-level features is provided following the example given
+by Barrett et al. pp. 159-160 \cite{THESIS14-Barrett}. Barrett writes
+``There are many ways to represent the state of a game of half field
+offense.  Ideally, we want a compact representation that allows the
+agent to learn quickly by generalizing its knowledge about a state to
+similar states without over-constraining the policy.'' The following
+features are used:
+
+\subsubsection{High Level State Feature List}
+\begin{itemize}
+\item{\textbf{X position} - The agent’s x position on the field.}
+\item{\textbf{Y position} - The agent’s y position on the field.}
+\item{\textbf{Orientation} - The direction that the agent is facing.}
+\item{\textbf{Goal opening angle} - The size of the largest open angle
+  of the agent to the goal, shown as $\theta_g$ in Figure
+  \ref{fig:openAngle}.}
+\item{\textbf{Teammate i's goal opening angle} - For each teammate i:
+  the i’s goal opening angle}
+\item{\textbf{Distance to Opponent} - If an opponent is present,
+  distance to the closest opponent. This feature is absent if there
+  are no opponents.}
+\item{\textbf{Distance from teammate i to opponent} - For each teammate
+  i: the distance from the teammate to the closest opponent. This
+  feature is absent if there are no opponents.}
+\item{\textbf{Pass opening angle i} - For each teammate i: the open
+  angle available to pass to teammate i. Shown as $\theta_p$ in Figure
+  \ref{fig:openAngle}.}
+\end{itemize}
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics[width=.75\textwidth]{figures/openAngle}
+  \caption{Open angle from ball to the goal $\theta_g$ avoiding the
+    blue goalie and the open angle from the ball to the yellow
+    teammate $\theta_p$. Figure reproduced with permission from Samuel
+    Barrett.}
+  \label{fig:openAngle}
+\end{figure}
+
+\subsection {Low Level Feature Set}
 The state features used by HFO are designed with the mindset of
 providing an overcomplete, basic, egocentric viewpoint. The features
 are basic in the sense that they provide distances and angles to
@@ -27,12 +74,12 @@ goalkeeper.
 All features are encoded as floating point values normalized to the
 range of [-1,1]. Different types of features are discussed next.
 
-\subsection{Boolean Features}
+\subsubsection{Boolean Features}
 
 Boolean features assume either the minimum feature value of -1 or the
 maximum feature value of 1.
 
-\subsection{Valid Features}
+\subsubsection{Valid Features}
 
 Since feature information is attained from the Agent's world-model, it
 is possible that, the world model's information may be stale or
@@ -47,7 +94,7 @@ zero if an inconsistency is detected. For example, if the world model
 detects that the agent's velocity is invalid, the feature that encodes
 the magnitude of self velocity will be set to zero.
 
-\subsection{Angular Features}
+\subsubsection{Angular Features}
 
 \textit{Angular features} (e.g. the angle to the ball), are encoded as two
 floating point numbers -- the $sin(\theta)$ and $cos(\theta)$ where
@@ -59,7 +106,7 @@ discontinuity that when normalized, could cause the feature value to
 flip between the maximum and minimum value in response to small
 changes in $\theta$.
 
-\subsection{Distance Features}
+\subsubsection{Distance Features}
 
 \textit{Distance features} encode the distance to objects of
 interest. Unless otherwise indicated, they are normalized against the
@@ -68,7 +115,7 @@ maximum possible distance in the HFO playfield (defined as $\sqrt{l^2
 playfield). A distance of zero will be encoded with the minimum
 feature value of -1 while a maximum distance will be encoded with 1.
 
-\subsection{Landmark Features}
+\subsubsection{Landmark Features}
 
 Landmark features encode the relative angle and distance to a landmark
 of interest. Each landmark feature consists of three floating point
@@ -76,7 +123,7 @@ values, two to encode the angle to the landmark and one to encode the
 distance. Note that if the agent's self position is invalid, then the
 landmark feature values are zeroed.
 
-\subsection{Player Features}
+\subsubsection{Player Features}
 
 Player features are used to encode the relationship of the agent to
 another player or opponent. Each player feature is encoded as 1) a
@@ -85,13 +132,13 @@ player's body 3) the magnitude of the player's velocity and 4) the
 global angle of the player's velocity. Eight floating point numbers
 are used to encode each player feature.
 
-\subsection{Other Features}
+\subsubsection{Other Features}
 
 Some features, such as the agent's stamina, do not fall into any of
 the above categories. These features are referred to as \textit{other
   features}.
 
-\section{State Feature List}
+\subsubsection{Low Level State Feature List}
 
 Basic Features are always present and independent of the number of
 teammates or opponents. The 32 basic features are encoded using 58
@@ -156,12 +203,16 @@ number of features is $58 + 8*\textrm{num\_teammates} +
 \end{itemize}
 
 \section{Action Space}
+The HFO domain provides support for both low-level primitive actions
+and high-level strategic actions. Basic, parameterized actions are
+provided for locomotion and kicking. Additionally high-level strategic
+actions are available for moving, shooting, passing and
+dribbling. Control of the agent's head and gaze is not provided and
+follows Agent2D's default strategy. Selection between high-level and
+low-level actions spaces is performed when connecting to the agent
+server.
 
-The action space of the HFO domain is primitive: basic parameterized
-actions are provided for locomotion and kicking. Control of the
-agent's head and gaze is not provided. The primitive actions are as
-follows:
-
+\subsection{Low Level Actions}
 \begin{itemize}
 \item{\textbf{Dash}(power, degrees): Moves the agent with power [-100,
     100] where negative values move backwards. The relative direction
@@ -179,5 +230,24 @@ follows:
 \item{\textbf{Quit}: Indicates to the agent server that you wish to
   terminate the HFO environment.}
 \end{itemize}
+
+\subsection{High Level Actions}
+\begin{itemize}
+\item{\textbf{Move}(): Re-positions the agent according to the
+  strategy given by Agent2D. The \textit{move} command works only when
+  agent does not have the ball. If the agent has the ball, another
+  command such as \textit{dribble}, \textit{shoot}, or \textit{pass}
+  should be used.}
+\item{\textbf{Shoot}(): Executes the best available shot. This command
+  only works when the agent has the ball.}
+\item{\textbf{Pass}(): Finds the best teammate to pass to and the type
+  of pass to use. This command only works when the agent has the
+  ball.}
+\item{\textbf{Dribble}(): Advances the ball towards the goal using a
+  combination of short kicks and moves.}
+\end{itemize}
+
+\bibliographystyle{abbrv}
+\bibliography{manual}
 
 \end{document}
