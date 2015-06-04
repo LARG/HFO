@@ -1,4 +1,4 @@
-HFO
+Half Field Offense
 ===============
 
 ![3 on 3 HFO](https://github.com/mhauskn/HFO/blob/master/img/hfo3on3.png)
