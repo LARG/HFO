@@ -5,6 +5,8 @@ Half Field Offense
 
 [Half Field Offense in Robocup 2D Soccer](http://www.cs.utexas.edu/~AustinVilla/sim/halffieldoffense/) is a subtask in RoboCup simulated soccer, modeling a situation in which the offense of one team has to get past the defense of the opposition in order to shoot goals. 
 
+This repository offers the ability to quickly and easily interface your learning agent with the HFO domain.
+
 ## Dependencies
  - [rcssserver-15.2.2](http://sourceforge.net/projects/sserver/files/rcssserver/15.2.2/)
   - If `configure` fails to detect boost libraries, set the configure flag `--with-boost-libdir=your_boost_path`
