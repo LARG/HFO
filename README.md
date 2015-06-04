@@ -3,9 +3,7 @@ Half Field Offense
 
 ![3 on 3 HFO](https://github.com/mhauskn/HFO/blob/master/img/hfo3on3.png)
 
-[Half Field Offense in Robocup 2D Soccer](http://www.cs.utexas.edu/~AustinVilla/sim/halffieldoffense/) is a subtask in RoboCup simulated soccer, modeling a situation in which the offense of one team has to get past the defense of the opposition in order to shoot goals. 
-
-This repository offers the ability to quickly and easily interface your learning agent with the HFO domain.
+[Half Field Offense in Robocup 2D Soccer](http://www.cs.utexas.edu/~AustinVilla/sim/halffieldoffense/) is a subtask in RoboCup simulated soccer, modeling a situation in which the offense of one team has to get past the defense of the opposition in order to shoot goals. This repository offers the ability to quickly and easily interface your learning agent with the HFO domain.
 
 ## Dependencies
  - [rcssserver-15.2.2](http://sourceforge.net/projects/sserver/files/rcssserver/15.2.2/)
