@@ -7,7 +7,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     author='Matthew Hausknecht',
     author_email='matthew.hausknecht@gmail.com',
-    description='Transparent cluster execution.',
+    description='Half Field Offense in 2D RoboCup Soccer.',
     license='MIT',
     keywords=('Robocup '
               'Half-field-offense '
