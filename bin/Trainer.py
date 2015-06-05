@@ -568,6 +568,7 @@ class Trainer(object):
       self._lastFrameBallTouched = self._frame
     if self.trialOver(team_holding_ball):
       self.updateResults(team_holding_ball)
+      self._lastFrameBallTouched = self._frame
       self.reset()
 
   def updateResults(self, team_holding_ball):
@@ -585,7 +586,6 @@ class Trainer(object):
       result = 'Defense Captured'
       self.send('(say CAPTURED_BY_DEFENSE)')
     elif self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH:
-      self._lastFrameBallTouched = self._frame
       self._numOutOfTime += 1
       result = 'Ball untouched for too long'
       self.send('(say OUT_OF_TIME)')
