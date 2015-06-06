@@ -51,13 +51,15 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   olcoach_port = args.port + 3
   serverOptions = ' server::port=%i server::coach_port=%i ' \
                   'server::olcoach_port=%i server::coach=1 ' \
-                  'server::game_log_dir=%s server::text_log_dir=%s' \
+                  'server::game_logging=%i server::text_logging=%i ' \
+                  'server::game_log_dir=%s server::text_log_dir=%s '\
+                  'server::synch_mode=%i ' \
+                  'server::fullstate_l=%i server::fullstate_r=%i' \
                   %(server_port, coach_port, olcoach_port,
-                    args.logDir, args.logDir)
-  if args.sync:
-    serverOptions += ' server::synch_mode=on'
-  if args.fullstate:
-    serverOptions += ' server::fullstate_l=on server::fullstate_r=on'
+                    args.logging, args.logging,
+                    args.logDir, args.logDir,
+                    args.sync,
+                    args.fullstate, args.fullstate)
   team1, team1Cmd = getAgentDirCmd(binary_dir, team1, server_port, coach_port,
                                    args.logDir, args.record)
   team2, team2Cmd = getAgentDirCmd(binary_dir, team2, server_port, coach_port,
@@ -119,6 +121,8 @@ def parseArgs(args=None):
   p.add_argument('--port', dest='port', type=int, default=6000,
                  help='Agent server\'s port. rcssserver, coach, and ol_coach'\
                  ' will be incrementally allocated the following ports.')
+  p.add_argument('--no-logging', dest='logging', action='store_false',
+                 default=True, help='Disable rcssserver logging.')
   p.add_argument('--log-dir', dest='logDir', default='log/',
                  help='Directory to store logs.')
   p.add_argument('--record', dest='record', action='store_true',
