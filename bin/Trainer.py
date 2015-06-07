@@ -430,7 +430,7 @@ class Trainer(object):
   def isGoal(self):
     """ Returns true if a goal has been scored. """
     return (self._ballPosition[0] > self._allowedBallX[1]) \
-      and (numpy.abs(self._ballPosition[1]) < self._SP['goal_width'])
+      and (numpy.abs(self._ballPosition[1]) <= 0.5 * self._SP['goal_width'])
 
   def isOOB(self):
     """ Returns true if the ball is out of bounds. """
