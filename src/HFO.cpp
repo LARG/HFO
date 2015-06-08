@@ -24,8 +24,8 @@ HFOEnvironment::~HFOEnvironment() {
   close(sockfd);
 }
 
-  void HFOEnvironment::connectToAgentServer(int server_port,
-                                            feature_set_t feature_set) {
+void HFOEnvironment::connectToAgentServer(int server_port,
+                                          feature_set_t feature_set) {
   std::cout << "[Agent Client] Connecting to Agent Server on port "
             << server_port << std::endl;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -45,9 +45,14 @@ HFOEnvironment::~HFOEnvironment() {
         server->h_length);
   serv_addr.sin_port = htons(server_port);
   int status = -1;
-  while (status < 0) {
+  int retry = 10;
+  while (status < 0 && retry > 0) {
     status = connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
     sleep(1);
+    retry--;
+  }
+  if (status < 0) {
+    error("[Agent Client] ERROR Unable to communicate with server");
   }
   std::cout << "[Agent Client] Connected" << std::endl;
   handshakeAgentServer(feature_set);

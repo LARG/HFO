@@ -43,14 +43,19 @@ class HFOEnvironment(object):
     '''Connect to the server that controls the agent on the specified port. '''
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print '[Agent Client] Connecting to Agent Server on port', server_port
-    while True:
+    retry = 10
+    while retry > 0:
       try:
         self.socket.connect(('localhost', server_port))
       except:
         time.sleep(1)
+        retry -= 1
         continue
       else:
         break
+    if retry <= 0:
+      print '[Agent Client] ERROR Unable to communicate with server'
+      exit(1)
     print '[Agent Client] Connected'
     self.handshakeAgentServer(feature_set)
     # Get the initial state
