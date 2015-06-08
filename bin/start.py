@@ -69,7 +69,8 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
     server = launch(SERVER_CMD + serverOptions, name='server')
     time.sleep(0.2)
     assert server.poll() is None,\
-      'Failed to launch Server with command: \"%s\"'%(SERVER_CMD)
+      '[start.py] Failed to launch Server with command: \"%s\"' \
+      %(SERVER_CMD + serverOptions)
     if not args.headless:
       monitorOptions = ' --port=%i'%(server_port)
       launch(MONITOR_CMD + monitorOptions, name='monitor')
@@ -91,6 +92,7 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   except KeyboardInterrupt:
     print '[start.py] Exiting for CTRL-C'
   finally:
+    print '[start.py] Cleaning up server and other processes'
     for p in processes:
       try:
         p.send_signal(SIGKILL)
