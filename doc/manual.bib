@@ -1,0 +1,65 @@
+@PhdThesis{THESIS14-Barrett,
+  author = {Samuel Barrett},
+  title  = {Making Friends on the Fly: Advances in Ad Hoc Teamwork},
+  school = {The University of Texas at Austin},
+  year = {2014},
+  address = {Austin, Texas, USA},
+  month = {December},
+  abstract={
+    Given the continuing improvements in design and manufacturing processes in
+    addition to improvements in artificial intelligence, robots are being
+    deployed in an increasing variety of environments for longer periods of time.
+    As the number of robots grows, it is expected that they will encounter and
+    interact with other robots.  Additionally, the number of companies and
+    research laboratories producing these robots is increasing, leading to the
+    situation where these robots may not share a common communication or
+    coordination protocol.  While standards for coordination and communication
+    may be created, we expect that any standards will lag behind the
+    state-of-the-art protocols and robots will need to additionally reason
+    intelligently about their teammates with limited information.  This problem
+    motivates the area of ad hoc teamwork in which an agent may potentially
+    cooperate with a variety of teammates in order to achieve a shared goal.  We
+    argue that agents that effectively reason about ad hoc teamwork need to
+    exhibit three capabilities: 1) robustness to teammate variety, 2) robustness
+    to diverse tasks, and 3) fast adaptation.  This thesis focuses on addressing
+    all three of these challenges.  In particular, this thesis introduces
+    algorithms for quickly adapting to unknown teammates that enable agents to
+    react to new teammates without extensive observations.
+
+    The majority of existing multiagent algorithms focus on scenarios where all
+    agents share coordination and communication protocols.  While previous research
+    on ad hoc teamwork considers some of these three challenges, this thesis
+    introduces a new algorithm, PLASTIC, that is the first to address all three
+    challenges in a single algorithm.  PLASTIC adapts quickly to unknown teammates
+    by reusing knowledge it learns about previous teammates and exploiting any
+    expert knowledge available.  Given this knowledge, PLASTIC selects which
+    previous teammates are most similar to the current ones online and uses this
+    information to adapt to their behaviors.  This thesis introduces two
+    instantiations of PLASTIC.  The first is a model-based approach, PLASTIC-Model,
+    that builds models of previous teammates' behaviors and plans online to
+    determine the best course of action.  The second uses a policy-based
+    approach, PLASTIC-Policy, in which it learns policies for cooperating with
+    past teammates and selects from among these policies online.  Furthermore, we
+    introduce a new transfer learning algorithm, TwoStageTransfer, that allows
+    transferring knowledge from many past teammates while considering how similar
+    each teammate is to the current ones.
+
+    We theoretically analyze the computational tractability of PLASTIC-Model in a
+    number of scenarios with unknown teammates.  Additionally, we empirically
+    evaluate PLASTIC in three domains that cover a spread of possible settings.
+    Our evaluations show that PLASTIC can learn to communicate with unknown
+    teammates using a limited set of messages, coordinate with externally-created
+    teammates that do not reason about ad hoc teams, and act intelligently in
+    domains with continuous states and actions.  Furthermore, these evaluations
+    show that TwoStageTransfer outperforms existing transfer learning algorithms
+    and enables PLASTIC to adapt even better to new teammates.  We also identify
+    three dimensions that we argue best describe ad hoc teamwork scenarios.  We
+    hypothesize that these dimensions are useful for analyzing similarities among
+    domains and determining which can be tackled by similar algorithms in addition
+    to identifying avenues for future research.  The work presented in this thesis
+    represents an important step towards enabling agents to adapt to unknown
+    teammates in the real world.  PLASTIC significantly broadens the robustness of
+    robots to their teammates and allows them to quickly adapt to new teammates by
+    reusing previously learned knowledge.
+  }
+}
