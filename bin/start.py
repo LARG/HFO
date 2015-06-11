@@ -9,7 +9,7 @@ processes, necProcesses = [], []
 # Command to run the rcssserver. Edit as needed.
 SERVER_CMD = 'rcssserver'
 # Command to run the monitor. Edit as needed.
-MONITOR_CMD = 'rcssmonitor'
+MONITOR_CMD = 'soccerwindow2'
 
 def getAgentDirCmd(binary_dir, teamname, server_port=6000, coach_port=6002,
                    logDir='log', record=False):
@@ -100,7 +100,7 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
         pass
       time.sleep(0.1)
 
-def parseArgs(args=None):
+def parseArgs():
   import argparse
   p = argparse.ArgumentParser(description='Start Half Field Offense.')
   p.add_argument('--headless', dest='headless', action='store_true',
@@ -110,9 +110,9 @@ def parseArgs(args=None):
   p.add_argument('--frames', dest='numFrames', type=int, default=-1,
                  help='Number of frames to run for')
   p.add_argument('--offense', dest='numOffense', type=int, default=4,
-                 choices=xrange(1,11), help='Number of offensive players')
+                 help='Number of offensive players')
   p.add_argument('--defense', dest='numDefense', type=int, default=4,
-                 choices=xrange(0,12), help='Number of defensive players')
+                 help='Number of defensive players')
   p.add_argument('--play-defense', dest='play_offense',
                  action='store_false', default=True,
                  help='Put the learning agent on defensive team')
@@ -133,7 +133,19 @@ def parseArgs(args=None):
                  help='Agent starts with the ball.')
   p.add_argument('--fullstate', dest='fullstate', action='store_true',
                  help='Server provides full-state information to agents.')
-  return p.parse_args(args=args)
+  args = p.parse_args()
+  if args.numOffense not in xrange(1, 11):
+    p.error('argument --offense: invalid choice: ' + str(args.numOffense) +
+            ' (choose from [1-10])')
+  if args.play_offense:
+    if args.numDefense not in xrange(0, 12):
+      p.error('argument --defense: invalid choice: ' + str(args.numDefense) +
+              ' (choose from [0-11])')
+  else:
+    if args.numDefense not in xrange(1, 12):
+      p.error('argument --defense: invalid choice: ' + str(args.numDefense) +
+              ' (choose from [1-11])')
+  return args
 
 if __name__ == '__main__':
   main(parseArgs())
