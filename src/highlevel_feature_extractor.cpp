@@ -37,14 +37,30 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   const PlayerCont& teammates = wm.teammates();
   float maxR = sqrtf(SP.pitchHalfLength() * SP.pitchHalfLength()
                      + SP.pitchHalfWidth() * SP.pitchHalfWidth());
-  Vector2D goalCenter(SP.pitchHalfLength(), 0);
   // features about self pos
+  // Allow the agent to go 10% over the playfield in any direction
+  float tolerance_x = .1 * SP.pitchHalfLength();
+  float tolerance_y = .1 * SP.pitchHalfWidth();
+  addNormFeature(self_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+  addNormFeature(self_pos.y, -SP.pitchHalfWidth() - tolerance_y,
+                 SP.pitchHalfWidth() + tolerance_y);
+  addNormFeature(self_ang, -2*M_PI, 2*M_PI);
+
   float r;
   float th;
-  angleDistToPoint(self_pos, goalCenter, th, r);
+  // features about the ball
+  Vector2D ball_pos = wm.ball().pos();
+  angleDistToPoint(self_pos, ball_pos, th, r);
   addNormFeature(r, 0, maxR);
   addNormFeature(th, -2*M_PI, 2*M_PI);
-  addNormFeature(self_ang, -2*M_PI, 2*M_PI);
+  addNormFeature(self.isKickable(), false, true);
+
+  // features about distance to goal center
+  Vector2D goalCenter(SP.pitchHalfLength(), 0);
+  angleDistToPoint(self_pos, goalCenter, th, r);
+  addNormFeature(r, 0, maxR); // Distance to goal center
+  addNormFeature(th, -2*M_PI, 2*M_PI); // Ang to goal center
+
   // features about our open angle to goal
   addNormFeature(calcLargestGoalAngle(wm, self_pos), 0, M_PI);
   //std::cout << "goal angle: " << RAD_T_DEG * features[ind-1] << std::endl;

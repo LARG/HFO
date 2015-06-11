@@ -29,14 +29,21 @@ by Barrett et al. pp. 159-160 \cite{THESIS14-Barrett}. Barrett writes
 ``There are many ways to represent the state of a game of half field
 offense.  Ideally, we want a compact representation that allows the
 agent to learn quickly by generalizing its knowledge about a state to
-similar states without over-constraining the policy.'' The following
-features are used:
+similar states without over-constraining the policy.'' All features
+are encoded a floating point values and normalized to the range of
+[-1,1]. Invalid features are given a value of -2. The features are as
+follows:
 
 \subsubsection{High Level State Feature List}
 \begin{itemize}
 \item{\textbf{X position} - The agent’s x position on the field.}
 \item{\textbf{Y position} - The agent’s y position on the field.}
 \item{\textbf{Orientation} - The direction that the agent is facing.}
+\item{\textbf{Ball Distance} - Distance to the ball.}
+\item{\textbf{Ball Angle} - Angle to the ball.}
+\item{\textbf{Able to Kick} - Boolean indicating if the agent can kick the ball.}
+\item{\textbf{Goal Center Distance} - Distance from the agent to the center of the goal.}
+\item{\textbf{Goal Center Angle} - Angle from the agent to the center of the goal.}
 \item{\textbf{Goal opening angle} - The size of the largest open angle
   of the agent to the goal, shown as $\theta_g$ in Figure
   \ref{fig:openAngle}.}
@@ -45,12 +52,15 @@ features are used:
 \item{\textbf{Distance to Opponent} - If an opponent is present,
   distance to the closest opponent. This feature is absent if there
   are no opponents.}
-\item{\textbf{Distance from teammate i to opponent} - For each teammate
-  i: the distance from the teammate to the closest opponent. This
-  feature is absent if there are no opponents.}
+\item{\textbf{Distance from teammate i to opponent} - For each
+  teammate i: the distance from the teammate to the closest
+  opponent. This feature is absent if there are no opponents. If
+  teammates are present but not detected, this feature is considered
+  invalid and given the value of -2.}
 \item{\textbf{Pass opening angle i} - For each teammate i: the open
   angle available to pass to teammate i. Shown as $\theta_p$ in Figure
-  \ref{fig:openAngle}.}
+  \ref{fig:openAngle}. If teammates are present but not detected, this
+  feature is considered invalid and given the value of -2.}
 \end{itemize}
 
 \begin{figure}[htp]

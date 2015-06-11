@@ -22,7 +22,7 @@ public:
 
 protected:
   // Number of features for non-player objects.
-  const static int num_basic_features = 4;
+  const static int num_basic_features = 9;
   // Number of features for each player or opponent in game.
   const static int features_per_teammate = 4;
   int numTeammates; // Number of teammates in HFO
