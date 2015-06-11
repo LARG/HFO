@@ -52,3 +52,20 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Make files
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+CMakeFiles/
+
+# Executeables
+bin/agent
+bin/sample_coach
+bin/sample_player
+bin/sample_trainer
+example/hfo_example_agent
+
+# Logs
+log/
+bin/log/
