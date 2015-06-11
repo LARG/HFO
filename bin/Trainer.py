@@ -78,26 +78,24 @@ class Trainer(object):
     self._teams = [] # Team indexes for offensive and defensive teams
     self._SP = {} # Sever Parameters. Recieved when connecting to the server.
     self._isPlaying = False # Is a game being played?
-    self._agentPopen = None # Agent's process
+    self._agentPopen = [] # Agent's processes
     self.initMsgHandlers()
 
-  def launch_agent(self):
+  def launch_agent(self, player_num):
     """Launch the learning agent using the start.sh script and return a
     DummyPopen for the process.
     """
-    print '[Trainer] Launching Agent'
+    print '[Trainer] Launching Agent'+str(player_num)
     if self._agent_play_offense:
       assert self._numOffense > 0
       self._agentTeam = self._offenseTeam
-      self._agentNumInt = 1 if self._numOffense == 1 \
-                          else self._rng.randint(1, self._numOffense)
+      self._agentNumInt = player_num + 1
       numTeammates = self._numOffense - 1
       numOpponents = self._numDefense
     else:
       assert self._numDefense > 0
       self._agentTeam = self._defenseTeam
-      self._agentNumInt = 0 if self._numDefense == 1 \
-                          else self._rng.randint(0, self._numDefense)
+      self._agentNumInt = player_num
       numTeammates = self._numOffense
       numOpponents = self._numDefense - 1
     self._agentNumExt = self.convertToExtPlayer(self._agentTeam,
@@ -108,7 +106,7 @@ class Trainer(object):
                ' --playingOffense %i --serverPort %i'\
                %(self._agentTeam, self._agentNumExt, self._serverPort,
                  self._coachPort, self._logDir, numTeammates, numOpponents,
-                 self._agent_play_offense, self._agentServerPort)
+                 self._agent_play_offense, (self._agentServerPort - player_num))
     if self._record:
       agentCmd += ' --record'
     agentCmd = os.path.join(binary_dir, agentCmd)
@@ -640,8 +638,14 @@ class Trainer(object):
     """
     try:
       if self._agent:
-        self._agentPopen = self.launch_agent()
-        necProcesses.append([self._agentPopen,'agent'])
+        if self._agent_play_offense:
+          for i in xrange(self._numOffense):
+            self._agentPopen.append(self.launch_agent(i))
+            necProcesses.append([self._agentPopen[i], 'agent'+str(i)])
+        else:
+          for i in xrange(self._numDefense):
+            self._agentPopen.append(self.launch_agent(i))
+            necProcesses.append([self._agentPopen[i], 'agent'+str(i)])
       self.startGame()
       while self.checkLive(necProcesses):
         prevFrame = self._frame
@@ -653,8 +657,8 @@ class Trainer(object):
     except (KeyboardInterrupt, DoneError):
       print '[Trainer] Exiting'
     finally:
-      if self._agentPopen is not None:
-        self._agentPopen.send_signal(SIGINT)
+      for p in self._agentPopen:
+        p.send_signal(SIGINT)
       try:
         self._comm.sendMsg('(bye)')
       except:
