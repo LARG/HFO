@@ -2,48 +2,39 @@
 # encoding: utf-8
 
 # First Start the server: $> bin/start.py
-import random
-if __name__ == '__main__':
-  try:
-    from hfo import *
-  except:
-    print 'Failed to import hfo. To install hfo, in the HFO directory'\
-      ' run: \"pip install .\"'
-    exit()
-  # Connect 4 agents
-  agents = []
-  for i in xrange(4):
-    agents.append(hfo.HFOEnvironment())
-    agents[i].connectToAgentServer(6000-i, HFO_Features.HIGH_LEVEL_FEATURE_SET)
+import random, threading, argparse
+try:
+  from hfo import *
+except:
+  print 'Failed to import hfo. To install hfo, in the HFO directory'\
+    ' run: \"pip install .\"'
+  exit()
+
+def get_random_action():
+  """ Returns a random high-level action """
+  high_lv_actions = [HFO_Actions.MOVE, HFO_Actions.SHOOT,
+                     HFO_Actions.PASS, HFO_Actions.DRIBBLE]
+  return (random.choice(high_lv_actions), 0, 0)
+
+def play_hfo(num):
+  """ Method called by a thread to play 5 games of HFO """
+  hfo_env = hfo.HFOEnvironment()
+  hfo_env.connectToAgentServer(6000 + num, HFO_Features.HIGH_LEVEL_FEATURE_SET)
   for episode in xrange(5):
     status = HFO_Status.IN_GAME
     while status == HFO_Status.IN_GAME:
-      # Grab the state features from the environment from the first agent
-      features = agents[0].getState()
-      # Take an action and get the current game status
-      for agent in agents:
-        rand_int = random.randint(0,3)
-        if rand_int == 0:
-          status = agent.act((HFO_Actions.MOVE, 0, 0))
-        elif rand_int == 1:
-          status = agent.act((HFO_Actions.SHOOT, 0, 0))
-        elif rand_int == 2:
-          status = agent.act((HFO_Actions.PASS, 0, 0))
-        elif rand_int == 3:
-          status = agent.act((HFO_Actions.DRIBBLE, 0, 0))
-    print 'Episode', episode, 'ended with',
-    # Check what the outcome of the episode was
-    if status == HFO_Status.GOAL:
-      print 'goal'
-    elif status == HFO_Status.CAPTURED_BY_DEFENSE:
-      print 'captured by defense'
-    elif status == HFO_Status.OUT_OF_BOUNDS:
-      print 'out of bounds'
-    elif status == HFO_Status.OUT_OF_TIME:
-      print 'out of time'
-    else:
-      print 'Unknown status', status
-      exit()
-  # Cleanup when finished
-  for agent in agents:
-    agent.cleanup()
+      state = hfo_env.getState()
+      status = hfo_env.act(get_random_action())
+  hfo_env.cleanup()
+
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('num_agents', type=int, help='Number of agents to start. '\
+                      'NOTE: server must be started with this number of agents.')
+  args = parser.parse_args()
+  for i in xrange(args.num_agents):
+    t = threading.Thread(target=play_hfo, args=(i,))
+    t.start()
+
+if __name__ == '__main__':
+  main()
