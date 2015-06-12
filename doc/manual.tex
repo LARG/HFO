@@ -1,7 +1,18 @@
 \documentclass[12pt]{article}
 
+%% Allows itemranges in enumerations
+\def\itemrange#1{%
+\addtocounter{enumi}{1}%
+\edef\labelenumi{\theenumi--\noexpand\theenumi}%
+\addtocounter{enumi}{-1}%
+\addtocounter{enumi}{#1}%
+\item
+\def\labelenumi{\theenumi}}
+\renewcommand*{\labelenumi}{\theenumi}
+
 \usepackage{hyperref,graphicx}
 \usepackage{fullpage}
+\usepackage{enumitem}
 
 \title{Half Field Offense \\ Technical Manual}
 \author{Matthew Hausknecht}
@@ -20,7 +31,7 @@ This document describes the state and action spaces of the HFO domain.
 The HFO domains provides a choice between a low-level feature set and
 a higher-level feature set. Selecting between the different feature
 sets is accomplished when connecting to the agent server. See
-\verb|examples/hfo_example_agent.cpp| and 
+\verb|examples/hfo_example_agent.cpp| and
 \verb|examples/hfo_example_agent.py| for examples.
 
 \subsection{High Level Feature Set}
@@ -35,7 +46,8 @@ are encoded a floating point values and normalized to the range of
 follows:
 
 \subsubsection{High Level State Feature List}
-\begin{itemize}
+\begin{enumerate}
+\setcounter{enumi}{-1}
 \item{\textbf{X position} - The agent’s x position on the field.}
 \item{\textbf{Y position} - The agent’s y position on the field.}
 \item{\textbf{Orientation} - The direction that the agent is facing.}
@@ -44,24 +56,31 @@ follows:
 \item{\textbf{Able to Kick} - Boolean indicating if the agent can kick the ball.}
 \item{\textbf{Goal Center Distance} - Distance from the agent to the center of the goal.}
 \item{\textbf{Goal Center Angle} - Angle from the agent to the center of the goal.}
-\item{\textbf{Goal opening angle} - The size of the largest open angle
+\item{\textbf{Goal Opening Angle} - The size of the largest open angle
   of the agent to the goal, shown as $\theta_g$ in Figure
-  \ref{fig:openAngle}.}
-\item{\textbf{Teammate i's goal opening angle} - For each teammate i:
-  the i’s goal opening angle}
-\item{\textbf{Distance to Opponent} - If an opponent is present,
+  \ref{fig:openAngle}. Invalid if agent is not playing offense.}
+\item [$T$] {\textbf{Teammate i's Goal Opening Angle} - For each
+  teammate i: i’s goal opening angle. Invalid if agent is not playing
+  offense.}
+\item [$1$] {\textbf{Distance to Opponent} - If an opponent is present,
   distance to the closest opponent. This feature is absent if there
   are no opponents.}
-\item{\textbf{Distance from teammate i to opponent} - For each
+\item [$T$] {\textbf{Distance from Teammate i to Opponent} - For each
   teammate i: the distance from the teammate to the closest
   opponent. This feature is absent if there are no opponents. If
   teammates are present but not detected, this feature is considered
   invalid and given the value of -2.}
-\item{\textbf{Pass opening angle i} - For each teammate i: the open
+\item [$T$] {\textbf{Pass Opening Angle} - For each teammate i: the open
   angle available to pass to teammate i. Shown as $\theta_p$ in Figure
   \ref{fig:openAngle}. If teammates are present but not detected, this
   feature is considered invalid and given the value of -2.}
-\end{itemize}
+\item [$2T$] {\textbf{Distance and Angle to Teammates} - For each
+  teammate i: the distance and angle to that teammate.}
+\end{enumerate}
+
+There are a total of $9 + 4*\textrm{num\_teammates}$ features with an
+additional $1 + \textrm{num\_teammates}$ features if at least one
+opponent is present.
 
 \begin{figure}[htp]
   \centering
@@ -160,14 +179,15 @@ point values are required for each player feature. Thus, the total
 number of features is $58 + 8*\textrm{num\_teammates} +
 8*\textrm{num\_opponents}$.
 
-\begin{itemize}
+\begin{enumerate}
+\setcounter{enumi}{-1}
   \item{\textbf{Self\_Pos\_Valid} [Valid] Indicates if self position is valid.}
   \item{\textbf{Self\_Vel\_Valid} [Valid] Indicates if the agent's velocity is valid.}
-  \item{\textbf{Self\_Vel\_Ang} [Angle] Angle of agent's velocity.}
+  \itemrange{1}{\textbf{Self\_Vel\_Ang} [Angle] Angle of agent's velocity.}
   \item{\textbf{Self\_Vel\_Mag} [Other] Magnitude of agent's
     velocity. Normalized against the maximum observed self speed,
     0.46.}
-  \item{\textbf{Self\_Ang} [Angle] Agent's Global Body Angle.}
+  \itemrange{1}{\textbf{Self\_Ang} [Angle] Agent's Global Body Angle.}
   \item{\textbf{Stamina} [Other] Agent's Stamina: The amount of remaining stamina the
     agent has. Normalized against the maximum observed agent stamina
     of 8000.}
@@ -181,18 +201,18 @@ number of features is $58 + 8*\textrm{num\_teammates} +
     is colliding with a goal post.}
   \item{\textbf{Kickable} [Boolean] Indicates if the agent is able to
     kick the ball.}
-  \item{\textbf{Goal Center} [Landmark] Center point between the goal posts.}
-  \item{\textbf{Goal Post Top} [Landmark] Top goal post.}
-  \item{\textbf{Goal Post Bot} [Landmark] Bottom goal post.}
-  \item{\textbf{Penalty Box Center} [Landmark] Center of the penalty box line.}
-  \item{\textbf{Penalty Box Top} [Landmark] Top corner of the penalty box.}
-  \item{\textbf{Penalty Box Bot} [Landmark] Bottom corner of the penalty box.}
-  \item{\textbf{Center Field} [Landmark] The left middle point of the
+  \itemrange{2}{\textbf{Goal Center} [Landmark] Center point between the goal posts.}
+  \itemrange{2}{\textbf{Goal Post Top} [Landmark] Top goal post.}
+  \itemrange{2}{\textbf{Goal Post Bot} [Landmark] Bottom goal post.}
+  \itemrange{2}{\textbf{Penalty Box Center} [Landmark] Center of the penalty box line.}
+  \itemrange{2}{\textbf{Penalty Box Top} [Landmark] Top corner of the penalty box.}
+  \itemrange{2}{\textbf{Penalty Box Bot} [Landmark] Bottom corner of the penalty box.}
+  \itemrange{2}{\textbf{Center Field} [Landmark] The left middle point of the
     HFO play area. True center of the full-field.}
-  \item{\textbf{Corner Top Left} [Landmark] Top left corner HFO Playfield.}
-  \item{\textbf{Corner Top Right} [Landmark] Top right corner HFO Playfield.}
-  \item{\textbf{Corner Bot Right} [Landmark] Bot right corner HFO Playfield.}
-  \item{\textbf{Corner Bot Left} [Landmark] Bot left corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Top Left} [Landmark] Top left corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Top Right} [Landmark] Top right corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bot right corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bot left corner HFO Playfield.}
   \item{\textbf{OOB Left Dist} [Distance] Distance to the nearest
     point of the left side of the HFO playable area. E.g. distance
     remaining before the agent goes out of bounds in left field.}
@@ -203,14 +223,14 @@ number of features is $58 + 8*\textrm{num\_teammates} +
   \item{\textbf{OOB Bot Dist} [Distance] Distance remaining before
     the agent goes out of bounds in bottom field.}
   \item{\textbf{Ball Pos Valid} [Valid] Indicates if the ball position estimate is valid.}
-  \item{\textbf{Ball Angle} [Angle] Angle to the ball from the agent's perspective.}
+  \itemrange{1}{\textbf{Ball Angle} [Angle] Angle to the ball from the agent's perspective.}
   \item{\textbf{Ball Dist} [Distance] Distance to the ball.}
   \item{\textbf{Ball Vel Valid} [Valid] Indicates if the ball velocity estimate is valid.}
   \item{\textbf{Ball Vel Mag} [Other] Global magnitude of the ball velocity. Normalized against the observed maximum ball velocity, 3.0.}
-  \item{\textbf{Ball Vel Ang} [Angle] Global angle of ball velocity.}
-  \item{\textbf{Teammate Features} [Player] One teammate feature for each teammate active in HFO, sorted by proximity to the agent.}
-  \item{\textbf{Opponent Features} [Player] One opponent feature for each opponent present, sorted by proximity to the player.}
-\end{itemize}
+  \itemrange{1}{\textbf{Ball Vel Ang} [Angle] Global angle of ball velocity.}
+  \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features) for each teammate active in HFO, sorted by proximity to the agent.}
+  \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features) for each opponent present, sorted by proximity to the player.}
+\end{enumerate}
 
 \section{Action Space}
 The HFO domain provides support for both low-level primitive actions
