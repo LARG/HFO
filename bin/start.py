@@ -45,10 +45,11 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   """
   if not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
+  num_agents   = args.offenseAgents + args.defenseAgents
   binary_dir   = os.path.dirname(os.path.realpath(__file__))
-  server_port  = args.port + 1
-  coach_port   = args.port + 2
-  olcoach_port = args.port + 3
+  server_port  = args.port + num_agents
+  coach_port   = args.port + num_agents + 1
+  olcoach_port = args.port + num_agents + 2
   serverOptions = ' server::port=%i server::coach_port=%i ' \
                   'server::olcoach_port=%i server::coach=1 ' \
                   'server::game_logging=%i server::text_logging=%i ' \
@@ -76,7 +77,8 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
       launch(MONITOR_CMD + monitorOptions, name='monitor')
     # Launch the Trainer
     from Trainer import Trainer
-    trainer = Trainer(args=args, rng=rng)
+    trainer = Trainer(args=args, rng=rng, server_port=server_port,
+                      coach_port=coach_port)
     trainer.initComm()
     # Start Team1
     launch(team1Cmd,False)
@@ -109,15 +111,17 @@ def parseArgs():
                  help='Number of trials to run')
   p.add_argument('--frames', dest='numFrames', type=int, default=-1,
                  help='Number of frames to run for')
-  p.add_argument('--offense', dest='numOffense', type=int, default=4,
-                 help='Number of offensive players')
-  p.add_argument('--defense', dest='numDefense', type=int, default=4,
-                 help='Number of defensive players')
-  p.add_argument('--play-defense', dest='play_offense',
-                 action='store_false', default=True,
-                 help='Put the learning agent on defensive team')
-  p.add_argument('--no-agent', dest='no_agent', action='store_true',
-                 help='Don\'t use a learning agent.')
+  p.add_argument('--frames-per-trial', dest='maxFramesPerTrial', type=int,
+                 default=1000, help='Max number of frames per trial. '\
+                 'Negative values mean unlimited.')
+  p.add_argument('--offense-agents', dest='offenseAgents', type=int, default=1,
+                 help='Number of offensive agents')
+  p.add_argument('--defense-agents', dest='defenseAgents', type=int, default=0,
+                 help='Number of defensive agents')
+  p.add_argument('--offense-npcs', dest='offenseNPCs', type=int, default=0,
+                 help='Number of offensive uncontrolled players')
+  p.add_argument('--defense-npcs', dest='defenseNPCs', type=int, default=0,
+                 help='Number of defensive uncontrolled players')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
                  help='Run server in non-sync mode')
   p.add_argument('--port', dest='port', type=int, default=6000,
@@ -134,17 +138,10 @@ def parseArgs():
   p.add_argument('--fullstate', dest='fullstate', action='store_true',
                  help='Server provides full-state information to agents.')
   args = p.parse_args()
-  if args.numOffense not in xrange(1, 11):
-    p.error('argument --offense: invalid choice: ' + str(args.numOffense) +
-            ' (choose from [1-10])')
-  if args.play_offense:
-    if args.numDefense not in xrange(0, 12):
-      p.error('argument --defense: invalid choice: ' + str(args.numDefense) +
-              ' (choose from [0-11])')
-  else:
-    if args.numDefense not in xrange(1, 12):
-      p.error('argument --defense: invalid choice: ' + str(args.numDefense) +
-              ' (choose from [1-11])')
+  assert args.offenseAgents + args.offenseNPCs in xrange(0, 11), \
+    'Invalid number of offensive players: (choose from [0,10])'
+  assert args.defenseAgents + args.defenseNPCs in xrange(0, 12), \
+    'Invalid number of defensive players: (choose from [0,11])'
   return args
 
 if __name__ == '__main__':

@@ -31,16 +31,18 @@ class DummyPopen(object):
 class Trainer(object):
   """ Trainer is responsible for setting up the players and game.
   """
-  def __init__(self, args, rng=numpy.random.RandomState()):
+  def __init__(self, args, rng=numpy.random.RandomState(), server_port=6001,
+               coach_port=6002):
     self._rng = rng # The Random Number Generator
-    self._serverPort = args.port + 1 # The port the server is listening on
-    self._coachPort = args.port + 2 # The coach port to talk with the server
+    self._serverPort = server_port  # The port the server is listening on
+    self._coachPort = coach_port # The coach port to talk with the server
     self._logDir = args.logDir # Directory to store logs
     self._record = args.record # Record states + actions
-    self._numOffense = args.numOffense # Number offensive players
-    self._numDefense = args.numDefense # Number defensive players
+    self._numOffense = args.offenseAgents + args.offenseNPCs # Number offensive players
+    self._numDefense = args.defenseAgents + args.defenseNPCs # Number defensive players
     self._maxTrials = args.numTrials # Maximum number of trials to play
     self._maxFrames = args.numFrames # Maximum number of frames to play
+    self._maxFramesPerTrial = args.maxFramesPerTrial
     # =============== FIELD DIMENSIONS =============== #
     self.NUM_FRAMES_TO_HOLD = 2 # Hold ball this many frames to capture
     self.HOLD_FACTOR = 1.5 # Gain to calculate ball control
@@ -62,51 +64,60 @@ class Trainer(object):
     self._numBallsOOB = 0 # Trials in which ball went out of bounds
     self._numOutOfTime = 0 # Trials that ran out of time
     # =============== AGENT =============== #
-    self._agent = not args.no_agent # Indicates if a learning agent is active
-    self._agent_play_offense = args.play_offense # Agent's role
-    self._agentTeam = '' # Name of the team the agent is playing for
-    self._agentNumInt = -1 # Agent's internal team number
-    self._agentNumExt = -1 # Agent's external team number
-    self._agentServerPort = args.port # Port for agent's server
+    self._numAgents = args.offenseAgents + args.defenseAgents
+    self._offenseAgents = args.offenseAgents
+    self._defenseAgents = args.defenseAgents
+    self._agentTeams = [] # Names of the teams the agents are playing for
+    self._agentNumInt = [] # List of agents internal team numbers
+    self._agentNumExt = [] # List of agents external team numbers
+    self._agentServerPort = args.port # Base Port for agent's server
     self._agentOnBall = args.agent_on_ball # If true, agent starts with the ball
     # =============== MISC =============== #
-    self._offenseTeam = '' # Name of the offensive team
-    self._defenseTeam = '' # Name of the defensive team
+    self._offenseTeamName = '' # Name of the offensive team
+    self._defenseTeamName = '' # Name of the defensive team
     self._playerPositions = numpy.zeros((11,2,2)) # Positions of the players
     self._ballPosition = numpy.zeros(2) # Position of the ball
     self._ballHeld = numpy.zeros((11,2)) # Track player holding the ball
     self._teams = [] # Team indexes for offensive and defensive teams
     self._SP = {} # Sever Parameters. Recieved when connecting to the server.
     self._isPlaying = False # Is a game being played?
+    self._teamHoldingBall = None # Team currently in control of the ball
+    self._playerHoldingBall = None # Player current in control of ball
     self._agentPopen = [] # Agent's processes
     self.initMsgHandlers()
 
-  def launch_agent(self, player_num):
-    """Launch the learning agent using the start.sh script and return a
-    DummyPopen for the process.
+  def launch_agent(self, agent_num, play_offense, port):
+    """Launch the learning agent using the start_agent.sh script and
+    return a DummyPopen for the process.
+
     """
-    print '[Trainer] Launching Agent'+str(player_num)
-    if self._agent_play_offense:
+    print '[Trainer] Launching Agent', str(agent_num)
+    if play_offense:
       assert self._numOffense > 0
-      self._agentTeam = self._offenseTeam
-      self._agentNumInt = player_num + 1
+      team_name = self._offenseTeamName
+      self._agentTeams.append(team_name)
+      # First offense number is reserved for inactive offensive goalie
+      internal_player_num = agent_num + 1
+      self._agentNumInt.append(internal_player_num)
       numTeammates = self._numOffense - 1
       numOpponents = self._numDefense
     else:
       assert self._numDefense > 0
-      self._agentTeam = self._defenseTeam
-      self._agentNumInt = player_num
-      numTeammates = self._numOffense
-      numOpponents = self._numDefense - 1
-    self._agentNumExt = self.convertToExtPlayer(self._agentTeam,
-                                                self._agentNumInt)
+      team_name = self._defenseTeamName
+      self._agentTeams.append(team_name)
+      internal_player_num = agent_num
+      self._agentNumInt.append(internal_player_num)
+      numTeammates = self._numDefense - 1
+      numOpponents = self._numOffense
+    ext_num = self.convertToExtPlayer(team_name, internal_player_num)
+    self._agentNumExt.append(ext_num)
     binary_dir = os.path.dirname(os.path.realpath(__file__))
     agentCmd = 'start_agent.sh -t %s -u %i -p %i -P %i --log-dir %s'\
                ' --numTeammates %i --numOpponents %i'\
                ' --playingOffense %i --serverPort %i'\
-               %(self._agentTeam, self._agentNumExt, self._serverPort,
-                 self._coachPort, self._logDir, numTeammates, numOpponents,
-                 self._agent_play_offense, (self._agentServerPort - player_num))
+               %(team_name, ext_num, self._serverPort,
+                 self._coachPort, self._logDir, numTeammates,
+                 numOpponents, play_offense, port)
     if self._record:
       agentCmd += ' --record'
     agentCmd = os.path.join(binary_dir, agentCmd)
@@ -152,10 +163,10 @@ class Trainer(object):
   def setTeams(self):
     """ Sets the offensive and defensive teams and player rosters. """
     self._offenseTeamInd = 0
-    self._offenseTeam = self._teams[self._offenseTeamInd]
-    self._defenseTeam = self._teams[1-self._offenseTeamInd]
-    offensive_roster = self.getOffensiveRoster(self._offenseTeam)
-    defensive_roster = self.getDefensiveRoster(self._defenseTeam)
+    self._offenseTeamName = self._teams[self._offenseTeamInd]
+    self._defenseTeamName = self._teams[1-self._offenseTeamInd]
+    offensive_roster = self.getOffensiveRoster(self._offenseTeamName)
+    defensive_roster = self.getDefensiveRoster(self._defenseTeamName)
     self._offenseOrder = [1] + offensive_roster # 1 for goalie
     self._defenseOrder = [1] + defensive_roster # 1 for goalie
 
@@ -208,10 +219,6 @@ class Trainer(object):
     if len(playerInfo) != 3:
       return
     _,team,player = playerInfo
-    if team != self._agentTeam:
-      return
-    if int(player) != self._agentNumExt:
-      return
     try:
       length = int(msg[0])
     except:
@@ -264,15 +271,17 @@ class Trainer(object):
 
   def convertToExtPlayer(self, team, num):
     """ Returns the external player number for a given player. """
-    assert team == self._offenseTeam or team == self._defenseTeam
-    if team == self._offenseTeam:
+    assert team == self._offenseTeamName or team == self._defenseTeamName,\
+      'Invalid team name %s. Valid choices: %s, %s.'\
+      %(team, self._offenseTeamName, self._defenseTeamName)
+    if team == self._offenseTeamName:
       return self._offenseOrder[num]
     else:
       return self._defenseOrder[num]
 
   def convertFromExtPlayer(self, team, num):
     """ Maps external player number to internal player number. """
-    if team == self._offenseTeam:
+    if team == self._offenseTeamName:
       return self._offenseOrder.index(num)
     else:
       return self._defenseOrder.index(num)
@@ -437,9 +446,18 @@ class Trainer(object):
       or self._ballPosition[1] < self._allowedBallY[0] \
       or self._ballPosition[1] > self._allowedBallY[1]
 
+  def isCaptured(self):
+    """ Returns true if the ball is captured by defense. """
+    return self._teamHoldingBall not in [None,self._offenseTeamInd]
+
+  def isOOT(self):
+    """ Returns true if the trial has run out of time. """
+    return self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH \
+      or (self._maxFramesPerTrial > 0 and self._frame -
+          self._lastTrialStart > self._maxFramesPerTrial)
+
   def movePlayer(self, team, internal_num, pos, convertToExt=True):
     """ Move a player to a specified position.
-
     Args:
       team: the team name of the player
       interal_num: the player's internal number
@@ -524,20 +542,20 @@ class Trainer(object):
     ends to setup for the next trial.
 
     """
-    # Always Move the offensive goalie
-    self.movePlayer(self._offenseTeam, 0, [-0.5 * self.PITCH_LENGTH, 0])
+    # Always Move the offensive goalie to the left goal
+    self.movePlayer(self._offenseTeamName, 0, [-0.5 * self.PITCH_LENGTH, 0])
     # Move the rest of the offense
     for i in xrange(1, self._numOffense + 1):
-      self.movePlayer(self._offenseTeam, i, self.getOffensiveResetPosition())
+      self.movePlayer(self._offenseTeamName, i, self.getOffensiveResetPosition())
     # Move the agent to the ball
-    if self._agent and self._agentOnBall:
-      self.movePlayer(self._offenseTeam, 1, self._ballPosition)
+    if self._agentOnBall and self._offenseAgents > 0:
+      self.movePlayer(self._offenseTeamName, self._agentNumInt[0], self._ballPosition)
     # Move the defensive goalie
     if self._numDefense > 0:
-      self.movePlayer(self._defenseTeam, 0, [0.5 * self.PITCH_LENGTH,0])
+      self.movePlayer(self._defenseTeamName, 0, [0.5 * self.PITCH_LENGTH,0])
     # Move the rest of the defense
     for i in xrange(1, self._numDefense):
-      self.movePlayer(self._defenseTeam, i, self.getDefensiveResetPosition())
+      self.movePlayer(self._defenseTeamName, i, self.getDefensiveResetPosition())
 
   def removeNonHFOPlayers(self):
     """Removes players that aren't involved in HFO game.
@@ -546,30 +564,28 @@ class Trainer(object):
     are sent to left-field.
 
     """
+    offensive_agent_numbers = self._agentNumInt[:self._offenseAgents]
+    defensive_agent_numbers = self._agentNumInt[self._offenseAgents:]
     for i in xrange(self._numOffense + 1, 11):
-      # Don't remove the learning agent
-      if not self._agent or i != self._agentNumInt or \
-         self._agentTeam != self._offenseTeam:
-        self.movePlayer(self._offenseTeam, i, [-0.25 * self.PITCH_LENGTH, 0])
+      if i not in offensive_agent_numbers:
+        self.movePlayer(self._offenseTeamName, i, [-0.25 * self.PITCH_LENGTH, 0])
     for i in xrange(self._numDefense, 11):
-      # Don't remove the learning agent
-      if not self._agent or i != self._agentNumInt or \
-         self._agentTeam != self._defenseTeam:
-        self.movePlayer(self._defenseTeam, i, [-0.25 * self.PITCH_LENGTH, 0])
+      if i not in defensive_agent_numbers:
+        self.movePlayer(self._defenseTeamName, i, [-0.25 * self.PITCH_LENGTH, 0])
 
   def step(self):
     """ Takes a simulated step. """
     # self.send('(check_ball)')
     self.removeNonHFOPlayers()
-    team_holding_ball, player_holding_ball = self.calcBallHolder()
-    if team_holding_ball is not None:
+    self._teamHoldingBall, self._playerHoldingBall = self.calcBallHolder()
+    if self._teamHoldingBall is not None:
       self._lastFrameBallTouched = self._frame
-    if self.trialOver(team_holding_ball):
-      self.updateResults(team_holding_ball)
+    if self.trialOver():
+      self.updateResults()
       self._lastFrameBallTouched = self._frame
       self.reset()
 
-  def updateResults(self, team_holding_ball):
+  def updateResults(self):
     """ Updates the various members after a trial has ended. """
     if self.isGoal():
       self._numGoals += 1
@@ -579,11 +595,11 @@ class Trainer(object):
       self._numBallsOOB += 1
       result = 'Out of Bounds'
       self.send('(say OUT_OF_BOUNDS)')
-    elif team_holding_ball not in [None,self._offenseTeamInd]:
+    elif self.isCaptured():
       self._numBallsCaptured += 1
       result = 'Defense Captured'
       self.send('(say CAPTURED_BY_DEFENSE)')
-    elif self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH:
+    elif self.isOOT():
       self._numOutOfTime += 1
       result = 'Ball untouched for too long'
       self.send('(say OUT_OF_TIME)')
@@ -600,7 +616,7 @@ class Trainer(object):
     if (self._maxFrames > 0) and (self._numFrames >= self._maxFrames):
       raise DoneError
 
-  def trialOver(self, team_holding_ball):
+  def trialOver(self):
     """Returns true if the trial has ended for one of the following
     reasons: Goal scored, out of bounds, captured by defense, or
     untouched for too long.
@@ -609,10 +625,7 @@ class Trainer(object):
     # The trial is still being setup, it cannot be over.
     if self._frame - self._lastTrialStart < 5:
       return False
-    return self.isGoal() \
-      or self.isOOB() \
-      or (team_holding_ball not in [None, self._offenseTeamInd]) \
-      or (self._frame - self._lastFrameBallTouched > self.UNTOUCHED_LENGTH)
+    return self.isGoal() or self.isOOB() or self.isCaptured() or self.isOOT()
 
   def printStats(self):
     print 'Num frames in completed trials : %i' % (self._numFrames)
@@ -634,18 +647,18 @@ class Trainer(object):
     return True
 
   def run(self, necProcesses):
-    """ Run the trainer.
-    """
+    """ Run the trainer """
     try:
-      if self._agent:
-        if self._agent_play_offense:
-          for i in xrange(self._numOffense):
-            self._agentPopen.append(self.launch_agent(i))
-            necProcesses.append([self._agentPopen[i], 'agent'+str(i)])
-        else:
-          for i in xrange(self._numDefense):
-            self._agentPopen.append(self.launch_agent(i))
-            necProcesses.append([self._agentPopen[i], 'agent'+str(i)])
+      for agent_num in xrange(self._offenseAgents):
+        port = self._agentServerPort + agent_num
+        agent = self.launch_agent(agent_num, play_offense=True, port=port)
+        self._agentPopen.append(agent)
+        necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
+      for agent_num in xrange(self._defenseAgents):
+        port = self._agentServerPort + agent_num + self._offenseAgents
+        agent = self.launch_agent(agent_num, play_offense=False, port=port)
+        self._agentPopen.append(agent)
+        necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
       self.startGame()
       while self.checkLive(necProcesses):
         prevFrame = self._frame
