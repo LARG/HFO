@@ -252,7 +252,7 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
 }
 
 void Agent::startServer(int server_port) {
-  std::cout << "Starting Server on Port " << server_port << std::endl;
+  std::cout << "[Agent Server] Starting Server on Port " << server_port << std::endl;
   struct sockaddr_in serv_addr, cli_addr;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {

@@ -41,9 +41,15 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   // Allow the agent to go 10% over the playfield in any direction
   float tolerance_x = .1 * SP.pitchHalfLength();
   float tolerance_y = .1 * SP.pitchHalfWidth();
-  addNormFeature(self_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+  if (playingOffense) { // Feature[0]: Xpostion
+    addNormFeature(self_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+  } else {
+    addNormFeature(self_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+  }
+  // Feature[1]: YPosition
   addNormFeature(self_pos.y, -SP.pitchHalfWidth() - tolerance_y,
                  SP.pitchHalfWidth() + tolerance_y);
+  // Feature[2]: Self Angle
   addNormFeature(self_ang, -2*M_PI, 2*M_PI);
 
   float r;
@@ -51,20 +57,27 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   // features about the ball
   Vector2D ball_pos = wm.ball().pos();
   angleDistToPoint(self_pos, ball_pos, th, r);
+  // Feature[3]: Dist to ball
   addNormFeature(r, 0, maxR);
+  // Feature[4]: Ang to ball
   addNormFeature(th, -2*M_PI, 2*M_PI);
+  // Feature[5]: Able to kick
   addNormFeature(self.isKickable(), false, true);
 
   // features about distance to goal center
   Vector2D goalCenter(SP.pitchHalfLength(), 0);
+  if (!playingOffense) {
+    goalCenter.assign(-SP.pitchHalfLength(), 0);
+  }
   angleDistToPoint(self_pos, goalCenter, th, r);
+  // Feature[6]: Goal Center Distance
   addNormFeature(r, 0, maxR); // Distance to goal center
+  // Feature[7]: Angle to goal center
   addNormFeature(th, -2*M_PI, 2*M_PI); // Ang to goal center
-
-  // features about our open angle to goal
+  // Feature[8]: largest open goal angle
   addNormFeature(calcLargestGoalAngle(wm, self_pos), 0, M_PI);
-  //std::cout << "goal angle: " << RAD_T_DEG * features[ind-1] << std::endl;
-  // teammate's open angle to goal
+
+  // Feature [9+T]: teammate's open angle to goal
   int detected_teammates = 0;
   for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject& teammate = *it;
@@ -75,7 +88,7 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   }
   // Add zero features for any missing teammates
   for (int i=detected_teammates; i<numTeammates; ++i) {
-      addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
   }
 
   // dist to our closest opp
