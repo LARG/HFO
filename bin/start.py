@@ -114,7 +114,7 @@ def parseArgs():
   p.add_argument('--frames-per-trial', dest='maxFramesPerTrial', type=int,
                  default=1000, help='Max number of frames per trial. '\
                  'Negative values mean unlimited.')
-  p.add_argument('--offense-agents', dest='offenseAgents', type=int, default=1,
+  p.add_argument('--offense-agents', dest='offenseAgents', type=int, default=0,
                  help='Number of offensive agents')
   p.add_argument('--defense-agents', dest='defenseAgents', type=int, default=0,
                  help='Number of defensive agents')
