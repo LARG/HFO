@@ -6,8 +6,55 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <assert.h>
 #include <netdb.h>
 #include <iostream>
+#include <sstream>
+
+bool HFOEnvironment::ParseHFOConfig(const std::string& message,
+                                    HFO_Config& config) {
+  config.num_offense = -1;
+  config.num_defense = -1;
+  std::istringstream iss(message);
+  std::string header = "HFO_SETUP";
+  std::string key, val;
+  iss >> key;
+  if (header.compare(key) != 0) {
+    std::cerr << "Got unexpected message header: " << header;
+    return false;
+  }
+  while (iss >> key) {
+    if (key.compare("offense_name") == 0) {
+      iss >> config.offense_team_name;
+    } else if (key.compare("defense_name") == 0) {
+      iss >> config.defense_team_name;
+    } else if (key.compare("num_offense") == 0) {
+      iss >> val;
+      config.num_offense = strtol(val.c_str(), NULL, 0);
+    } else if (key.compare("num_defense") == 0) {
+      iss >> val;
+      config.num_defense = strtol(val.c_str(), NULL, 0);
+    } else if (key.compare("offense_nums") == 0) {
+      assert(config.num_offense >= 0);
+      for (int i=0; i<config.num_offense; ++i) {
+        iss >> val;
+        config.offense_nums.push_back(strtol(val.c_str(), NULL, 0));
+      }
+    } else if (key.compare("defense_nums") == 0) {
+      assert(config.num_defense >= 0);
+      for (int i=0; i<config.num_defense; ++i) {
+        iss >> val;
+        config.defense_nums.push_back(strtol(val.c_str(), NULL, 0));
+      }
+    } else {
+      std::cerr << "Unrecognized key: " << key << std::endl;
+      return false;
+    }
+  }
+  assert(config.offense_nums.size() == config.num_offense);
+  assert(config.defense_nums.size() == config.num_defense);
+  return true;
+};
 
 void error(const char *msg) {
   perror(msg);

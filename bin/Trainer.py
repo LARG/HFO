@@ -659,6 +659,16 @@ class Trainer(object):
         agent = self.launch_agent(agent_num, play_offense=False, port=port)
         self._agentPopen.append(agent)
         necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
+      # Broadcast the HFO configuration
+      offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
+                               for i in xrange(1, self._numOffense + 1)])
+      defense_nums = ' '.join([str(self.convertToExtPlayer(self._defenseTeamName, i))
+                               for i in xrange(self._numDefense)])
+      self.send('(say HFO_SETUP offense_name %s defense_name %s num_offense %d'\
+                  ' num_defense %d offense_nums %s defense_nums %s)'
+                %(self._offenseTeamName, self._defenseTeamName,
+                  self._numOffense, self._numDefense,
+                  offense_nums, defense_nums))
       self.startGame()
       while self.checkLive(necProcesses):
         prevFrame = self._frame

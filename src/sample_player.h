@@ -27,9 +27,11 @@
 #ifndef SAMPLE_PLAYER_H
 #define SAMPLE_PLAYER_H
 
+#include "HFO.hpp"
 #include "action_generator.h"
 #include "field_evaluator.h"
 #include "communication.h"
+#include "feature_extractor.h"
 
 #include <rcsc/player/player_agent.h>
 #include <vector>
@@ -95,6 +97,16 @@ private:
 public:
     virtual
     FieldEvaluator::ConstPtr getFieldEvaluator() const;
+
+protected:
+  // Listens for a HFO Config message
+  bool getHFOConfig();
+
+  HFO_Config hfo_config;
+  FeatureExtractor* feature_extractor;
+  long lastTrainerMessageTime;
+  int num_teammates, num_opponents;
+  bool playing_offense;
 };
 
 #endif

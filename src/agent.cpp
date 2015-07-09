@@ -29,6 +29,7 @@
 #endif
 
 #include "agent.h"
+#include "HFO.cpp"
 
 #include "strategy.h"
 #include "field_analyzer.h"
@@ -111,13 +112,6 @@ using namespace rcsc;
 // Debugging tools to check for proper feature normalization
 float min_feat_val = 1e8;
 float max_feat_val = -1e8;
-
-// Socket Error
-void error(const char *msg)
-{
-    perror(msg);
-    exit(1);
-}
 
 // Minimium and feature values
 #define FEAT_MIN -1.
@@ -296,7 +290,11 @@ void Agent::clientHandshake() {
     error("[Agent Server] ERROR recv from socket");
   }
   // Create the corresponding FeatureExtractor
-  feature_extractor = getFeatureExtractor(feature_set);
+  if (feature_extractor != NULL) {
+    delete feature_extractor;
+  }
+  feature_extractor = getFeatureExtractor(feature_set, num_teammates,
+                                          num_opponents, playing_offense);
   // Send the number of features
   int numFeatures = feature_extractor->getNumFeatures();
   assert(numFeatures > 0);
@@ -314,11 +312,10 @@ void Agent::clientHandshake() {
   std::cout << "[Agent Server] Handshake complete" << std::endl;
 }
 
-FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx) {
-  if (feature_extractor != NULL) {
-    delete feature_extractor;
-  }
-
+FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
+                                             int num_teammates,
+                                             int num_opponents,
+                                             bool playing_offense) {
   switch (feature_set_indx) {
     case LOW_LEVEL_FEATURE_SET:
       return new LowLevelFeatureExtractor(num_teammates, num_opponents,
@@ -335,11 +332,12 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx) {
   }
 }
 
-hfo_status_t Agent::getGameStatus() {
+hfo_status_t Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
+                                  long& lastTrainerMessageTime) {
   hfo_status_t game_status = IN_GAME;
-  if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
-    lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
-    const std::string& message = audioSensor().trainerMessage();
+  if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
+    const std::string& message = audio_sensor.trainerMessage();
+    bool recognized_message = true;
     if (message.compare("GOAL") == 0) {
       game_status = GOAL;
     } else if (message.compare("CAPTURED_BY_DEFENSE") == 0) {
@@ -349,8 +347,10 @@ hfo_status_t Agent::getGameStatus() {
     } else if (message.compare("OUT_OF_TIME") == 0) {
       game_status = OUT_OF_TIME;
     } else {
-      std::cout << "[Agent Server] Unrecognized Trainer Message: " << message
-                << std::endl;
+      recognized_message = false;
+    }
+    if (recognized_message) {
+      lastTrainerMessageTime = audio_sensor.trainerMessageTime().cycle();
     }
   }
   return game_status;
@@ -367,7 +367,7 @@ void Agent::actionImpl() {
   }
 
   // Update and send the game status
-  hfo_status_t game_status = getGameStatus();
+  hfo_status_t game_status = getGameStatus(audioSensor(), lastTrainerMessageTime);
   if (send(newsockfd, &game_status, sizeof(int), 0) < 0) {
     error("[Agent Server] ERROR sending from socket");
   }

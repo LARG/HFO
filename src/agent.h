@@ -42,6 +42,16 @@ public:
   virtual ~Agent();
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
 
+  // Get the current game status
+  static hfo_status_t getGameStatus(const rcsc::AudioSensor& audio_sensor,
+                                    long& lastTrainerMessageTime);
+
+  // Returns the feature extractor corresponding to the feature_set_t
+  static FeatureExtractor* getFeatureExtractor(feature_set_t feature_set,
+                                               int num_teammates,
+                                               int num_opponents,
+                                               bool playing_offense);
+
 protected:
   // You can override this method. But you must call
   // PlayerAgent::initImpl() in this method.
@@ -60,17 +70,11 @@ protected:
   virtual FieldEvaluator::ConstPtr createFieldEvaluator() const;
   virtual ActionGenerator::ConstPtr createActionGenerator() const;
 
-  // Get the current game status
-  hfo_status_t getGameStatus();
-
   // Start the server and listen for a connection.
   void startServer(int server_port=6008);
 
   // Transmit information to the client and ensure it can recieve.
   void clientHandshake();
-
-  // Returns the feature extractor corresponding to the feature_set_t
-  FeatureExtractor* getFeatureExtractor(feature_set_t feature_set);
 
  protected:
   FeatureExtractor* feature_extractor;

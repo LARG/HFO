@@ -1,6 +1,7 @@
 #ifndef __HFO_HPP__
 #define __HFO_HPP__
 
+#include <string>
 #include <vector>
 
 // For descriptions of the different feature sets see
@@ -41,10 +42,26 @@ struct Action {
   float arg2;
 };
 
+// Configuration of the HFO domain including the team names and player
+// numbers for each team. This can be populated by ParseHFOConfig().
+struct HFO_Config {
+  std::string offense_team_name;
+  std::string defense_team_name;
+  int num_offense; // Number of offensive players
+  int num_defense; // Number of defensive players
+  std::vector<int> offense_nums; // Offensive player numbers
+  std::vector<int> defense_nums; // Defensive player numbers
+};
+
+
 class HFOEnvironment {
  public:
   HFOEnvironment();
   ~HFOEnvironment();
+
+  // Parse a message sent from Trainer to construct an HFO config.
+  // Returns a bool indicating if the struct was correctly parsed.
+  static bool ParseHFOConfig(const std::string& message, HFO_Config& config);
 
   // Connect to the server that controls the agent on the specified port.
   void connectToAgentServer(int server_port=6000,

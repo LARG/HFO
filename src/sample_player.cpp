@@ -29,6 +29,7 @@
 #endif
 
 #include "sample_player.h"
+#include "agent.h"
 
 #include "strategy.h"
 #include "field_analyzer.h"
@@ -52,6 +53,8 @@
 #include "view_tactical.h"
 
 #include "intention_receive.h"
+#include "lowlevel_feature_extractor.h"
+#include "highlevel_feature_extractor.h"
 
 #include <rcsc/action/basic_actions.h>
 #include <rcsc/action/bhv_emergency.h>
@@ -95,7 +98,12 @@ SamplePlayer::SamplePlayer()
     : PlayerAgent(),
       M_communication(),
       M_field_evaluator( createFieldEvaluator() ),
-      M_action_generator( createActionGenerator() )
+      M_action_generator( createActionGenerator() ),
+      feature_extractor(NULL),
+      lastTrainerMessageTime(-1),
+      num_teammates(-1),
+      num_opponents(-1),
+      playing_offense(false)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
@@ -157,7 +165,9 @@ SamplePlayer::SamplePlayer()
  */
 SamplePlayer::~SamplePlayer()
 {
-
+  if (feature_extractor != NULL) {
+    delete feature_extractor;
+  }
 }
 
 /*-------------------------------------------------------------------*/
@@ -215,6 +225,34 @@ SamplePlayer::initImpl( CmdLineParser & cmd_parser )
     return true;
 }
 
+/*!  Listen from a message from the trainer that reveals the
+  configuration of the HFO domain. Use this to populate our HFO_Config
+  struct.
+*/
+bool SamplePlayer::getHFOConfig() {
+  const AudioSensor& audio_sensor = audioSensor();
+  if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
+    const std::string& message = audio_sensor.trainerMessage();
+    if (HFOEnvironment::ParseHFOConfig(message, hfo_config)) {
+      lastTrainerMessageTime = audio_sensor.trainerMessageTime().cycle();
+      if (config().teamName().compare(hfo_config.offense_team_name) == 0) {
+        playing_offense = true;
+      } else if (config().teamName().compare(hfo_config.defense_team_name) == 0) {
+        playing_offense = false;
+      }
+      if (playing_offense) {
+        num_teammates = std::max(0, hfo_config.num_offense - 1);
+        num_opponents = hfo_config.num_defense;
+      } else {
+        num_teammates = std::max(0, hfo_config.num_defense - 1);
+        num_opponents = hfo_config.num_offense;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 /*-------------------------------------------------------------------*/
 /*!
   main decision
@@ -223,6 +261,24 @@ SamplePlayer::initImpl( CmdLineParser & cmd_parser )
 void
 SamplePlayer::actionImpl()
 {
+#ifdef ELOG
+  if (config().record()) {
+    if (feature_extractor == NULL) {
+      if (getHFOConfig()) {
+        feature_extractor = Agent::getFeatureExtractor(
+            LOW_LEVEL_FEATURE_SET, num_teammates, num_opponents, playing_offense);
+      }
+    } else {
+      hfo_status_t game_status = Agent::getGameStatus(
+          audioSensor(), lastTrainerMessageTime);
+      elog.addText(Logger::WORLD, "GameStatus %d", game_status);
+      elog.flush();
+      feature_extractor->ExtractFeatures(this->world());
+      feature_extractor->LogFeatures();
+    }
+  }
+#endif
+
     //
     // update strategy and analyzer
     //
