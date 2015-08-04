@@ -209,7 +209,7 @@ float FeatureExtractor::calcLargestOpenAngle(const rcsc::WorldModel &wm,
       //float oppAngleTop = oppAngle;
       float oppAngleBottom = oppAngle - halfWidthAngle;
       float oppAngleTop = oppAngle + halfWidthAngle;
-      //std::cout << "    to split? " << oppDist << " " << maxDist << std::endl;
+      // std::cout << "    to split? " << oppDist << " " << maxDist << std::endl;
       if (oppDist < maxDist) {
         splitAngles(openAngles,oppAngleBottom,oppAngleTop);
       }
@@ -218,7 +218,7 @@ float FeatureExtractor::calcLargestOpenAngle(const rcsc::WorldModel &wm,
   float largestOpening = 0;
   for (uint i = 0; i < openAngles.size(); ++i) {
     OpenAngle &open = openAngles[i];
-    //std::cout << "  opening: " << RAD_T_DEG * open.first << " " << RAD_T_DEG * open.second << std::endl;
+    // std::cout << "  opening: " << RAD_T_DEG * open.first << " " << RAD_T_DEG * open.second << std::endl;
     float opening = open.second - open.first;
     if (opening > largestOpening) {
       largestOpening = opening;
@@ -230,8 +230,8 @@ float FeatureExtractor::calcLargestOpenAngle(const rcsc::WorldModel &wm,
 void FeatureExtractor::splitAngles(std::vector<OpenAngle> &openAngles,
                                    float oppAngleBottom, float oppAngleTop) {
   std::vector<OpenAngle> resAngles;
-  for (uint i = 0; i < resAngles.size(); ++i) {
-    OpenAngle& open = resAngles[i];
+  for (uint i = 0; i < openAngles.size(); ++i) {
+    OpenAngle& open = openAngles[i];
     if ((oppAngleTop < open.first) || (oppAngleBottom > open.second)) {
       resAngles.push_back(open);
     } else {
