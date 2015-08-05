@@ -43,6 +43,9 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   """Sets up the teams, launches the server and monitor, starts the
   trainer.
   """
+  if args.seed:
+    print '[start.py] Seeding RNG with seed: ', args.seed
+    rng.seed(args.seed)
   if not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
   num_agents   = args.offenseAgents + args.defenseAgents
@@ -137,6 +140,8 @@ def parseArgs():
                  help='Agent starts with the ball.')
   p.add_argument('--fullstate', dest='fullstate', action='store_true',
                  help='Server provides full-state information to agents.')
+  p.add_argument('--seed', dest='seed', type=int,
+                 help='Seed the trainer\'s RNG. Default: time.')
   args = p.parse_args()
   assert args.offenseAgents + args.offenseNPCs in xrange(0, 11), \
     'Invalid number of offensive players: (choose from [0,10])'
