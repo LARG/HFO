@@ -11,8 +11,43 @@
 #include <iostream>
 #include <sstream>
 
-bool HFOEnvironment::ParseHFOConfig(const std::string& message,
-                                    HFO_Config& config) {
+using namespace hfo;
+
+std::string HFOEnvironment::ActionToString(Action action) {
+  std::stringstream ss;
+  switch (action.action) {
+    case DASH:
+      ss << "Dash(" << action.arg1 << "," << action.arg2 << ")";
+      break;
+    case TURN:
+      ss << "Turn(" << action.arg1 << ")";
+      break;
+    case TACKLE:
+      ss << "Tackle(" << action.arg1 << ")";
+      break;
+    case KICK:
+      ss << "Kick(" << action.arg1 << "," << action.arg2 << ")";
+      break;
+    case MOVE:
+      ss << "Move";
+      break;
+    case SHOOT:
+      ss << "Shoot";
+      break;
+    case PASS:
+      ss << "Pass";
+      break;
+    case DRIBBLE:
+      ss << "Dribble";
+      break;
+    case QUIT:
+      ss << "Quit";
+      break;
+  }
+  return ss.str();
+};
+
+bool HFOEnvironment::ParseConfig(const std::string& message, Config& config) {
   config.num_offense = -1;
   config.num_defense = -1;
   std::istringstream iss(message);
@@ -56,19 +91,15 @@ bool HFOEnvironment::ParseHFOConfig(const std::string& message,
   return true;
 };
 
-void error(const char *msg) {
-  perror(msg);
-  exit(0);
-}
-
 HFOEnvironment::HFOEnvironment() {}
 HFOEnvironment::~HFOEnvironment() {
   // Send a quit action and close the connection to the agent's server
   action_t quit = QUIT;
   if (send(sockfd, &quit, sizeof(int), 0) < 0) {
-    error("[Agent Client] ERROR sending from socket");
+    perror("[Agent Client] ERROR sending from socket");
   }
   close(sockfd);
+  exit(1);
 }
 
 void HFOEnvironment::connectToAgentServer(int server_port,
@@ -77,12 +108,13 @@ void HFOEnvironment::connectToAgentServer(int server_port,
             << server_port << std::endl;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
-    error("ERROR opening socket");
+    perror("ERROR opening socket");
+    exit(1);
   }
   struct hostent *server = gethostbyname("localhost");
   if (server == NULL) {
     fprintf(stderr,"ERROR, no such host\n");
-    exit(0);
+    exit(1);
   }
   struct sockaddr_in serv_addr;
   bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -99,14 +131,18 @@ void HFOEnvironment::connectToAgentServer(int server_port,
     retry--;
   }
   if (status < 0) {
-    error("[Agent Client] ERROR Unable to communicate with server");
+    perror("[Agent Client] ERROR Unable to communicate with server");
+    close(sockfd);
+    exit(1);
   }
   std::cout << "[Agent Client] Connected" << std::endl;
   handshakeAgentServer(feature_set);
   // Get the initial game state
   feature_vec.resize(numFeatures);
   if (recv(sockfd, &(feature_vec.front()), numFeatures*sizeof(float), 0) < 0) {
-    error("[Agent Client] ERROR recieving state features from socket");
+    perror("[Agent Client] ERROR recieving state features from socket");
+    close(sockfd);
+    exit(1);
   }
 }
 
@@ -114,35 +150,50 @@ void HFOEnvironment::handshakeAgentServer(feature_set_t feature_set) {
   // Recieve float 123.2345
   float f;
   if (recv(sockfd, &f, sizeof(float), 0) < 0) {
-    error("[Agent Client] ERROR recv from socket");
+    perror("[Agent Client] ERROR recv from socket");
+    close(sockfd);
+    exit(1);
   }
   // Check that error is within bounds
   if (abs(f - 123.2345) > 1e-4) {
-    error("[Agent Client] Handshake failed. Improper float recieved.");
+    perror("[Agent Client] Handshake failed. Improper float recieved.");
+    close(sockfd);
+    exit(1);
   }
   // Send float 5432.321
   f = 5432.321;
   if (send(sockfd, &f, sizeof(float), 0) < 0) {
-    error("[Agent Client] ERROR sending from socket");
+    perror("[Agent Client] ERROR sending from socket");
+    close(sockfd);
+    exit(1);
   }
   // Send the feature set request
   if (send(sockfd, &feature_set, sizeof(int), 0) < 0) {
-    error("[Agent Client] ERROR sending from socket");
+    perror("[Agent Client] ERROR sending from socket");
+    close(sockfd);
+    exit(1);
   }
   // Recieve the number of features
   if (recv(sockfd, &numFeatures, sizeof(int), 0) < 0) {
-    error("[Agent Client] ERROR recv from socket");
+    perror("[Agent Client] ERROR recv from socket");
+    close(sockfd);
+    exit(1);
   }
   if (send(sockfd, &numFeatures, sizeof(int), 0) < 0) {
-    error("[Agent Client] ERROR sending from socket");
+    perror("[Agent Client] ERROR sending from socket");
+    close(sockfd);
+    exit(1);
   }
   // Recieve the game status
-  hfo_status_t status;
-  if (recv(sockfd, &status, sizeof(hfo_status_t), 0) < 0) {
-    error("[Agent Client] ERROR recv from socket");
+  status_t status;
+  if (recv(sockfd, &status, sizeof(status_t), 0) < 0) {
+    perror("[Agent Client] ERROR recv from socket");
+    close(sockfd);
+    exit(1);
   }
   if (status != IN_GAME) {
     std::cout << "[Agent Client] Handshake failed: status check." << std::endl;
+    close(sockfd);
     exit(1);
   }
   std::cout << "[Agent Client] Handshake complete" << std::endl;
@@ -152,19 +203,25 @@ const std::vector<float>& HFOEnvironment::getState() {
   return feature_vec;
 }
 
-hfo_status_t HFOEnvironment::act(Action action) {
-  hfo_status_t game_status;
+status_t HFOEnvironment::act(Action action) {
+  status_t game_status;
   // Send the action
   if (send(sockfd, &action, sizeof(Action), 0) < 0) {
-    error("[Agent Client] ERROR sending from socket");
+    perror("[Agent Client] ERROR sending from socket");
+    close(sockfd);
+    exit(1);
   }
   // Get the game status
-  if (recv(sockfd, &game_status, sizeof(hfo_status_t), 0) < 0) {
-    error("[Agent Client] ERROR recieving from socket");
+  if (recv(sockfd, &game_status, sizeof(status_t), 0) < 0) {
+    perror("[Agent Client] ERROR recieving from socket");
+    close(sockfd);
+    exit(1);
   }
   // Get the next game state
   if (recv(sockfd, &(feature_vec.front()), numFeatures*sizeof(float), 0) < 0) {
-    error("[Agent Client] ERROR recieving state features from socket");
+    perror("[Agent Client] ERROR recieving state features from socket");
+    close(sockfd);
+    exit(1);
   }
   return game_status;
 }

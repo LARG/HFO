@@ -233,7 +233,7 @@ bool SamplePlayer::getHFOConfig() {
   const AudioSensor& audio_sensor = audioSensor();
   if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
     const std::string& message = audio_sensor.trainerMessage();
-    if (HFOEnvironment::ParseHFOConfig(message, hfo_config)) {
+    if (hfo::HFOEnvironment::ParseConfig(message, hfo_config)) {
       lastTrainerMessageTime = audio_sensor.trainerMessageTime().cycle();
       if (config().teamName().compare(hfo_config.offense_team_name) == 0) {
         playing_offense = true;

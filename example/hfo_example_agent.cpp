@@ -4,23 +4,25 @@
 #include <cstdlib>
 
 using namespace std;
+using namespace hfo;
 
-// First Start the server: $> bin/start.py
+// Before running this program, first Start HFO server:
+// $./bin/start.py --offense-agents 1
 
 int main() {
   // Create the HFO environment
   HFOEnvironment hfo;
-  // Connect the agent's server on the given port with the given
-  // feature set.  See possible feature sets in src/HFO.hpp.
+  // Connect to the agent's server on port 6000 and request low-level
+  // feature set. See manual for more information on feature sets.
   hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
   // Play 5 episodes
   for (int episode=0; episode<5; episode++) {
-    hfo_status_t status = IN_GAME;
+    status_t status = IN_GAME;
     while (status == IN_GAME) {
-      // Grab the vector of state features for the current state
+      // Get the vector of state features for the current state
       const std::vector<float>& feature_vec = hfo.getState();
       // Create a dash action
-      Action a = {DASH, 0., 0.};
+      Action a = {DASH, 0.0, 0.0};
       // Perform the dash and recieve the current game status
       status = hfo.act(a);
     }

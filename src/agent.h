@@ -43,11 +43,11 @@ public:
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
 
   // Get the current game status
-  static hfo_status_t getGameStatus(const rcsc::AudioSensor& audio_sensor,
-                                    long& lastTrainerMessageTime);
+  static hfo::status_t getGameStatus(const rcsc::AudioSensor& audio_sensor,
+                                     long& lastTrainerMessageTime);
 
   // Returns the feature extractor corresponding to the feature_set_t
-  static FeatureExtractor* getFeatureExtractor(feature_set_t feature_set,
+  static FeatureExtractor* getFeatureExtractor(hfo::feature_set_t feature_set,
                                                int num_teammates,
                                                int num_opponents,
                                                bool playing_offense);

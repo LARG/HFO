@@ -102,7 +102,7 @@ protected:
   // Listens for a HFO Config message
   bool getHFOConfig();
 
-  HFO_Config hfo_config;
+  hfo::Config hfo_config;
   FeatureExtractor* feature_extractor;
   long lastTrainerMessageTime;
   int num_teammates, num_opponents;

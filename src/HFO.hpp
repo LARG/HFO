@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+namespace hfo {
+
 // For descriptions of the different feature sets see
 // https://github.com/mhauskn/HFO/blob/master/doc/manual.pdf
 enum feature_set_t
@@ -26,25 +28,27 @@ enum action_t
   QUIT     // Special action to quit the game
 };
 
-// The current status of the HFO game
-enum hfo_status_t
-{
-  IN_GAME,
-  GOAL,
-  CAPTURED_BY_DEFENSE,
-  OUT_OF_BOUNDS,
-  OUT_OF_TIME
-};
-
+// An Action consists of the discreet action as well as required
+// arguments (parameters).
 struct Action {
   action_t action;
   float arg1;
   float arg2;
 };
 
+// Status of a HFO game
+enum status_t
+{
+  IN_GAME,             // Game is currently active
+  GOAL,                // A goal has been scored by the offense
+  CAPTURED_BY_DEFENSE, // The defense has captured the ball
+  OUT_OF_BOUNDS,       // Ball has gone out of bounds
+  OUT_OF_TIME          // Trial has ended due to time limit
+};
+
 // Configuration of the HFO domain including the team names and player
-// numbers for each team. This can be populated by ParseHFOConfig().
-struct HFO_Config {
+// numbers for each team. This struct is populated by ParseConfig().
+struct Config {
   std::string offense_team_name;
   std::string defense_team_name;
   int num_offense; // Number of offensive players
@@ -53,15 +57,17 @@ struct HFO_Config {
   std::vector<int> defense_nums; // Defensive player numbers
 };
 
-
 class HFOEnvironment {
  public:
   HFOEnvironment();
   ~HFOEnvironment();
 
-  // Parse a message sent from Trainer to construct an HFO config.
-  // Returns a bool indicating if the struct was correctly parsed.
-  static bool ParseHFOConfig(const std::string& message, HFO_Config& config);
+  // Returns a string representation of an action.
+  static std::string ActionToString(Action action);
+
+  // Parse a Trainer message to populate config. Returns a bool
+  // indicating if the struct was correctly parsed.
+  static bool ParseConfig(const std::string& message, Config& config);
 
   // Connect to the server that controls the agent on the specified port.
   void connectToAgentServer(int server_port=6000,
@@ -71,7 +77,7 @@ class HFOEnvironment {
   const std::vector<float>& getState();
 
   // Take an action and recieve the resulting game status
-  hfo_status_t act(Action action);
+  status_t act(Action action);
 
  protected:
   int numFeatures; // The number of features in this domain
@@ -83,4 +89,5 @@ class HFOEnvironment {
   virtual void handshakeAgentServer(feature_set_t feature_set);
 };
 
+} // namespace hfo
 #endif

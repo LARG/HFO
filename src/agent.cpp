@@ -29,7 +29,6 @@
 #endif
 
 #include "agent.h"
-#include "HFO.cpp"
 
 #include "strategy.h"
 #include "field_analyzer.h"
@@ -108,21 +107,7 @@
 #include <netinet/in.h>
 
 using namespace rcsc;
-
-// Debugging tools to check for proper feature normalization
-float min_feat_val = 1e8;
-float max_feat_val = -1e8;
-
-// Minimium and feature values
-#define FEAT_MIN -1.
-#define FEAT_MAX 1.
-
-#define LOG_FEATURE(val) \
-  if (val <= min_feat_val) \
-    min_feat_val = val; \
-  if (val >= max_feat_val) \
-    max_feat_val = val; \
-  std::cout << "FEATURE " << val << " [" << min_feat_val << ", " << max_feat_val << "]" << std::endl;
+using namespace hfo;
 
 Agent::Agent()
     : PlayerAgent(),
@@ -250,21 +235,25 @@ void Agent::startServer(int server_port) {
   struct sockaddr_in serv_addr, cli_addr;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
-    error("[Agent Server] ERROR opening socket");
+    perror("[Agent Server] ERROR opening socket");
+    exit(1);
   }
   bzero((char *) &serv_addr, sizeof(serv_addr));
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = INADDR_ANY;
   serv_addr.sin_port = htons(server_port);
   if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-    error("[Agent Server] ERROR on binding");
+    perror("[Agent Server] ERROR on binding");
+    exit(1);
   }
   listen(sockfd, 5);
   socklen_t clilen = sizeof(cli_addr);
   std::cout << "[Agent Server] Waiting for client to connect... " << std::endl;
   newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
   if (newsockfd < 0) {
-    error("[Agent Server] ERROR on accept");
+    perror("[Agent Server] ERROR on accept");
+    close(sockfd);
+    exit(1);
   }
   std::cout << "[Agent Server] Connected" << std::endl;
   server_running = true;
@@ -274,20 +263,28 @@ void Agent::clientHandshake() {
   // Send float 123.2345
   float f = 123.2345;
   if (send(newsockfd, &f, sizeof(float), 0) < 0) {
-    error("[Agent Server] ERROR sending from socket");
+    perror("[Agent Server] ERROR sending from socket");
+    close(sockfd);
+    exit(1);
   }
   // Recieve float 5432.321
   if (recv(newsockfd, &f, sizeof(float), 0) < 0) {
-    error("[Agent Server] ERROR recv from socket");
+    perror("[Agent Server] ERROR recv from socket");
+    close(sockfd);
+    exit(1);
   }
   // Check that error is within bounds
   if (abs(f - 5432.321) > 1e-4) {
-    error("[Agent Server] Handshake failed. Improper float recieved.");
+    perror("[Agent Server] Handshake failed. Improper float recieved.");
+    close(sockfd);
+    exit(1);
   }
   // Recieve the feature set to use
-  feature_set_t feature_set;
+  hfo::feature_set_t feature_set;
   if (recv(newsockfd, &feature_set, sizeof(int), 0) < 0) {
-    error("[Agent Server] ERROR recv from socket");
+    perror("[Agent Server] PERROR recv from socket");
+    close(sockfd);
+    exit(1);
   }
   // Create the corresponding FeatureExtractor
   if (feature_extractor != NULL) {
@@ -299,15 +296,21 @@ void Agent::clientHandshake() {
   int numFeatures = feature_extractor->getNumFeatures();
   assert(numFeatures > 0);
   if (send(newsockfd, &numFeatures, sizeof(int), 0) < 0) {
-    error("[Agent Server] ERROR sending from socket");
+    perror("[Agent Server] ERROR sending from socket");
+    close(sockfd);
+    exit(1);
   }
   // Check that client has recieved correctly
   int client_response = -1;
   if (recv(newsockfd, &client_response, sizeof(int), 0) < 0) {
-    error("[Agent Server] ERROR recv from socket");
+    perror("[Agent Server] ERROR recv from socket");
+    close(sockfd);
+    exit(1);
   }
   if (client_response != numFeatures) {
-    error("[Agent Server] Client incorrectly parsed the number of features.");
+    perror("[Agent Server] Client incorrectly parsed the number of features.");
+    close(sockfd);
+    exit(1);
   }
   std::cout << "[Agent Server] Handshake complete" << std::endl;
 }
@@ -332,9 +335,9 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
   }
 }
 
-hfo_status_t Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
+status_t Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
                                   long& lastTrainerMessageTime) {
-  hfo_status_t game_status = IN_GAME;
+  status_t game_status = IN_GAME;
   if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
     const std::string& message = audio_sensor.trainerMessage();
     bool recognized_message = true;
@@ -367,9 +370,11 @@ void Agent::actionImpl() {
   }
 
   // Update and send the game status
-  hfo_status_t game_status = getGameStatus(audioSensor(), lastTrainerMessageTime);
+  status_t game_status = getGameStatus(audioSensor(), lastTrainerMessageTime);
   if (send(newsockfd, &game_status, sizeof(int), 0) < 0) {
-    error("[Agent Server] ERROR sending from socket");
+    perror("[Agent Server] ERROR sending from socket");
+    close(sockfd);
+    exit(1);
   }
 
   // Update and send the state features
@@ -386,13 +391,16 @@ void Agent::actionImpl() {
 
   if (send(newsockfd, &(features.front()),
            features.size() * sizeof(float), 0) < 0) {
-    error("[Agent Server] ERROR sending state features from socket");
+    perror("[Agent Server] ERROR sending state features from socket");
+    exit(1);
   }
 
   // Get the action
   Action action;
   if (recv(newsockfd, &action, sizeof(Action), 0) < 0) {
-    error("[Agent Server] ERROR recv from socket");
+    perror("[Agent Server] ERROR recv from socket");
+    close(sockfd);
+    exit(1);
   }
   switch(action.action) {
     case DASH:
@@ -421,10 +429,12 @@ void Agent::actionImpl() {
       break;
     case QUIT:
       std::cout << "[Agent Server] Got quit from agent." << std::endl;
+      close(sockfd);
       exit(0);
     default:
       std::cerr << "[Agent Server] ERROR Unsupported Action: "
                 << action.action << std::endl;
+      close(sockfd);
       exit(1);
   }
 
