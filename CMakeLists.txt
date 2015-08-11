@@ -35,7 +35,7 @@ list(APPEND LINK_LIBS
 )
 
 add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/sample_coach.cpp ${SOURCES})
-add_executable(sample_player ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCES})
+add_executable(sample_player ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCE_DIR}/agent.cpp ${SOURCES})
 add_executable(sample_trainer ${SOURCE_DIR}/main_trainer.cpp ${SOURCE_DIR}/sample_trainer.cpp ${SOURCES})
 add_executable(agent ${SOURCE_DIR}/main_agent.cpp ${SOURCE_DIR}/agent.cpp ${SOURCES})
 add_library(hfo-lib SHARED ${SOURCE_DIR}/HFO.hpp ${SOURCE_DIR}/HFO.cpp)

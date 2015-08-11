@@ -266,10 +266,10 @@ SamplePlayer::actionImpl()
     if (feature_extractor == NULL) {
       if (getHFOConfig()) {
         feature_extractor = Agent::getFeatureExtractor(
-            LOW_LEVEL_FEATURE_SET, num_teammates, num_opponents, playing_offense);
+            hfo::LOW_LEVEL_FEATURE_SET, num_teammates, num_opponents, playing_offense);
       }
     } else {
-      hfo_status_t game_status = Agent::getGameStatus(
+      hfo::status_t game_status = Agent::getGameStatus(
           audioSensor(), lastTrainerMessageTime);
       elog.addText(Logger::WORLD, "GameStatus %d", game_status);
       elog.flush();
