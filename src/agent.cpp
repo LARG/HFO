@@ -46,6 +46,7 @@
 #include "bhv_set_play.h"
 #include "bhv_set_play_kick_in.h"
 #include "bhv_set_play_indirect_free_kick.h"
+#include "shoot_generator.h"
 
 #include "bhv_custom_before_kick_off.h"
 #include "bhv_strict_check_shoot.h"
@@ -73,6 +74,7 @@
 #include <rcsc/action/body_kick_one_step.h>
 #include <rcsc/action/body_pass.h>
 #include <rcsc/action/body_dribble.h>
+#include <rcsc/action/body_smart_kick.h>
 #include <rcsc/action/neck_scan_field.h>
 #include <rcsc/action/neck_turn_to_ball_or_scan.h>
 #include <rcsc/action/view_synch.h>
@@ -402,6 +404,14 @@ void Agent::actionImpl() {
     close(sockfd);
     exit(1);
   }
+  if (action.action == SHOOT) {
+    const ShootGenerator::Container & cont =
+        ShootGenerator::instance().courses(this->world(), false);
+    ShootGenerator::Container::const_iterator best_shoot
+        = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
+    Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
+                   best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
+  }
   switch(action.action) {
     case DASH:
       this->doDash(action.arg1, action.arg2);
@@ -419,7 +429,6 @@ void Agent::actionImpl() {
       this->doMove();
       break;
     case SHOOT:
-      this->doShoot();
       break;
     case PASS:
       this->doPass();
