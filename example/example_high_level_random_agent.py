@@ -12,20 +12,27 @@ except:
 
 def get_random_action():
   """ Returns a random high-level action """
-  high_lv_actions = [HFO_Actions.MOVE, HFO_Actions.SHOOT,
-                     HFO_Actions.PASS, HFO_Actions.DRIBBLE]
+  high_lv_actions = [HFO_Actions.SHOOT, HFO_Actions.PASS, HFO_Actions.DRIBBLE]
   return (random.choice(high_lv_actions), 0, 0)
 
 def play_hfo(num):
   """ Method called by a thread to play 5 games of HFO """
   hfo_env = hfo.HFOEnvironment()
   hfo_env.connectToAgentServer(6000 + num, HFO_Features.HIGH_LEVEL_FEATURE_SET)
-  for episode in xrange(5):
-    status = HFO_Status.IN_GAME
-    while status == HFO_Status.IN_GAME:
-      state = hfo_env.getState()
-      status = hfo_env.act(get_random_action())
-  hfo_env.cleanup()
+  try:
+    for episode in xrange(5):
+      status = HFO_Status.IN_GAME
+      while status == HFO_Status.IN_GAME:
+        state = hfo_env.getState()
+        if state[5] == 1: #state[5]  is 1 when player has the ball
+          status = hfo_env.act(get_random_action())
+        else:
+          status = hfo_env.act((HFO_Actions.MOVE, 0, 0))
+  except:
+    pass
+  finally:
+    print "Agent " + str(num) + " exiting." 
+    hfo_env.cleanup()
 
 def main():
   parser = argparse.ArgumentParser()
