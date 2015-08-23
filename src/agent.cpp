@@ -47,6 +47,7 @@
 #include "bhv_set_play_kick_in.h"
 #include "bhv_set_play_indirect_free_kick.h"
 #include "shoot_generator.h"
+#include "bhv_force_pass.h"
 
 #include "bhv_custom_before_kick_off.h"
 #include "bhv_strict_check_shoot.h"
@@ -411,6 +412,11 @@ void Agent::actionImpl() {
         = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
     Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
                    best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
+  } else if (action.action == PASS) {
+    Force_Pass pass;
+    int receiver = int(action.arg1);
+    pass.get_pass_to_player(this->world(), receiver);
+    pass.execute(this);
   }
   switch(action.action) {
     case DASH:
@@ -431,7 +437,6 @@ void Agent::actionImpl() {
     case SHOOT:
       break;
     case PASS:
-      this->doPass();
       break;
     case DRIBBLE:
       this->doDribble();
