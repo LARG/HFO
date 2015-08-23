@@ -74,11 +74,12 @@ follows:
   angle available to pass to teammate i. Shown as $\theta_p$ in Figure
   \ref{fig:openAngle}. If teammates are present but not detected, this
   feature is considered invalid and given the value of -2.}
-\item [$2T$] {\textbf{Distance and Angle to Teammates} - For each
-  teammate i: the distance and angle to that teammate.}
+\item [$3T$] {\textbf{Distance, Angle, and Uniform Number of
+    Teammates} - For each teammate i: the distance, angle, and uniform
+  number of that teammate.}
 \end{enumerate}
 
-There are a total of $9 + 4*\textrm{num\_teammates}$ features with an
+There are a total of $9 + 5*\textrm{num\_teammates}$ features with an
 additional $1 + \textrm{num\_teammates}$ features if at least one
 opponent is present.
 
@@ -270,9 +271,10 @@ server.
   should be used.}
 \item{\textbf{Shoot}(): Executes the best available shot. This command
   only works when the agent has the ball.}
-\item{\textbf{Pass}(): Finds the best teammate to pass to and the type
-  of pass to use. This command only works when the agent has the
-  ball.}
+\item{\textbf{Pass}(teammate\_uniform\_number): Passes to the teammate
+  with the provided uniform number. Does nothing if the player does
+  not have control of the ball or the requested teammate is not
+  detected.}
 \item{\textbf{Dribble}(): Advances the ball towards the goal using a
   combination of short kicks and moves.}
 \end{itemize}

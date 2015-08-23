@@ -132,13 +132,15 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
       angleDistToPoint(self_pos, teammate.pos(), th, r);
       addFeature(r);
       addFeature(th);
+      addFeature(teammate.unum());
       detected_teammates++;
     }
   }
   // Add zero features for any missing teammates
   for (int i=detected_teammates; i<numTeammates; ++i) {
-      addFeature(FEAT_INVALID);
-      addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
   }
 
   assert(featIndx == numFeatures);
