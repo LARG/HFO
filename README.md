@@ -17,7 +17,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 make install
 ```
-[Optional Python Install]: `pip install [--user] .`
+Optional Python Install: `pip install [--user] .`
 
 
 
