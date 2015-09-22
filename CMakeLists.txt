@@ -86,6 +86,7 @@ add_library(hfo-lib SHARED ${SOURCE_DIR}/HFO.hpp ${SOURCE_DIR}/HFO.cpp)
 set_target_properties(hfo-lib PROPERTIES OUTPUT_NAME hfo)
 set_target_properties(hfo-lib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
+add_dependencies(player_chain_action librcsc)
 add_dependencies(sample_coach librcsc)
 add_dependencies(sample_player librcsc)
 add_dependencies(sample_trainer librcsc)

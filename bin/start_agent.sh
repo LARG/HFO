@@ -452,7 +452,7 @@ while [ $i -le ${number} ] ; do
     cmd="${player} ${opt} ${opts} ${offline_number} ${goalie} --reconnect $i"
     if [ X"${use_gdb}" = X'' ]; then
       ${cmd} &
-      echo "PID: $!" > ${LOG_DIR}/start$BASHPID
+      echo "PID: $!" > ${LOG_DIR}/start$$
     else
       gdb -ex run --args  ${cmd}
     fi
