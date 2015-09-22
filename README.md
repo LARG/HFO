@@ -24,13 +24,14 @@ Optional Python Install: `pip install [--user] .`
 ## Example Agents
 Example C++ and Python agents are provided in the `example` directory.
 
-## Demo
- - Start a simple 1v1 game played by Agent2D:
+## Demo1
+Start a simple 1v1 game played by Agent2D:
 ```
 ./bin/start.py --offense-npcs=1 --defense-npcs=1
 ```
 
- - Start an example agent on the empty goal task. This agent will move
+## Demo2
+Start an example agent on the empty goal task. This agent will move
 forwards slowly. First start the server: `./bin/start.py
 --offense-agents=1 &` and then connect the agent:
 `./example/hfo_example_agent`.
