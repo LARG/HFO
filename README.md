@@ -28,7 +28,7 @@ Start a simple 1v1 game played by Agent2D:
 Start an example agent on the empty goal task. This agent will move
 forwards slowly. First start the server: `./bin/start.py
 --offense-agents=1 &` and then connect the agent:
-`./example/hfo_example_agent`.
+`./example/hfo_example_agent`
 
 Or do both in a single command:
 ```
