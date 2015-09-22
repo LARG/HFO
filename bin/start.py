@@ -7,9 +7,9 @@ from signal import SIGKILL
 # Global list of all/essential running processes
 processes, necProcesses = [], []
 # Command to run the rcssserver. Edit as needed.
-SERVER_CMD = 'rcssserver'
+SERVER_BIN = 'rcssserver'
 # Command to run the monitor. Edit as needed.
-MONITOR_CMD = 'soccerwindow2'
+MONITOR_BIN = 'soccerwindow2'
 
 def getAgentDirCmd(binary_dir, teamname, server_port=6000, coach_port=6002,
                    logDir='log', record=False):
@@ -53,6 +53,7 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   server_port  = args.port + num_agents
   coach_port   = args.port + num_agents + 1
   olcoach_port = args.port + num_agents + 2
+  serverCommand = os.path.join(binary_dir, SERVER_BIN)
   serverOptions = ' server::port=%i server::coach_port=%i ' \
                   'server::olcoach_port=%i server::coach=1 ' \
                   'server::game_logging=%i server::text_logging=%i ' \
@@ -70,14 +71,15 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
                                    args.logDir, args.record)
   try:
     # Launch the Server
-    server = launch(SERVER_CMD + serverOptions, name='server')
+    server = launch(serverCommand + serverOptions, name='server')
     time.sleep(0.2)
     assert server.poll() is None,\
       '[start.py] Failed to launch Server with command: \"%s\"' \
-      %(SERVER_CMD + serverOptions)
+      %(serverCommand + serverOptions)
     if not args.headless:
-      monitorOptions = ' --port=%i'%(server_port)
-      launch(MONITOR_CMD + monitorOptions, name='monitor')
+      monitorCommand = os.path.join(binary_dir, MONITOR_BIN)
+      monitorOptions = ' --connect --port=%i'%(server_port)
+      launch(monitorCommand + monitorOptions, name='monitor')
     # Launch the Trainer
     from Trainer import Trainer
     trainer = Trainer(args=args, rng=rng, server_port=server_port,
