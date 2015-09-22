@@ -17,7 +17,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 make install
 ```
-Optional Python Install: `pip install [--user] .`
+Python Install (required only for python interface): `pip install [--user] .`
 
 ## Demos
 Start a simple 1v1 game played by Agent2D:
