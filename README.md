@@ -11,11 +11,12 @@ RoboCup 2D Half Field Offense
  - Qt4 [Optional]: Required for SoccerWindow2 visualizer. To skip add cmake flag `-DBUILD_SOCCERWINDOW=False`.
 
 ## Install
-```mkdir build && cd build
+`
+mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 make install
-```
+`
 
 ## Example Agents
 Example C++ and Python agents are provided in the `example` directory.
