@@ -631,7 +631,8 @@ class Trainer(object):
 
   def printStats(self):
     print '[Trainer] TotalFrames = %i, AvgFramesPerTrial = %.1f, AvgFramesPerGoal = %.1f'\
-      %(self._numFrames, self._numFrames / float(self._numTrials),
+      %(self._numFrames,
+        self._numFrames / float(self._numTrials) if self._numTrials > 0 else float('nan'),
         self._numGoalFrames / float(self._numGoals) if self._numGoals > 0 else float('nan'))
     print '[Trainer] Trials             : %i' % self._numTrials
     print '[Trainer] Goals              : %i' % self._numGoals
