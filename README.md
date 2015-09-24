@@ -36,7 +36,9 @@ Or do both in a single command:
 ```
 
 ## Example Agents
-Example C++ and Python agents are provided in the `example` directory.
+
+Example agents are provided in the `example` directory. Below are two
+minimal examples:
 
 #### Example C++ Agent
 ```c++
@@ -56,12 +58,12 @@ for (int episode=0; episode<5; episode++) {
 #### Example Python Agent
 ```python
 hfo = hfo.HFOEnvironment()
-hfo.connectToAgentServer(6000, HFO_Features.HIGH_LEVEL_FEATURE_SET)
+hfo.connectToAgentServer(6000, HFO_Features.LOW_LEVEL_FEATURE_SET)
 for episode in xrange(5):
   status = HFO_Status.IN_GAME
   while status == HFO_Status.IN_GAME:
     features = hfo.getState()
-    status = hfo.act((HFO_Actions.DASH, 0, 0))
+    status = hfo.act((HFO_Actions.DASH, 20.0, 0))
   print 'Episode', episode, 'ended'
 ```
 
