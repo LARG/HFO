@@ -22,17 +22,16 @@ Python Install (required only for python interface): `pip install [--user] .`
 ## Demos
 Start a simple 1v1 game played by Agent2D:
 ```
-./bin/start.py --offense-npcs=1 --defense-npcs=1
+./bin/HFO --offense-npcs=1 --defense-npcs=1 --no-sync
 ```
 
 Start an example agent on the empty goal task. This agent will move
-forwards slowly. First start the server: `./bin/start.py
---offense-agents=1 &` and then connect the agent:
-`./example/hfo_example_agent`
+forwards slowly. First start the server: `./bin/HFO --offense-agents=1
+--no-sync &` and then connect the agent: `./example/hfo_example_agent`
 
 Or do both in a single command:
 ```
-(./bin/start.py --offense-agents=1 &) && ./example/hfo_example_agent
+(./bin/HFO --offense-agents=1 --no-sync &) && ./example/hfo_example_agent
 ```
 
 ## Example Agents
