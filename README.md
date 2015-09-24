@@ -17,7 +17,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 make install
 ```
-#### Python Install (required only for python interface)
+#### Python Install [required for python interface]
 From the main HFO directory: `pip install [--user] .`
 
 ## Demos
