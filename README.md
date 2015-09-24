@@ -21,7 +21,7 @@ make install
 From the main HFO directory: `pip install [--user] .`
 
 ## Demos
-Start a simple 1v1 game played by Agent2D:
+Start a 1v1 game played by Agent2D:
 ```
 ./bin/HFO --offense-npcs=1 --defense-npcs=1 --no-sync
 ```
