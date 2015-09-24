@@ -123,7 +123,7 @@ class Trainer(object):
     agentCmd = os.path.join(binary_dir, agentCmd)
     agentCmd = agentCmd.split(' ')
     # Ignore stderr because librcsc continually prints to it
-    kwargs = {}#{'stderr':open('/dev/null','w')}
+    kwargs = {'stderr':open('/dev/null','w')}
     p = subprocess.Popen(agentCmd, **kwargs)
     p.wait()
     pid_file = os.path.join(self._logDir, 'start%i'%p.pid)

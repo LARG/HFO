@@ -45,7 +45,7 @@ int main() {
   // feature set. See manual for more information on feature sets.
   hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
   // Play 5 episodes
-  for (int episode=0; episode<5; episode++) {
+  for (int episode=0; ; episode++) {
     status_t status = IN_GAME;
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
