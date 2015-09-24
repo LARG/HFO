@@ -8,8 +8,7 @@ RoboCup 2D Half Field Offense
 ## Dependencies
  - Boost-system, filesystem
  - Flex
- - Qt4 [Optional]: Required for SoccerWindow2 visualizer. To skip this step, add cmake flag 
-   `-DBUILD_SOCCERWINDOW=False`
+ - Qt4 [Required for SoccerWindow2 visualizer]: To not build the visualizer, add cmake flag `-DBUILD_SOCCERWINDOW=False`
 
 ## Install
 ```
