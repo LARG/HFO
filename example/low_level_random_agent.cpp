@@ -55,24 +55,5 @@ int main() {
       // Perform the dash and recieve the current game status
       status = hfo.act(a);
     }
-    // Check what the outcome of the episode was
-    cout << "Episode " << episode << " ended with status: ";
-    switch (status) {
-      case GOAL:
-        cout << "goal" << endl;
-        break;
-      case CAPTURED_BY_DEFENSE:
-        cout << "captured by defense" << endl;
-        break;
-      case OUT_OF_BOUNDS:
-        cout << "out of bounds" << endl;
-        break;
-      case OUT_OF_TIME:
-        cout << "out of time" << endl;
-        break;
-      default:
-        cout << "Unknown status " << status << endl;
-        exit(1);
-    }
   }
 };
