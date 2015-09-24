@@ -40,7 +40,7 @@ Or do both in a single command:
 Example agents are provided in the `example` directory. Below are two
 minimal examples:
 
-#### Example C++ Agent
+#### C++ Agent
 ```c++
 HFOEnvironment hfo;
 hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
@@ -55,7 +55,7 @@ for (int episode=0; episode<5; episode++) {
 }
 ```
 
-#### Example Python Agent
+#### Python Agent
 ```python
 hfo = hfo.HFOEnvironment()
 hfo.connectToAgentServer(6000, HFO_Features.LOW_LEVEL_FEATURE_SET)
