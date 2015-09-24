@@ -17,7 +17,8 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j4
 make install
 ```
-Python Install (required only for python interface): From the main HFO directory `pip install [--user] .`
+#### Python Install (required only for python interface)
+From the main HFO directory: `pip install [--user] .`
 
 ## Demos
 Start a simple 1v1 game played by Agent2D:
