@@ -53,5 +53,17 @@ for (int episode=0; episode<5; episode++) {
 }
 ```
 
+#### Example Python Agent
+```python
+hfo = hfo.HFOEnvironment()
+hfo.connectToAgentServer(6000, HFO_Features.HIGH_LEVEL_FEATURE_SET)
+for episode in xrange(5):
+  status = HFO_Status.IN_GAME
+  while status == HFO_Status.IN_GAME:
+    features = hfo.getState()
+    status = hfo.act((HFO_Actions.DASH, 0, 0))
+  print 'Episode', episode, 'ended'
+```
+
 ## Documentation
 The state and action spaces provided by the HFO domain are documented in the [manual](doc/manual.pdf).
