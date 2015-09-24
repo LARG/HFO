@@ -54,6 +54,7 @@ class Trainer(object):
     self._allowedBallY = numpy.array([-0.5 * self.PITCH_WIDTH, 0.5 * self.PITCH_WIDTH])
     # =============== COUNTERS =============== #
     self._numFrames = 0 # Number of frames seen in HFO trials
+    self._numGoalFrames = 0 # Number of frames in goal-scoring HFO trials
     self._frame = 0 # Current frame id
     self._lastTrialStart = -1 # Frame Id in which the last trial started
     self._lastFrameBallTouched = -1 # Frame Id in which ball was last touched
@@ -589,6 +590,7 @@ class Trainer(object):
     """ Updates the various members after a trial has ended. """
     if self.isGoal():
       self._numGoals += 1
+      self._numGoalFrames += self._frame - self._lastTrialStart
       result = 'Goal'
       self.send('(say GOAL)')
     elif self.isOOB():
@@ -606,9 +608,9 @@ class Trainer(object):
     else:
       print '[Trainer] Error: Unable to detect reason for End of Trial!'
       sys.exit(1)
-    print '[Trainer] EndOfTrial: %2i /%2i %5i %s'%\
-      (self._numGoals, self._numTrials, self._frame, result)
     self._numTrials += 1
+    print '[Trainer] EndOfTrial: %d / %d %d %s'%\
+      (self._numGoals, self._numTrials, self._frame, result)
     self._numFrames += self._frame - self._lastTrialStart
     self._lastTrialStart = self._frame
     if (self._maxTrials > 0) and (self._numTrials >= self._maxTrials):
@@ -628,12 +630,14 @@ class Trainer(object):
     return self.isGoal() or self.isOOB() or self.isCaptured() or self.isOOT()
 
   def printStats(self):
-    print 'Num frames in completed trials : %i' % (self._numFrames)
-    print 'Trials             : %i' % self._numTrials
-    print 'Goals              : %i' % self._numGoals
-    print 'Defense Captured   : %i' % self._numBallsCaptured
-    print 'Balls Out of Bounds: %i' % self._numBallsOOB
-    print 'Out of Time        : %i' % self._numOutOfTime
+    print '[Trainer] TotalFrames = %i, AvgFramesPerTrial = %.1f, AvgFramesPerGoal = %.1f'\
+      %(self._numFrames, self._numFrames / float(self._numTrials),
+        self._numGoalFrames / float(self._numGoals) if self._numGoals > 0 else float('nan'))
+    print '[Trainer] Trials             : %i' % self._numTrials
+    print '[Trainer] Goals              : %i' % self._numGoals
+    print '[Trainer] Defense Captured   : %i' % self._numBallsCaptured
+    print '[Trainer] Balls Out of Bounds: %i' % self._numBallsOOB
+    print '[Trainer] Out of Time        : %i' % self._numOutOfTime
 
   def checkLive(self, necProcesses):
     """Returns true if each of the necessary processes is still alive and
@@ -678,7 +682,7 @@ class Trainer(object):
     except TimeoutError:
       print '[Trainer] Haven\'t heard from the server for too long, Exiting'
     except (KeyboardInterrupt, DoneError):
-      print '[Trainer] Exiting'
+      print '[Trainer] Finished'
     finally:
       for p in self._agentPopen:
         p.send_signal(SIGINT)
