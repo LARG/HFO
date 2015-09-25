@@ -38,12 +38,16 @@ Action get_random_low_lv_action() {
   return act;
 }
 
-int main() {
+int main(int argc, char** argv) {
+  int port = 6000;
+  if (argc > 1) {
+    port = atoi(argv[1]);
+  }
   // Create the HFO environment
   HFOEnvironment hfo;
   // Connect to the agent's server on port 6000 and request low-level
   // feature set. See manual for more information on feature sets.
-  hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
+  hfo.connectToAgentServer(port, LOW_LEVEL_FEATURE_SET);
   // Play 5 episodes
   for (int episode=0; ; episode++) {
     status_t status = IN_GAME;
