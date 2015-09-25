@@ -14,7 +14,7 @@
 \usepackage{fullpage}
 \usepackage{enumitem}
 
-\title{Half Field Offense \\ Technical Manual}
+\title{RoboCup 2D Half Field Offense \\ Technical Manual}
 \author{Matthew Hausknecht}
 
 \begin{document}
@@ -24,15 +24,162 @@
 
 \section{Overview}
 
-This document describes the state and action spaces of the HFO domain.
+This document describes the installation, usage, state, and action spaces of the HFO domain.
+
+\section{Installation}
+
+Installation with CMake:
+
+\begin{verbatim}
+  > mkdir build && cd build
+  > cmake -DCMAKE_BUILD_TYPE=Release ..
+  > make -j4 # Replace 4 with the number of cores on your machine
+  > make install # This just copies binaries to the HFO directory; no sudo required
+\end{verbatim}
+
+HFO installation has been tested on Ubuntu Linux and OSX. Successful
+installation depends on
+\verb+CMake, Boost-system, Boost-filesystem, Flex+. By default, the
+soccerwindow2 visualizer is also built and requires
+\verb+Qt4+. Experimentally speaking, HFO is fully-functional without
+the visualizer. To disable this component, use the following cmake
+command:\\
+
+\noindent \verb+  > cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SOCCERWINDOW=False ..+
+
+\subsection{Python Interface}
+
+The Python interface is required for interfacing Python agents to the
+HFO domain. To install this interface, from the main HFO directory:
+
+\noindent \verb+  > pip install .+
+
+or
+
+\noindent \verb+  > pip install --user .+
+
+if you have limited permissions on the machine.
+
+\section{Uninstall}
+
+The install is completely contained in the HFO directory. Simply
+delete this directory to uninstall. If you have installed the python
+interface, uninstall it as follows: \verb+pip uninstall hfo+.
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/HFODiagram}
+  \caption{HFO is comprised of several components which communicate
+    over the network. Network connections are depicted with orange
+    ovals. Calling the HFO executable starts the trainer, visualizer,
+    and all the offensive and defensive npcs (Agent2d) as well as the
+    offensive and defensive agent servers. Your code then uses the HFO
+    interface to connect your agent to an agent server. Once all
+    servers have connected agents, the game begins. The trainer
+    oversees the game and is responsible for resetting the players
+    between episodes.}
+  \label{fig:hfo}
+\end{figure}
+
+\section{Basic Usage}
+
+RoboCup 2D soccer is designed to be played between two teams of
+autonomous agents who communicate with a game server. Shown in Figure
+\ref{fig:hfo}, the HFO domain reflects these design choices and allows
+arbitrary teams to be created consisting of some mix of
+non-player-controlled agents (agent2d npcs) and player-controlled
+agents. These options are specified through the following flags:\\
+
+\noindent
+\verb+ > ./bin/HFO --offense-agents=1 --defense-agents=1 --offense-npcs=2 --defense-npcs=2+\\
+
+This would create a 3v3 game with one player-controlled agent on
+each team. In order for the game to start, you must connect your
+player-controlled agents to the waiting agent servers. This is done
+through the call:\\
+
+\noindent \verb+  > hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);+\\
+or in Python:\\
+\noindent \verb+  > hfo_env.connectToAgentServer(6000, HFO_Features.LOW_LEVEL_FEATURE_SET)+\\
+
+By default, the server for the first agent is allocated to port
+6000. Subsequent ports are allocated sequentially backwards (e.g. to
+connect the second agent, port 5999 would be used). The default port
+may be changed as follows:\\
+
+\noindent \verb+  > ./bin/HFO --port 12345+
+
+\section{Visualizer}
+
+The SoccerWindow2 Visualizer allows a live game to be viewed as it
+progresses. By default, the visualizer is enabled. However, the game
+will likely proceed at a pace too fast for meaningful watching. To
+enforce a standard pace, disable sync-mode:\\
+
+\noindent \verb+  > ./bin/HFO --no-sync+\\
+
+To disable visualization altogether, run in headless mode:\\
+
+\noindent \verb+  > ./bin/HFO --headless+\\
+
+The visualizer may also be used after the end of a game by replaying
+logs, as discussed in the next section.
+
+\section{Logging}
+
+By default, the soccer server generates game logs and stores them in
+the \verb+log+ directory. The main game log is
+\verb+log/incomplete.rcg+. This log may be replayed using the
+soccerwindow2 visualizer. \\
+
+\noindent To replay a log: \\
+\verb+  > ./bin/soccerwindow2 -l log/incomplete.rcg+
+
+\noindent To disable logging:\\
+\verb+  > ./bin/HFO --no-logging +
+
+\noindent To change the logging directory:\\
+\verb+  > ./bin/HFO --log-dir /path/to/new/dir +
+
+\section{Recording}
+
+It is possible to record the low-level state perceptions, actions, and
+game status of all players:\\
+
+\noindent \verb+  > ./bin/HFO --record + \\
+
+This will produce logs for all the offensive players
+(\verb+log/left-[1-11].log+) and defensive players
+(\verb+log/right-[1-11].log+). The first offensive player is left-11,
+so in the case of single-agent offense, left-11.log will contain the
+active player's record. The log, \verb+incomplete.rcg+ may be used to
+verify the player numbers on field.
+
+\section{Randomness}
+
+A seed may be specified as follows:\\
+
+\noindent \verb+  > ./bin/HFO --seed 123+\\
+
+This seed will determine the placement of the players and the ball at
+the beginning of each episode. Due to non-determinism in the player
+policies and server, it is not sufficient to precisely replicate full
+games. It \textit{only} replicates the starting conditions for each
+episode. The player's behavior, observations, and physics all proceed
+stochastically.
 
 \section{State Spaces}
 
 The HFO domains provides a choice between a low-level feature set and
 a higher-level feature set. Selecting between the different feature
-sets is accomplished when connecting to the agent server. See
+sets is accomplished when connecting to the agent server. Also see
 \verb|examples/hfo_example_agent.cpp| and
-\verb|examples/hfo_example_agent.py| for examples.
+\verb|examples/hfo_example_agent.py| for examples:
+
+\begin{verbatim}
+  > hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
+  > hfo.connectToAgentServer(6000, HIGH_LEVEL_FEATURE_SET);
+\end{verbatim}
 
 \subsection{High Level Feature Set}
 A set of high-level features is provided following the example given
@@ -239,9 +386,9 @@ and high-level strategic actions. Basic, parameterized actions are
 provided for locomotion and kicking. Additionally high-level strategic
 actions are available for moving, shooting, passing and
 dribbling. Control of the agent's head and gaze is not provided and
-follows Agent2D's default strategy. Selection between high-level and
-low-level actions spaces is performed when connecting to the agent
-server.
+follows Agent2D's default strategy. Both low and high level actions
+are available through the same interface. It is the responsibility of
+the user to faithfully report which action spaces were used.
 
 \subsection{Low Level Actions}
 \begin{itemize}
@@ -254,7 +401,7 @@ server.
   specified direction. Valid values range between [-180, 180] degrees
   where 90 degrees turns the agent to directly to its right side.}
 \item{\textbf{Tackle}(degrees): Contest the ball. Direction
-  varies between [-180, 180]. TODO: Better description.}
+  varies between [-180, 180].}
 \item{\textbf{Kick}(power, degrees): Kick the ball with power [0, 100]
   in relative direction [-180, 180]. Has no effect if the agent does
   not possess the ball.}
@@ -278,6 +425,18 @@ server.
 \item{\textbf{Dribble}(): Advances the ball towards the goal using a
   combination of short kicks and moves.}
 \end{itemize}
+
+\section{Developing a New Agent}
+
+New agents may be developed in C++ or Python. In Python, as long as
+the hfo interface has been installed, the agent needs only to
+\verb+from hfo import *+. In C++ it is necessary to
+\verb+#include <HFO.hpp>+ and also to link against the shared object
+library \verb+lib/libhfo.so+ when compiling:\\
+
+\begin{verbatim}
+  > g++ example/your_new_agent.cpp -I src -L lib -Wl,-rpath=lib -lhfo
+\end{verbatim}
 
 \bibliographystyle{abbrv}
 \bibliography{manual}
