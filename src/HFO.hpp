@@ -23,7 +23,7 @@ enum action_t
   KICK,    // [Low-Level] Kick(power, direction)
   MOVE,    // [High-Level] Move(): Reposition player according to strategy
   SHOOT,   // [High-Level] Shoot(): Shoot the ball
-  PASS,    // [High-Level] Pass(): Pass to the most open teammate
+  PASS,    // [High-Level] Pass(teammate_unum): Pass to the most open teammate
   DRIBBLE, // [High-Level] Dribble(): Offensive dribble
   QUIT     // Special action to quit the game
 };
