@@ -127,8 +127,9 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
   // Angle and distance to the ball
   addFeature(ball.rposValid() ? FEAT_MAX : FEAT_MIN);
   if (ball.rposValid()) {
-    addAngFeature(ball.angleFromSelf());
-    addDistFeature(ball.distFromSelf(), maxHFORadius);
+    addLandmarkFeatures(ball.pos(), self_pos, self_ang);
+    // addAngFeature(ball.angleFromSelf());
+    // addDistFeature(ball.distFromSelf(), maxHFORadius);
   } else {
     addFeature(0);
     addFeature(0);

@@ -62,7 +62,7 @@ void FeatureExtractor::addLandmarkFeatures(const rcsc::Vector2D& landmark,
     addFeature(0);
   } else {
     Vector2D vec_to_landmark = landmark - self_pos;
-    addAngFeature(self_ang - vec_to_landmark.th());
+    addAngFeature(vec_to_landmark.th() - self_ang);
     addDistFeature(vec_to_landmark.r(), maxHFORadius);
   }
 }

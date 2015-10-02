@@ -13,6 +13,7 @@
 \usepackage{hyperref,graphicx}
 \usepackage{fullpage}
 \usepackage{enumitem}
+\usepackage{subcaption}
 
 \title{RoboCup 2D Half Field Offense \\ Technical Manual}
 \author{Matthew Hausknecht}
@@ -273,15 +274,44 @@ the magnitude of self velocity will be set to zero.
 
 \subsubsection{Angular Features}
 
-\textit{Angular features} (e.g. the angle to the ball), are encoded as two
-floating point numbers -- the $sin(\theta)$ and $cos(\theta)$ where
-$\theta$ is the original angle.
+\textit{Angular features} (e.g. the angle to the ball), are encoded as
+two floating point numbers -- the $sin(\theta)$ and $cos(\theta)$
+where $\theta$ is the original angle in radians. Figure
+\ref{fig:ang_example} provides examples of the angular encoding.
 
 This encoding allows the angle to vary smoothly for all possible
 angular values. Other encodings such as radians or degrees have a
 discontinuity that when normalized, could cause the feature value to
 flip between the maximum and minimum value in response to small
 changes in $\theta$.
+
+Given an angular feature $\langle \alpha_1, \alpha_2 \rangle$ we can
+recover the original angle $\theta$ (in radians) by taking the
+$cos^{-1}(\alpha_2)$ and multiplying by the sign of $\alpha_1$.
+
+\begin{figure*}[htp]
+  \centering
+  \subcaptionbox{Angular Encoding}{
+    \includegraphics[width=.4\textwidth]{figures/AngExample}
+  }
+  \hspace{3em}
+  \subcaptionbox{Additional Examples}{
+    \includegraphics[width=.3\textwidth]{figures/AngFeatExample}
+  }
+  \caption{\textbf{Angular Encoding:} Objects on the agents left/right
+    side result in a negative/positive $sin(\theta)$. $cos(\theta)$ is
+    positive in front of the player and negative behind. For example,
+    an object directly in front of the player would have angular
+    features of $sin(\theta)=0, cos(\theta)=1$. Additional examples:
+    \textbf{Angle to ball} $\theta=60^\circ$ or $1.0472$ radians. This
+    results in angular features $\langle sin(\theta)=.86,
+    cos(\theta)=.49 \rangle$. \textbf{Angle to teammate}:
+    $\theta=135^\circ, 2.35$ radians. $\langle sin(\theta)=.71,
+    cos(\theta)=-.71 \rangle$. \textbf{Angle to Opponent}:
+    $\theta=-90^\circ$ or $-1.57$ radians. $\langle sin(\theta)=-1,
+    cos(\theta)=0 \rangle$.}
+  \label{fig:ang_example}
+\end{figure*}
 
 \subsubsection{Distance Features}
 
