@@ -650,7 +650,7 @@ class Trainer(object):
       # Launch offense players
       for player_num in xrange(1, 12):
         player = self.launch_player(player_num, play_offense = True)
-        time.sleep(0.1)
+        time.sleep(0.2)
         if player_num not in offense_unums:
           player.terminate()
         else:
@@ -662,7 +662,7 @@ class Trainer(object):
       # Launch defense players
       for player_num in xrange(1, 12):
         player = self.launch_player(player_num, play_offense = False)
-        time.sleep(0.1)
+        time.sleep(0.2)
         if player_num not in defense_unums:
           player.terminate()
         else:
@@ -677,12 +677,14 @@ class Trainer(object):
       for agent_num in xrange(self._offenseAgents):
         port = self._agentServerPort + agent_num
         agent = self.launch_agent(agent_num, play_offense=True, port=port)
+        time.sleep(0.2)
         self._agentPopen.append(agent)
         necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
       # Launch defense agents
       for agent_num in xrange(self._defenseAgents):
         port = self._agentServerPort + agent_num + self._offenseAgents
         agent = self.launch_agent(agent_num, play_offense=False, port=port)
+        time.sleep(0.2)
         self._agentPopen.append(agent)
         necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
       # Broadcast the HFO configuration
@@ -720,7 +722,7 @@ class Trainer(object):
       for p in self._npcPopen:
         try:
           p.terminate()
-          time.sleep()
+          time.sleep(0.1)
           p.kill()
         except:
           pass
