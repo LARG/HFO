@@ -86,6 +86,7 @@
 #include <rcsc/player/say_message_builder.h>
 #include <rcsc/player/audio_sensor.h>
 #include <rcsc/player/freeform_parser.h>
+#include <rcsc/player/free_message.h>
 
 #include <rcsc/common/basic_client.h>
 #include <rcsc/common/logger.h>
@@ -108,6 +109,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <poll.h>
 
 using namespace rcsc;
 using namespace hfo;
@@ -119,7 +121,7 @@ Agent::Agent()
       M_action_generator(createActionGenerator()),
       lastTrainerMessageTime(-1),
       server_port(6008),
-      server_running(false),
+      client_connected(false),
       num_teammates(-1),
       num_opponents(-1),
       playing_offense(false)
@@ -230,12 +232,14 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
 
     assert(num_teammates >= 0);
     assert(num_opponents >= 0);
+
+    startServer(server_port);
     return true;
 }
 
 void Agent::startServer(int server_port) {
   std::cout << "[Agent Server] Starting Server on Port " << server_port << std::endl;
-  struct sockaddr_in serv_addr, cli_addr;
+  struct sockaddr_in serv_addr;
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
     perror("[Agent Server] ERROR opening socket");
@@ -250,16 +254,32 @@ void Agent::startServer(int server_port) {
     exit(1);
   }
   listen(sockfd, 5);
-  socklen_t clilen = sizeof(cli_addr);
-  std::cout << "[Agent Server] Waiting for client to connect... " << std::endl;
-  newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-  if (newsockfd < 0) {
-    perror("[Agent Server] ERROR on accept");
-    close(sockfd);
-    exit(1);
+}
+
+void Agent::listenForConnection() {
+  int rv;
+  struct pollfd ufd;
+  ufd.fd = sockfd;
+  ufd.events = POLLIN;
+  rv = poll(&ufd, 1, 1000);
+  if (rv == -1) {
+    perror("poll"); // error occurred in poll()
+  } else if (rv == 0) {
+    std::cout << "[Agent Server] Waiting for client to connect... " << std::endl;
+  } else {
+    if (ufd.revents & POLLIN) {
+      struct sockaddr_in cli_addr;
+      socklen_t clilen = sizeof(cli_addr);
+      newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+      if (newsockfd < 0) {
+        perror("[Agent Server] ERROR on accept");
+        close(sockfd);
+        exit(1);
+      }
+      std::cout << "[Agent Server] Connected" << std::endl;
+      clientHandshake();
+    }
   }
-  std::cout << "[Agent Server] Connected" << std::endl;
-  server_running = true;
 }
 
 void Agent::clientHandshake() {
@@ -316,6 +336,9 @@ void Agent::clientHandshake() {
     exit(1);
   }
   std::cout << "[Agent Server] Handshake complete" << std::endl;
+  client_connected = true;
+  rcsc::FreeMessage<5> *free_msg = new FreeMessage<5>("ready");
+  addSayMessage(free_msg);
 }
 
 FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
@@ -367,9 +390,13 @@ status_t Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
   virtual method in super class
 */
 void Agent::actionImpl() {
-  if (!server_running) {
-    startServer(server_port);
-    clientHandshake();
+  // For now let's not worry about turning the neck or setting the vision.
+  this->setViewAction(new View_Tactical());
+  this->setNeckAction(new Neck_TurnToBallOrScan());
+
+  if (!client_connected) {
+    listenForConnection();
+    return;
   }
 
   // Update and send the game status
@@ -451,10 +478,6 @@ void Agent::actionImpl() {
       close(sockfd);
       exit(1);
   }
-
-  // For now let's not worry about turning the neck or setting the vision.
-  this->setViewAction(new View_Tactical());
-  this->setNeckAction(new Neck_TurnToBallOrScan());
 }
 
 /*-------------------------------------------------------------------*/

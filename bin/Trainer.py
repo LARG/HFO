@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys, numpy, time, os, subprocess, re
-from signal import SIGINT
+import sys, numpy, time, os, subprocess
 from Communicator import ClientCommunicator, TimeoutError
 
 class DoneError(Exception):
@@ -11,22 +10,6 @@ class DoneError(Exception):
     self.msg = msg
   def __str__(self):
     return 'Done due to %s' % self.msg
-
-class DummyPopen(object):
-  """ Emulates a Popen object without actually starting a process. """
-  def __init__(self, pid):
-    self.pid = pid
-  def poll(self):
-    try:
-      os.kill(self.pid, 0)
-      return None
-    except OSError:
-      return 0
-  def send_signal(self, sig):
-    try:
-      os.kill(self.pid, sig)
-    except OSError:
-      pass
 
 class Trainer(object):
   """ Trainer is responsible for setting up the players and game.
@@ -68,9 +51,9 @@ class Trainer(object):
     self._numAgents = args.offenseAgents + args.defenseAgents
     self._offenseAgents = args.offenseAgents
     self._defenseAgents = args.defenseAgents
+    self._agentReady = set([]) # Unums of ready agents
     self._agentTeams = [] # Names of the teams the agents are playing for
     self._agentNumInt = [] # List of agents internal team numbers
-    self._agentNumExt = [] # List of agents external team numbers
     self._agentServerPort = args.port # Base Port for agent's server
     self._agentOnBall = args.agent_on_ball # If true, agent starts with the ball
     # =============== MISC =============== #
@@ -85,14 +68,43 @@ class Trainer(object):
     self._teamHoldingBall = None # Team currently in control of the ball
     self._playerHoldingBall = None # Player current in control of ball
     self._agentPopen = [] # Agent's processes
+    self._npcPopen = [] # NPC's processes
+    self._connectedPlayers = []
     self.initMsgHandlers()
 
-  def launch_agent(self, agent_num, play_offense, port):
-    """Launch the learning agent using the start_agent.sh script and
-    return a DummyPopen for the process.
+  def launch_player(self, player_num, play_offense):
+    """Launches a player using sample_player binary
 
+    Returns a Popen process object
     """
-    print '[Trainer] Launching Agent', str(agent_num)
+    if play_offense:
+      team_name = self._offenseTeamName
+    else:
+      team_name = self._defenseTeamName
+    binary_dir = os.path.dirname(os.path.realpath(__file__))
+    config_dir = os.path.join(binary_dir, '../config/formations-dt')
+    player_conf = os.path.join(binary_dir, '../config/player.conf')
+    player_cmd = os.path.join(binary_dir, 'sample_player')
+    player_cmd += ' -t %s -p %i --config_dir %s ' \
+                  ' --log_dir %s --player-config %s' \
+                  %(team_name, self._serverPort, config_dir,
+                    self._logDir, player_conf)
+    if self._record:
+        player_cmd += ' --record'
+    if player_num == 1:
+        player_cmd += ' -g'
+    kwargs = {'stdout':open('/dev/null', 'w'),
+              'stderr':open('/dev/null', 'w')}
+    p = subprocess.Popen(player_cmd.split(' '), shell = False, **kwargs)
+    return p
+
+  def launch_agent(self, agent_num, play_offense, port):
+    """Launches a learning agent using the agent binary
+
+    Returns a Popen process object
+    """
+    print '[Trainer] Launching %s Agent %d' % \
+      ('offense' if play_offense else 'defense', agent_num)
     if play_offense:
       assert self._numOffense > 0
       team_name = self._offenseTeamName
@@ -111,29 +123,24 @@ class Trainer(object):
       numTeammates = self._numDefense - 1
       numOpponents = self._numOffense
     ext_num = self.convertToExtPlayer(team_name, internal_player_num)
-    self._agentNumExt.append(ext_num)
     binary_dir = os.path.dirname(os.path.realpath(__file__))
-    agentCmd = 'start_agent.sh -t %s -u %i -p %i -P %i --log-dir %s'\
-               ' --numTeammates %i --numOpponents %i'\
-               ' --playingOffense %i --serverPort %i'\
-               %(team_name, ext_num, self._serverPort,
-                 self._coachPort, self._logDir, numTeammates,
-                 numOpponents, play_offense, port)
+    config_dir = os.path.join(binary_dir, '../config/formations-dt')
+    player_conf = os.path.join(binary_dir, '../config/player.conf')
+    agent_cmd =  os.path.join(binary_dir, 'agent')
+    agent_cmd += ' -t %s -p %i --numTeammates %i --numOpponents %i' \
+                 ' --playingOffense %i --serverPort %i --log_dir %s' \
+                 ' --player-config %s --config_dir %s' \
+                 %(team_name, self._serverPort, numTeammates,
+                   numOpponents, play_offense, port, self._logDir,
+                   player_conf, config_dir)
+    if ext_num == 1:
+      agent_cmd += ' -g'
     if self._record:
-      agentCmd += ' --record'
-    agentCmd = os.path.join(binary_dir, agentCmd)
-    agentCmd = agentCmd.split(' ')
-    # Ignore stderr because librcsc continually prints to it
-    kwargs = {'stderr':open('/dev/null','w')}
-    p = subprocess.Popen(agentCmd, **kwargs)
-    p.wait()
-    pid_file = os.path.join(self._logDir, 'start%i'%p.pid)
-    print '[Trainer] Parsing agent\'s pid from file:', pid_file
-    assert os.path.isfile(pid_file)
-    with open(pid_file,'r') as f:
-      output = f.read()
-    pid = int(re.findall('PID: (\d+)',output)[0])
-    return DummyPopen(pid)
+      agent_cmd += ' --record'
+    kwargs = {'stdout':open('/dev/null', 'w'),
+              'stderr':open('/dev/null', 'w')}
+    p = subprocess.Popen(agent_cmd.split(' '), shell = False, **kwargs)
+    return p
 
   def getDefensiveRoster(self, team_name):
     """Returns a list of player numbers on a given team that are thought
@@ -160,6 +167,10 @@ class Trainer(object):
       return [11,4,7,3,6,10,8,9,2,5]
     else:
       return [11,7,8,9,10,6,3,2,4,5]
+
+  def addTeam(self, team_name):
+    """ Adds a team to the team list"""
+    self._teams.append(team_name)
 
   def setTeams(self):
     """ Sets the offensive and defensive teams and player rosters. """
@@ -217,10 +228,8 @@ class Trainer(object):
   def _hear(self, body):
     """ Handle a hear message. """
     timestep,playerInfo,msg = body
-    if len(playerInfo) != 3:
-      return
-    _,team,player = playerInfo
     try:
+      _,team,player = playerInfo[:3]
       length = int(msg[0])
     except:
       return
@@ -232,6 +241,9 @@ class Trainer(object):
         self.startGame()
     elif msg == 'DONE':
       raise DoneError
+    elif msg == 'ready':
+      print '[Trainer] Agent Ready:', team, player
+      self._agentReady.add((team, player))
     else:
       print '[Trainer] Unhandled message from agent: %s' % msg
 
@@ -361,9 +373,9 @@ class Trainer(object):
           val = param[1]
       self._SP[param[0]] = val
 
-  def listenAndProcess(self):
+  def listenAndProcess(self, retry_count=None):
     """ Gather messages and process them. """
-    msg = self.recv()
+    msg = self.recv(retry_count)
     assert((msg[0] == '(') and (msg[-1] == ')')),'|%s|' % msg
     msg = self.parseMsg(msg)
     self.handleMsg(msg)
@@ -389,6 +401,26 @@ class Trainer(object):
     #self.unregisterMsgHandler(*partial)
     self.ignoreMsg(*partial,quiet=True)
 
+  def waitOnPlayer(self, player_num, on_offense):
+    """Wait on a launched player to connect and be reported by the
+    server.
+
+    """
+    self.send('(look)')
+    partial = ['ok','look']
+    self._numPlayers = 0
+    def f(body):
+      for i in xrange(4, len(body)):
+        _,team,num = body[i][0][:3]
+        if (team, num) not in self._connectedPlayers:
+          self._connectedPlayers.append((team,num))
+    self.registerMsgHandler(f,*partial,quiet=True)
+    team_name = self._offenseTeamName if on_offense else self._defenseTeamName
+    while (team_name, str(player_num)) not in self._connectedPlayers:
+      self.listenAndProcess()
+      self.send('(look)')
+    self.ignoreMsg(*partial,quiet=True)
+
   def checkIfAllPlayersConnected(self):
     """ Returns true if all players are connected. """
     self.send('(look)')
@@ -397,8 +429,8 @@ class Trainer(object):
     def f(x):
       self._numPlayers = len(x) - 4 # -4 for time, ball, goal_l, and goal_r
       self.send('(look)')
-    self.registerMsgHandler(f,*partial)
-    while self._numPlayers != 2 * 11:
+    self.registerMsgHandler(f,*partial,quiet=True)
+    while self._numPlayers != 2 * 11: # self._numOffense + self._numDefense:
       self.listenAndProcess()
     self.ignoreMsg(*partial,quiet=True)
 
@@ -543,9 +575,7 @@ class Trainer(object):
     ends to setup for the next trial.
 
     """
-    # Always Move the offensive goalie to the left goal
-    self.movePlayer(self._offenseTeamName, 0, [-0.5 * self.PITCH_LENGTH, 0])
-    # Move the rest of the offense
+    # Move the offense
     for i in xrange(1, self._numOffense + 1):
       self.movePlayer(self._offenseTeamName, i, self.getOffensiveResetPosition())
     # Move the agent to the ball
@@ -558,26 +588,8 @@ class Trainer(object):
     for i in xrange(1, self._numDefense):
       self.movePlayer(self._defenseTeamName, i, self.getDefensiveResetPosition())
 
-  def removeNonHFOPlayers(self):
-    """Removes players that aren't involved in HFO game.
-
-    The players whose numbers are greater than numOffense/numDefense
-    are sent to left-field.
-
-    """
-    offensive_agent_numbers = self._agentNumInt[:self._offenseAgents]
-    defensive_agent_numbers = self._agentNumInt[self._offenseAgents:]
-    for i in xrange(self._numOffense + 1, 11):
-      if i not in offensive_agent_numbers:
-        self.movePlayer(self._offenseTeamName, i, [-0.25 * self.PITCH_LENGTH, 0])
-    for i in xrange(self._numDefense, 11):
-      if i not in defensive_agent_numbers:
-        self.movePlayer(self._defenseTeamName, i, [-0.25 * self.PITCH_LENGTH, 0])
-
   def step(self):
     """ Takes a simulated step. """
-    # self.send('(check_ball)')
-    self.removeNonHFOPlayers()
     self._teamHoldingBall, self._playerHoldingBall = self.calcBallHolder()
     if self._teamHoldingBall is not None:
       self._lastFrameBallTouched = self._frame
@@ -654,16 +666,66 @@ class Trainer(object):
   def run(self, necProcesses):
     """ Run the trainer """
     try:
-      for agent_num in xrange(self._offenseAgents):
-        port = self._agentServerPort + agent_num
-        agent = self.launch_agent(agent_num, play_offense=True, port=port)
-        self._agentPopen.append(agent)
-        necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
-      for agent_num in xrange(self._defenseAgents):
-        port = self._agentServerPort + agent_num + self._offenseAgents
-        agent = self.launch_agent(agent_num, play_offense=False, port=port)
-        self._agentPopen.append(agent)
-        necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
+      self.setTeams()
+      offense_unums = self._offenseOrder[1: self._numOffense + 1]
+      sorted_offense_agent_unums = sorted(self._offenseOrder[1:self._offenseAgents+1])
+      defense_unums = self._defenseOrder[: self._numDefense]
+      sorted_defense_agent_unums = sorted(self._defenseOrder[:self._defenseAgents])
+      unnecessary_players = []
+
+      # Launch offense
+      agent_num = 0
+      for player_num in xrange(1, 12):
+        if agent_num < self._offenseAgents and \
+           sorted_offense_agent_unums[agent_num] == player_num:
+          port = self._agentServerPort + agent_num
+          agent = self.launch_agent(agent_num, play_offense=True, port=port)
+          self._agentPopen.append(agent)
+          necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
+          agent_num += 1
+        else:
+          player = self.launch_player(player_num, play_offense = True)
+          if player_num in offense_unums:
+            self._npcPopen.append(player)
+            necProcesses.append([player, 'offense_npc_' + str(player_num)])
+          else:
+            unnecessary_players.append(player)
+        self.waitOnPlayer(player_num, on_offense=True)
+      self.waitOnTeam(first = False)
+
+      # Launch defense
+      agent_num = 0
+      for player_num in xrange(1, 12):
+        if agent_num < self._defenseAgents and \
+           sorted_defense_agent_unums[agent_num] == player_num:
+          port = self._agentServerPort + agent_num + self._offenseAgents
+          agent = self.launch_agent(agent_num, play_offense=False, port=port)
+          self._agentPopen.append(agent)
+          necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
+          agent_num += 1
+        else:
+          player = self.launch_player(player_num, play_offense = False)
+          if player_num in defense_unums:
+            self._npcPopen.append(player)
+            necProcesses.append([player, 'defense_npc_' + str(player_num)])
+          else:
+            unnecessary_players.append(player)
+        self.waitOnPlayer(player_num, on_offense=False)
+      self.waitOnTeam(first = False)
+      self.checkIfAllPlayersConnected()
+
+      print '[Trainer] Agents awaiting your connections'
+      necOff = set([(self._offenseTeamName,str(x)) for x in sorted_offense_agent_unums])
+      necDef = set([(self._defenseTeamName,str(x)) for x in sorted_defense_agent_unums])
+      necAgents = necOff.union(necDef)
+      while self.checkLive(necProcesses) and self._agentReady != necAgents:
+        self.listenAndProcess(1000)
+
+      # Terminate unnecessary players
+      print '[Trainer] Removing unnecessary players'
+      for player in unnecessary_players:
+        player.terminate()
+
       # Broadcast the HFO configuration
       offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
                                for i in xrange(1, self._numOffense + 1)])
@@ -674,6 +736,7 @@ class Trainer(object):
                 %(self._offenseTeamName, self._defenseTeamName,
                   self._numOffense, self._numDefense,
                   offense_nums, defense_nums))
+      print '[Trainer] Starting game'
       self.startGame()
       while self.checkLive(necProcesses):
         prevFrame = self._frame
@@ -685,11 +748,23 @@ class Trainer(object):
     except (KeyboardInterrupt, DoneError):
       print '[Trainer] Finished'
     finally:
-      for p in self._agentPopen:
-        p.send_signal(SIGINT)
       try:
         self._comm.sendMsg('(bye)')
       except:
         pass
+      for p in self._agentPopen:
+        try:
+          p.terminate()
+          time.sleep(0.1)
+          p.kill()
+        except:
+          pass
+      for p in self._npcPopen:
+        try:
+          p.terminate()
+          time.sleep(0.1)
+          p.kill()
+        except:
+          pass
       self._comm.close()
       self.printStats()

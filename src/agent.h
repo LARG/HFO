@@ -72,7 +72,7 @@ protected:
 
   // Start the server and listen for a connection.
   void startServer(int server_port=6008);
-
+  void listenForConnection();
   // Transmit information to the client and ensure it can recieve.
   void clientHandshake();
 
@@ -80,7 +80,7 @@ protected:
   FeatureExtractor* feature_extractor;
   long lastTrainerMessageTime; // Last time the trainer sent a message
   int server_port; // Port to start the server on
-  bool server_running; // Is the server running?
+  bool client_connected; // Has the client connected and handshake?
   int sockfd, newsockfd; // Server sockets
   int num_teammates, num_opponents;
   bool playing_offense;
