@@ -425,38 +425,66 @@ void Agent::actionImpl() {
     exit(1);
   }
 
-  // Get the action
-  Action action;
-  if (recv(newsockfd, &action, sizeof(Action), 0) < 0) {
+  // Get the action type
+  action_t action;
+  if (recv(newsockfd, &action, sizeof(action_t), 0) < 0) {
     perror("[Agent Server] ERROR recv from socket");
     close(sockfd);
     exit(1);
   }
-  if (action.action == SHOOT) {
+  // Get the parameters for that action
+  int n_args = HFOEnvironment::NumParams(action);
+  float params[n_args];
+  if (n_args > 0) {
+    if (recv(newsockfd, &params, sizeof(float)*n_args, 0) < 0) {
+      perror("[Agent Server] ERROR recv from socket");
+      close(sockfd);
+      exit(1);
+    }
+  }
+  if (action == SHOOT) {
     const ShootGenerator::Container & cont =
         ShootGenerator::instance().courses(this->world(), false);
     ShootGenerator::Container::const_iterator best_shoot
         = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
     Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
                    best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
-  } else if (action.action == PASS) {
+  } else if (action == PASS) {
     Force_Pass pass;
-    int receiver = int(action.arg1);
+    int receiver = int(params[0]);
     pass.get_pass_to_player(this->world(), receiver);
     pass.execute(this);
   }
-  switch(action.action) {
+  switch(action) {
     case DASH:
-      this->doDash(action.arg1, action.arg2);
+      this->doDash(params[0], params[1]);
       break;
     case TURN:
-      this->doTurn(action.arg1);
+      this->doTurn(params[0]);
       break;
     case TACKLE:
-      this->doTackle(action.arg1, false);
+      this->doTackle(params[0], false);
       break;
     case KICK:
-      this->doKick(action.arg1, action.arg2);
+      this->doKick(params[0], params[1]);
+      break;
+    case KICK_TO:
+      Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
+                              feature_extractor->absoluteYPos(params[1])),
+                     params[2], params[2] * 0.99, 3).execute(this);
+      break;
+    case MOVE_TO:
+      Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
+                              feature_extractor->absoluteYPos(params[1])), 0.25,
+                     ServerParam::i().maxDashPower()).execute(this);
+      break;
+    case DRIBBLE_TO:
+      Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
+                            feature_extractor->absoluteYPos(params[1])), 1.0,
+                   ServerParam::i().maxDashPower(), 2).execute(this);
+      break;
+    case INTERCEPT:
+      Body_Intercept().execute(this);
       break;
     case MOVE:
       this->doMove();
@@ -468,13 +496,15 @@ void Agent::actionImpl() {
     case DRIBBLE:
       this->doDribble();
       break;
+    case NOOP:
+      break;
     case QUIT:
       std::cout << "[Agent Server] Got quit from agent." << std::endl;
       close(sockfd);
       exit(0);
     default:
       std::cerr << "[Agent Server] ERROR Unsupported Action: "
-                << action.action << std::endl;
+                << action << std::endl;
       close(sockfd);
       exit(1);
   }

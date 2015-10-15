@@ -9,10 +9,12 @@ using namespace hfo;
 // Before running this program, first Start HFO server:
 // $./bin/HFO --offense-agents 1
 
+float arg1, arg2;
+
 // Returns a random low-level action
-Action get_random_low_lv_action() {
-  action_t action_indx = (action_t) (rand() % 4);
-  float arg1, arg2;
+action_t get_random_low_lv_action() {
+  action_t action_indx = (action_t) ((rand() % 4) + DASH);
+  std::cout << action_indx << std::endl;
   switch (action_indx) {
     case DASH:
       arg1 = (rand() / float(RAND_MAX)) * 200 - 100; // power: [-100, 100]
@@ -34,8 +36,7 @@ Action get_random_low_lv_action() {
       cout << "Invalid Action Index: " << action_indx;
       break;
   }
-  Action act = {action_indx, arg1, arg2};
-  return act;
+  return action_indx;
 }
 
 int main(int argc, char** argv) {
@@ -54,10 +55,8 @@ int main(int argc, char** argv) {
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
-      // Create a dash action
-      Action a = get_random_low_lv_action();
-      // Perform the dash and recieve the current game status
-      status = hfo.act(a);
+      // Perform the action and recieve the current game status
+      status = hfo.act(get_random_low_lv_action(), arg1, arg2);
     }
   }
 };

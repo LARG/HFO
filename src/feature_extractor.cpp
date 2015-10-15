@@ -9,8 +9,13 @@
 
 using namespace rcsc;
 
-FeatureExtractor::FeatureExtractor() :
-    numFeatures(-1)
+FeatureExtractor::FeatureExtractor(int num_teammates,
+                                   int num_opponents,
+                                   bool playing_offense) :
+    numFeatures(-1),
+    numTeammates(num_teammates),
+    numOpponents(num_opponents),
+    playingOffense(playing_offense)
 {
   const ServerParam& SP = ServerParam::i();
 
@@ -92,15 +97,33 @@ void FeatureExtractor::addFeature(float val) {
   feature_vec[featIndx++] = val;
 }
 
-void FeatureExtractor::addNormFeature(float val, float min_val, float max_val) {
-  assert(featIndx < numFeatures);
+float FeatureExtractor::normalize(float val, float min_val, float max_val) {
   if (val < min_val || val > max_val) {
     std::cout << "Feature " << featIndx << " Violated Feature Bounds: " << val
-              << " Expected min/max: [" << min_val << ", " << max_val << "]" << std::endl;
+              << " Expected min/max: [" << min_val << ", "
+              << max_val << "]" << std::endl;
     val = std::min(std::max(val, min_val), max_val);
   }
-  feature_vec[featIndx++] = ((val - min_val) / (max_val - min_val))
+  return ((val - min_val) / (max_val - min_val))
       * (FEAT_MAX - FEAT_MIN) + FEAT_MIN;
+}
+
+float FeatureExtractor::unnormalize(float val, float min_val, float max_val) {
+  if (val < FEAT_MIN || val > FEAT_MAX) {
+    std::cout << "Unnormalized value Violated Feature Bounds: " << val
+              << " Expected min/max: [" << FEAT_MIN << ", "
+              << FEAT_MAX << "]" << std::endl;
+    float ft_max = FEAT_MAX; // Linker error on OSX otherwise...?
+    float ft_min = FEAT_MIN;
+    val = std::min(std::max(val, ft_min), ft_max);
+  }
+  return ((val - FEAT_MIN) / (FEAT_MAX - FEAT_MIN))
+      * (max_val - min_val) + min_val;
+}
+
+void FeatureExtractor::addNormFeature(float val, float min_val, float max_val) {
+  assert(featIndx < numFeatures);
+  feature_vec[featIndx++] = normalize(val, min_val, max_val);
 }
 
 void FeatureExtractor::checkFeatures() {
@@ -240,4 +263,34 @@ void FeatureExtractor::splitAngles(std::vector<OpenAngle> &openAngles,
     }
   }
   openAngles = resAngles;
+}
+
+float FeatureExtractor::normalizedXPos(float absolute_x_pos) {
+  float tolerance_x = .1 * pitchHalfLength;
+  if (playingOffense) {
+    return normalize(absolute_x_pos, -tolerance_x, pitchHalfLength + tolerance_x);
+  } else {
+    return normalize(absolute_x_pos, -pitchHalfLength-tolerance_x, tolerance_x);
+  }
+}
+
+float FeatureExtractor::normalizedYPos(float absolute_y_pos) {
+  float tolerance_y = .1 * pitchHalfWidth;
+  return normalize(absolute_y_pos, -pitchHalfWidth - tolerance_y,
+                   pitchHalfWidth + tolerance_y);
+}
+
+float FeatureExtractor::absoluteXPos(float normalized_x_pos) {
+  float tolerance_x = .1 * pitchHalfLength;
+  if (playingOffense) {
+    return unnormalize(normalized_x_pos, -tolerance_x, pitchHalfLength + tolerance_x);
+  } else {
+    return unnormalize(normalized_x_pos, -pitchHalfLength-tolerance_x, tolerance_x);
+  }
+}
+
+float FeatureExtractor::absoluteYPos(float normalized_y_pos) {
+  float tolerance_y = .1 * pitchHalfWidth;
+  return unnormalize(normalized_y_pos, -pitchHalfWidth - tolerance_y,
+                     pitchHalfWidth + tolerance_y);
 }

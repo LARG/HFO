@@ -10,10 +10,9 @@ using namespace hfo;
 // $./bin/HFO --offense-agents 1
 
 // Returns a random high-level action
-Action get_random_high_lv_action() {
-  action_t action_indx = (action_t) ((rand() % 4) + 4);
-  Action act = {action_indx, 0, 0};
-  return act;
+action_t get_random_high_lv_action() {
+  action_t action_indx = (action_t) ((rand() % 4) + MOVE);
+  return action_indx;
 }
 
 int main(int argc, char** argv) {
@@ -32,10 +31,9 @@ int main(int argc, char** argv) {
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
-      // Create a dash action
-      Action a = get_random_high_lv_action();
-      // Perform the dash and recieve the current game status
-      status = hfo.act(a);
+      // Perform the action and recieve the current game status
+      status = hfo.act(get_random_high_lv_action());
     }
   }
+  hfo.act(QUIT);
 };

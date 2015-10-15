@@ -14,14 +14,20 @@ class HFO_Actions:
   [Low-Level] Turn(direction)
   [Low-Level] Tackle(direction)
   [Low-Level] Kick(power, direction)
+  [Mid-Level] Kick_To(target_x, target_y, speed)
+  [Mid-Level] Move(target_x, target_y)
+  [Mid-Level] Dribble(target_x, target_y)
+  [Mid-Level] Intercept(): Intercept the ball
   [High-Level] Move(): Reposition player according to strategy
   [High-Level] Shoot(): Shoot the ball
-  [High-Level] Pass(): Pass to the most open teammate
+  [High-Level] Pass(teammate_unum): Pass to teammate
   [High-Level] Dribble(): Offensive dribble
-  QUIT
+  NOOP(): Do Nothing
+  QUIT(): Quit the game
 
   '''
-  DASH, TURN, TACKLE, KICK, MOVE, SHOOT, PASS, DRIBBLE, QUIT = range(9)
+  DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
+    MOVE, SHOOT, PASS, DRIBBLE, NOOP, QUIT = range(14)
 
 class HFO_Status:
   ''' Current status of the HFO game. '''
@@ -37,6 +43,24 @@ class HFOEnvironment(object):
     self.socket = None # Socket connection to server
     self.numFeatures = None # Given by the server in handshake
     self.features = None # The state features
+
+  def NumParams(self, action_type):
+    ''' Returns the number of required parameters for each action type. '''
+    return {
+      HFO_Actions.DASH : 2,
+      HFO_Actions.TURN : 1,
+      HFO_Actions.TACKLE : 1,
+      HFO_Actions.KICK : 2,
+      HFO_Actions.KICK_TO : 3,
+      HFO_Actions.MOVE_TO : 2,
+      HFO_Actions.DRIBBLE_TO : 2,
+      HFO_Actions.INTERCEPT : 0,
+      HFO_Actions.MOVE : 0,
+      HFO_Actions.SHOOT : 0,
+      HFO_Actions.PASS : 1,
+      HFO_Actions.DRIBBLE : 0,
+      HFO_Actions.NOOP : 0,
+      HFO_Actions.QUIT : 0}.get(action_type, -1);
 
   def connectToAgentServer(self, server_port=6000,
                            feature_set=HFO_Features.HIGH_LEVEL_FEATURE_SET):
@@ -92,9 +116,14 @@ class HFOEnvironment(object):
     size numFeatures. '''
     return self.features
 
-  def act(self, action):
+  def act(self, *args):
     ''' Send an action and recieve the game status.'''
-    self.socket.send(struct.pack("iff", *action))
+    assert len(args) > 0, 'Not enough arguments provided to act'
+    action_type = args[0]
+    n_params = self.NumParams(action_type)
+    assert n_params == len(args) - 1, 'Incorrect number of params to act: '\
+      'Required %d provided %d'%(n_params, len(args)-1)
+    self.socket.send(struct.pack('i'+'f'*n_params, *args))
     # Get the current game status
     data = self.socket.recv(struct.calcsize("i"))
     status = struct.unpack("i", data)[0]

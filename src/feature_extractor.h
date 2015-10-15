@@ -8,7 +8,7 @@ typedef std::pair<float, float> OpenAngle;
 
 class FeatureExtractor {
 public:
-  FeatureExtractor();
+  FeatureExtractor(int num_teammates, int num_opponents, bool playing_offense);
   virtual ~FeatureExtractor();
 
   // Updated the state features stored in feature_vec
@@ -68,6 +68,12 @@ public:
                           float oppAngleBottom,
                           float oppAngleTop);
 
+  // Convert back and forth between normalized and absolute x,y postions
+  float normalizedXPos(float absolute_x_pos);
+  float normalizedYPos(float absolute_y_pos);
+  float absoluteXPos(float normalized_x_pos);
+  float absoluteYPos(float normalized_y_pos);
+
 protected:
   // Encodes an angle feature as the sin and cosine of that angle,
   // effectively transforming a single angle into two features.
@@ -91,6 +97,11 @@ protected:
 
   // Add a feature without normalizing
   void addFeature(float val);
+
+  // Returns a normalized feature value
+  float normalize(float val, float min_val, float max_val);
+  // Converts a normalized feature value back into original space
+  float unnormalize(float val, float min_val, float max_val);
 
   // Add a feature and normalize to the range [FEAT_MIN, FEAT_MAX]
   void addNormFeature(float val, float min_val, float max_val);
@@ -118,6 +129,9 @@ protected:
   // Useful measures defined by the Server Parameters
   float pitchLength, pitchWidth, pitchHalfLength, pitchHalfWidth,
     goalHalfWidth, penaltyAreaLength, penaltyAreaWidth;
+  int numTeammates; // Number of teammates in HFO
+  int numOpponents; // Number of opponents in HFO
+  bool playingOffense; // Are we playing offense or defense?
 };
 
 #endif // FEATURE_EXTRACTOR_H

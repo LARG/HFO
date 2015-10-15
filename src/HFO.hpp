@@ -17,15 +17,20 @@ enum feature_set_t
 // The actions available to the agent
 enum action_t
 {
-  DASH,    // [Low-Level] Dash(power, relative_direction)
-  TURN,    // [Low-Level] Turn(direction)
-  TACKLE,  // [Low-Level] Tackle(direction)
-  KICK,    // [Low-Level] Kick(power, direction)
-  MOVE,    // [High-Level] Move(): Reposition player according to strategy
-  SHOOT,   // [High-Level] Shoot(): Shoot the ball
-  PASS,    // [High-Level] Pass(teammate_unum): Pass to the most open teammate
-  DRIBBLE, // [High-Level] Dribble(): Offensive dribble
-  QUIT     // Special action to quit the game
+  DASH,       // [Low-Level] Dash(power, direction)
+  TURN,       // [Low-Level] Turn(direction)
+  TACKLE,     // [Low-Level] Tackle(direction)
+  KICK,       // [Low-Level] Kick(power, direction)
+  KICK_TO,    // [Mid-Level] Kick_To(target_x, target_y, speed)
+  MOVE_TO,    // [Mid-Level] Move(target_x, target_y)
+  DRIBBLE_TO, // [Mid-Level] Dribble(target_x, target_y)
+  INTERCEPT,  // [Mid-Level] Intercept(): Intercept the ball
+  MOVE,       // [High-Level] Move(): Reposition player according to strategy
+  SHOOT,      // [High-Level] Shoot(): Shoot the ball
+  PASS,       // [High-Level] Pass(teammate_unum): Pass to the most open teammate
+  DRIBBLE,    // [High-Level] Dribble(): Offensive dribble
+  NOOP,       // Do nothing
+  QUIT        // Special action to quit the game
 };
 
 // An Action consists of the discreet action as well as required
@@ -65,6 +70,9 @@ class HFOEnvironment {
   // Returns a string representation of an action.
   static std::string ActionToString(Action action);
 
+  // Get the number of parameters needed for a action.
+  static int NumParams(action_t action);
+
   // Parse a Trainer message to populate config. Returns a bool
   // indicating if the struct was correctly parsed.
   static bool ParseConfig(const std::string& message, Config& config);
@@ -77,7 +85,7 @@ class HFOEnvironment {
   const std::vector<float>& getState();
 
   // Take an action and recieve the resulting game status
-  status_t act(Action action);
+  status_t act(action_t action, ...);
 
  protected:
   int numFeatures; // The number of features in this domain
