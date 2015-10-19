@@ -45,14 +45,15 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
   serverOptions = ' server::port=%i server::coach_port=%i ' \
                   'server::olcoach_port=%i server::coach=1 ' \
                   'server::game_logging=%i server::text_logging=%i ' \
+                  'server::hfo_logging=%i server::hfo_log_dir=%s ' \
                   'server::game_log_dir=%s server::text_log_dir=%s '\
-                  'server::synch_mode=%i ' \
-                  'server::fullstate_l=%i server::fullstate_r=%i' \
+                  'server::synch_mode=%i server::hfo=1 ' \
+                  'server::fullstate_l=%i server::fullstate_r=%i ' \
+                  'server::coach_w_referee=on server::record_messages=on' \
                   %(server_port, coach_port, olcoach_port,
-                    args.logging, args.logging,
-                    args.logDir, args.logDir,
-                    args.sync,
-                    args.fullstate, args.fullstate)
+                    args.logging, args.logging, args.logging,
+                    args.logDir, args.logDir, args.logDir,
+                    args.sync, args.fullstate, args.fullstate)
   try:
     # Launch the Server
     server = launch(serverCommand + serverOptions, name='server')

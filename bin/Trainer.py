@@ -671,7 +671,6 @@ class Trainer(object):
       sorted_offense_agent_unums = sorted(self._offenseOrder[1:self._offenseAgents+1])
       defense_unums = self._defenseOrder[: self._numDefense]
       sorted_defense_agent_unums = sorted(self._defenseOrder[:self._defenseAgents])
-      #unnecessary_players = []
 
       # Launch offense
       agent_num = 0
@@ -693,7 +692,6 @@ class Trainer(object):
             player.terminate()
             time.sleep(0.1)
             continue
-            #unnecessary_players.append(player)
         self.waitOnPlayer(player_num, on_offense=True)
       self.waitOnTeam(first = False)
 
@@ -717,7 +715,6 @@ class Trainer(object):
             player.terminate()
             time.sleep(0.1)
             continue
-            #unnecessary_players.append(player)
         self.waitOnPlayer(player_num, on_offense=False)
       self.waitOnTeam(first = False)
       self.checkIfAllPlayersConnected()
@@ -728,11 +725,6 @@ class Trainer(object):
       necAgents = necOff.union(necDef)
       while self.checkLive(necProcesses) and self._agentReady != necAgents:
         self.listenAndProcess(1000)
-
-      # Terminate unnecessary players
-      #print '[Trainer] Removing unnecessary players'
-      #for player in unnecessary_players:
-      #  player.terminate()
 
       # Broadcast the HFO configuration
       offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
@@ -749,8 +741,8 @@ class Trainer(object):
       while self.checkLive(necProcesses):
         prevFrame = self._frame
         self.listenAndProcess()
-        if self._frame != prevFrame:
-          self.step()
+        # if self._frame != prevFrame:
+        #   self.step()
     except TimeoutError:
       print '[Trainer] Haven\'t heard from the server for too long, Exiting'
     except (KeyboardInterrupt, DoneError):
