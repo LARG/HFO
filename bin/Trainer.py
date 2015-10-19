@@ -430,7 +430,7 @@ class Trainer(object):
       self._numPlayers = len(x) - 4 # -4 for time, ball, goal_l, and goal_r
       self.send('(look)')
     self.registerMsgHandler(f,*partial,quiet=True)
-    while self._numPlayers != 2 * 11: # self._numOffense + self._numDefense:
+    while self._numPlayers != self._numOffense + self._numDefense:
       self.listenAndProcess()
     self.ignoreMsg(*partial,quiet=True)
 
@@ -671,7 +671,7 @@ class Trainer(object):
       sorted_offense_agent_unums = sorted(self._offenseOrder[1:self._offenseAgents+1])
       defense_unums = self._defenseOrder[: self._numDefense]
       sorted_defense_agent_unums = sorted(self._defenseOrder[:self._defenseAgents])
-      unnecessary_players = []
+      #unnecessary_players = []
 
       # Launch offense
       agent_num = 0
@@ -685,11 +685,15 @@ class Trainer(object):
           agent_num += 1
         else:
           player = self.launch_player(player_num, play_offense = True)
+          time.sleep(0.15)
           if player_num in offense_unums:
             self._npcPopen.append(player)
             necProcesses.append([player, 'offense_npc_' + str(player_num)])
           else:
-            unnecessary_players.append(player)
+            player.terminate()
+            time.sleep(0.1)
+            continue
+            #unnecessary_players.append(player)
         self.waitOnPlayer(player_num, on_offense=True)
       self.waitOnTeam(first = False)
 
@@ -705,11 +709,15 @@ class Trainer(object):
           agent_num += 1
         else:
           player = self.launch_player(player_num, play_offense = False)
+          time.sleep(0.15)
           if player_num in defense_unums:
             self._npcPopen.append(player)
             necProcesses.append([player, 'defense_npc_' + str(player_num)])
           else:
-            unnecessary_players.append(player)
+            player.terminate()
+            time.sleep(0.1)
+            continue
+            #unnecessary_players.append(player)
         self.waitOnPlayer(player_num, on_offense=False)
       self.waitOnTeam(first = False)
       self.checkIfAllPlayersConnected()
@@ -722,9 +730,9 @@ class Trainer(object):
         self.listenAndProcess(1000)
 
       # Terminate unnecessary players
-      print '[Trainer] Removing unnecessary players'
-      for player in unnecessary_players:
-        player.terminate()
+      #print '[Trainer] Removing unnecessary players'
+      #for player in unnecessary_players:
+      #  player.terminate()
 
       # Broadcast the HFO configuration
       offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
