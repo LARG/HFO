@@ -40,7 +40,6 @@ class Trainer(object):
     self._agentTeams = [] # Names of the teams the agents are playing for
     self._agentNumInt = [] # List of agents internal team numbers
     self._agentServerPort = args.port # Base Port for agent's server
-    self._agentOnBall = args.agent_on_ball # If true, agent starts with the ball
     # =============== MISC =============== #
     self._offenseTeamName = '' # Name of the offensive team
     self._defenseTeamName = '' # Name of the defensive team

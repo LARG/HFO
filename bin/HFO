@@ -50,12 +50,14 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
                   'server::synch_mode=%i server::hfo=1 ' \
                   'server::fullstate_l=%i server::fullstate_r=%i ' \
                   'server::coach_w_referee=1 server::hfo_max_trial_time=%i ' \
-                  'server::hfo_max_trials=%i server::hfo_max_frames=%i' \
+                  'server::hfo_max_trials=%i server::hfo_max_frames=%i ' \
+                  'server::hfo_offense_on_ball=%i' \
                   %(server_port, coach_port, olcoach_port,
                     args.logging, args.logging, args.logging,
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate,
-                    args.maxFramesPerTrial, args.numTrials, args.numFrames)
+                    args.maxFramesPerTrial, args.numTrials, args.numFrames,
+                    args.offenseOnBall)
                   # server::record_messages=on -- useful for debug
   try:
     # Launch the Server
@@ -121,8 +123,8 @@ def parseArgs():
                  help='Directory to store logs.')
   p.add_argument('--record', dest='record', action='store_true',
                  help='Record logs of states and actions.')
-  p.add_argument('--agent-on-ball', dest='agent_on_ball', action='store_true',
-                 help='Agent starts with the ball.')
+  p.add_argument('--offense-on-ball', dest='offenseOnBall', action='store_true',
+                 help='Offense starts with the ball.')
   p.add_argument('--fullstate', dest='fullstate', action='store_true',
                  help='Server provides full-state information to agents.')
   p.add_argument('--seed', dest='seed', type=int,
