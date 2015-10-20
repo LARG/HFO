@@ -365,7 +365,7 @@ class Trainer(object):
     server.
 
     """
-    print 'Wait on player', player_num, on_offense
+    #print 'Wait on player', player_num, on_offense
     self.send('(look)')
     partial = ['ok','look']
     self._numPlayers = 0
@@ -433,15 +433,13 @@ class Trainer(object):
       # Launch offense
       agent_num = 0
       for player_num in xrange(1, 12):
-        if agent_num < self._offenseAgents:
-          agent_ext_num = sorted_offense_agent_unums[agent_num]
-          if agent_ext_num == player_num:
-            port = self._agentServerPort + agent_num
-            agent = self.launch_agent(agent_num, agent_ext_num,
-                                      play_offense=True, port=port)
-            self._agentPopen.append(agent)
-            necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
-            agent_num += 1
+        if agent_num < self._offenseAgents and player_num == sorted_offense_agent_unums[agent_num]:
+          port = self._agentServerPort + agent_num
+          agent = self.launch_agent(agent_num, sorted_offense_agent_unums[agent_num],
+                                    play_offense=True, port=port)
+          self._agentPopen.append(agent)
+          necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
+          agent_num += 1
         else:
           player = self.launch_npc(player_num, play_offense=True)
           if player_num in offense_unums:
@@ -454,15 +452,13 @@ class Trainer(object):
       # Launch defense
       agent_num = 0
       for player_num in xrange(1, 12):
-        if agent_num < self._defenseAgents:
-          agent_ext_num = sorted_offense_agent_unums[agent_num]
-          if agent_ext_num == player_num:
-            port = self._agentServerPort + agent_num + self._offenseAgents
-            agent = self.launch_agent(agent_num, agent_ext_num,
-                                      play_offense=False, port=port)
-            self._agentPopen.append(agent)
-            necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
-            agent_num += 1
+        if agent_num < self._defenseAgents and player_num == sorted_defense_agent_unums[agent_num]:
+          port = self._agentServerPort + agent_num + self._offenseAgents
+          agent = self.launch_agent(agent_num, sorted_defense_agent_unums[agent_num],
+                                    play_offense=False, port=port)
+          self._agentPopen.append(agent)
+          necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
+          agent_num += 1
         else:
           player = self.launch_npc(player_num, play_offense=False)
           if player_num in defense_unums:
