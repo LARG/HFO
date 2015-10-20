@@ -46,6 +46,7 @@ class Trainer(object):
     self._defenseTeamName = '' # Name of the defensive team
     self._teams = [] # Team indexes for offensive and defensive teams
     self._isPlaying = False # Is a game being played?
+    self._done = False # Are we finished?
     self._agentPopen = [] # Agent's processes
     self._npcPopen = [] # NPC's processes
     self._connectedPlayers = []
@@ -223,6 +224,8 @@ class Trainer(object):
       self._numBallsCaptured += 1
     elif event == 'OUT_OF_TIME':
       self._numOutOfTime += 1
+    elif event == 'HFO_FINISHED':
+      self._done = True
     if event in {'GOAL','OUT_OF_BOUNDS','CAPTURED_BY_DEFENSE','OUT_OF_TIME'}:
       self._numTrials += 1
       print 'EndOfTrial: %d / %d %d %s'%\
@@ -351,6 +354,8 @@ class Trainer(object):
                               else self._defenseTeamName, player_num)
     player.terminate()
     time.sleep(0.1)
+    player.kill()
+    player.wait()
     self.send('(look)')
     partial = ['ok','look']
     self._numPlayers = 0
@@ -497,7 +502,7 @@ class Trainer(object):
                   offense_nums, defense_nums))
       print 'Starting game'
       self.startGame()
-      while self.checkLive(necProcesses):
+      while self.checkLive(necProcesses) and not self._done:
         prevFrame = self._frame
         self.listenAndProcess()
     except TimeoutError:

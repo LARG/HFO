@@ -49,11 +49,13 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
                   'server::game_log_dir=%s server::text_log_dir=%s '\
                   'server::synch_mode=%i server::hfo=1 ' \
                   'server::fullstate_l=%i server::fullstate_r=%i ' \
-                  'server::coach_w_referee=1' \
+                  'server::coach_w_referee=1 server::hfo_max_trial_time=%i ' \
+                  'server::hfo_max_trials=%i server::hfo_max_frames=%i' \
                   %(server_port, coach_port, olcoach_port,
                     args.logging, args.logging, args.logging,
                     args.logDir, args.logDir, args.logDir,
-                    args.sync, args.fullstate, args.fullstate)
+                    args.sync, args.fullstate, args.fullstate,
+                    args.maxFramesPerTrial, args.numTrials, args.numFrames)
                   # server::record_messages=on -- useful for debug
   try:
     # Launch the Server
