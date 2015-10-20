@@ -200,6 +200,11 @@ Neck_OffensiveInterceptNeck::execute( PlayerAgent * agent )
     //
     //
 
+    if ( ! ActionChainHolder::instance().initialized() )
+    {
+        return false;
+    }
+
     if ( self_min == 5
          && trap_ball_speed > wm.self().playerType().kickableArea() * 1.7 )
     {

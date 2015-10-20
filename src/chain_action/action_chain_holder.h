@@ -71,6 +71,7 @@ public:
     const
     ActionChainHolder & i();
 
+    bool initialized() { return M_graph != NULL; }
 
 public:
     void setFieldEvaluator( const FieldEvaluator::ConstPtr & evaluator );
