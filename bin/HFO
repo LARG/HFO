@@ -49,11 +49,12 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
                   'server::game_log_dir=%s server::text_log_dir=%s '\
                   'server::synch_mode=%i server::hfo=1 ' \
                   'server::fullstate_l=%i server::fullstate_r=%i ' \
-                  'server::coach_w_referee=on server::record_messages=on' \
+                  'server::coach_w_referee=1' \
                   %(server_port, coach_port, olcoach_port,
                     args.logging, args.logging, args.logging,
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate)
+                  # server::record_messages=on -- useful for debug
   try:
     # Launch the Server
     server = launch(serverCommand + serverOptions, name='server')
@@ -67,8 +68,7 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
       launch(monitorCommand + monitorOptions, name='monitor')
     # Launch the Trainer
     from Trainer import Trainer
-    trainer = Trainer(args=args, rng=rng, server_port=server_port,
-                      coach_port=coach_port)
+    trainer = Trainer(args=args, server_port=server_port, coach_port=coach_port)
     trainer.initComm()
     # Add Team1
     trainer.addTeam(team1)
