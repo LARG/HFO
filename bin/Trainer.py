@@ -349,34 +349,18 @@ class Trainer(object):
 
   def disconnectPlayer(self, player, player_num, on_offense):
     """Wait on a launched player to disconnect from the server. """
-    print 'Disconnect %s-%d'%(self._offenseTeamName if on_offense
-                              else self._defenseTeamName, player_num)
-    player.terminate()
-    time.sleep(0.1)
-    player.kill()
-    player.wait()
-    self.send('(look)')
-    partial = ['ok','look']
-    self._numPlayers = 0
-    def f(body):
-      del self._connectedPlayers[:]
-      for i in xrange(4, len(body)):
-        _,team,num = body[i][0][:3]
-        if (team, num) not in self._connectedPlayers:
-          self._connectedPlayers.append((team,num))
-    self.registerMsgHandler(f,*partial,quiet=True)
+    # print 'Disconnect %s-%d'%(self._offenseTeamName if on_offense
+    #                           else self._defenseTeamName, player_num)
     team_name = self._offenseTeamName if on_offense else self._defenseTeamName
-    while (team_name, str(player_num)) in self._connectedPlayers:
-      self.listenAndProcess()
-      self.send('(look)')
-    self.ignoreMsg(*partial,quiet=True)
+    self.send('(disconnect_player %s %d)'%(team_name, player_num))
+    player.kill()
 
   def waitOnPlayer(self, player_num, on_offense):
     """Wait on a launched player to connect and be reported by the
     server.
 
     """
-    time.sleep(0.1)
+    # time.sleep(0.1)
     self.send('(look)')
     partial = ['ok','look']
     self._numPlayers = 0

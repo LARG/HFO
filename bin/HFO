@@ -28,12 +28,9 @@ def launch(cmd, name = 'Unknown', necessary = True, supressOutput = True):
     necProcesses.append([p,name])
   return p
 
-def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
+def main(args, team1='left', team2='right'):
   """Sets up the teams, launches the server and monitor, starts the trainer.
   """
-  if args.seed:
-    print '[start.py] Seeding RNG with seed: ', args.seed
-    rng.seed(args.seed)
   if not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
   num_agents   = args.offenseAgents + args.defenseAgents
@@ -51,17 +48,17 @@ def main(args, team1='left', team2='right', rng=numpy.random.RandomState()):
                   'server::fullstate_l=%i server::fullstate_r=%i ' \
                   'server::coach_w_referee=1 server::hfo_max_trial_time=%i ' \
                   'server::hfo_max_trials=%i server::hfo_max_frames=%i ' \
-                  'server::hfo_offense_on_ball=%i' \
+                  'server::hfo_offense_on_ball=%i server::random_seed=%i' \
                   %(server_port, coach_port, olcoach_port,
                     args.logging, args.logging, args.logging,
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
-                    args.offenseOnBall)
+                    args.offenseOnBall, args.seed)
                   # server::record_messages=on -- useful for debug
   try:
     # Launch the Server
-    server = launch(serverCommand + serverOptions, name='server')
+    server = launch(serverCommand + serverOptions, name='server', supressOutput=True)
     time.sleep(0.2)
     assert server.poll() is None,\
       '[start.py] Failed to launch Server with command: \"%s\"' \
@@ -128,7 +125,7 @@ def parseArgs():
   p.add_argument('--fullstate', dest='fullstate', action='store_true',
                  help='Server provides full-state information to agents.')
   p.add_argument('--seed', dest='seed', type=int,
-                 help='Seed the trainer\'s RNG. Default: time.')
+                 help='Seed the server\'s RNG. Default: time.')
   args = p.parse_args()
   if args.offenseAgents not in xrange(0, 11):
     p.error('argument --offense-agents: invalid choice: '\
