@@ -62,7 +62,7 @@ class Communicator(object):
           raise TimeoutError
         else:
           retryCount -= 1
-          print 'error receiving message, trying again'
+          print '[Trainer] waiting for message, retry =', retryCount
           time.sleep(0.3)
           #raise ValueError('Error while receiving message')
     (msg,sep,rest) = msg.partition('\0')
