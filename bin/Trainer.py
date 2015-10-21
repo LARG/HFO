@@ -360,7 +360,6 @@ class Trainer(object):
     server.
 
     """
-    # time.sleep(0.1)
     self.send('(look)')
     partial = ['ok','look']
     self._numPlayers = 0

@@ -124,7 +124,7 @@ def parseArgs():
                  help='Offense starts with the ball.')
   p.add_argument('--fullstate', dest='fullstate', action='store_true',
                  help='Server provides full-state information to agents.')
-  p.add_argument('--seed', dest='seed', type=int,
+  p.add_argument('--seed', dest='seed', type=int, default=-1,
                  help='Seed the server\'s RNG. Default: time.')
   args = p.parse_args()
   if args.offenseAgents not in xrange(0, 11):
