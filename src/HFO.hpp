@@ -17,17 +17,17 @@ enum feature_set_t
 // The actions available to the agent
 enum action_t
 {
-  DASH,       // [Low-Level] Dash(power, direction)
-  TURN,       // [Low-Level] Turn(direction)
-  TACKLE,     // [Low-Level] Tackle(direction)
-  KICK,       // [Low-Level] Kick(power, direction)
-  KICK_TO,    // [Mid-Level] Kick_To(target_x, target_y, speed)
-  MOVE_TO,    // [Mid-Level] Move(target_x, target_y)
-  DRIBBLE_TO, // [Mid-Level] Dribble(target_x, target_y)
+  DASH,       // [Low-Level] Dash(power [0,100], direction [-180,180])
+  TURN,       // [Low-Level] Turn(direction [-180,180])
+  TACKLE,     // [Low-Level] Tackle(direction [-180,180])
+  KICK,       // [Low-Level] Kick(power [0,100], direction [-180,180])
+  KICK_TO,    // [Mid-Level] Kick_To(target_x [-1,1], target_y [-1,1], speed [0,3])
+  MOVE_TO,    // [Mid-Level] Move(target_x [-1,1], target_y [-1,1])
+  DRIBBLE_TO, // [Mid-Level] Dribble(target_x [-1,1], target_y [-1,1])
   INTERCEPT,  // [Mid-Level] Intercept(): Intercept the ball
   MOVE,       // [High-Level] Move(): Reposition player according to strategy
   SHOOT,      // [High-Level] Shoot(): Shoot the ball
-  PASS,       // [High-Level] Pass(teammate_unum): Pass to the most open teammate
+  PASS,       // [High-Level] Pass(teammate_unum [0,11]): Pass to the most open teammate
   DRIBBLE,    // [High-Level] Dribble(): Offensive dribble
   NOOP,       // Do nothing
   QUIT        // Special action to quit the game
