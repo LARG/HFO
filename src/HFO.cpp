@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <iostream>
 #include <sstream>
+#include <stdarg.h>
 
 using namespace hfo;
 
@@ -251,7 +252,7 @@ status_t HFOEnvironment::act(action_t action, ...) {
   if (n_args > 0) {
     float params[n_args];
     va_list vl;
-    va_start(vl, n_args);
+    va_start(vl, action);
     for (int i = 0; i < n_args; ++i) {
       params[i] = va_arg(vl, double);
     }
