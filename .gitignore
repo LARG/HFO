@@ -4,6 +4,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.a
 
 # Distribution / packaging
 .Python
@@ -31,6 +32,7 @@ var/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+install_manifest.txt
 
 # Unit test / coverage reports
 htmlcov/
@@ -64,7 +66,16 @@ bin/agent
 bin/sample_coach
 bin/sample_player
 bin/sample_trainer
+bin/rcssserver
+bin/soccerwindow2
 example/hfo_example_agent
+example/high_level_random_agent
+example/low_level_random_agent
+
+# Dependency directories
+librcsc-prefix/
+rcssserver-prefix/
+soccerwindow2-prefix/
 
 # Logs
 log/
