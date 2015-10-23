@@ -48,8 +48,7 @@ for (int episode=0; episode<5; episode++) {
   status_t status = IN_GAME;
   while (status == IN_GAME) {
     const std::vector<float>& feature_vec = hfo.getState();
-    Action a = {DASH, 20.0, 0.0};
-    status = hfo.act(a);
+    status = hfo.act(DASH, 20.0, 0.0);
   }
   cout << "Episode " << episode << " ended";
 }
@@ -63,7 +62,7 @@ for episode in xrange(5):
   status = HFO_Status.IN_GAME
   while status == HFO_Status.IN_GAME:
     features = hfo.getState()
-    status = hfo.act((HFO_Actions.DASH, 20.0, 0))
+    status = hfo.act(HFO_Actions.DASH, 20.0, 0.0)
   print 'Episode', episode, 'ended'
 ```
 
