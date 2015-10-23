@@ -164,9 +164,9 @@ A seed may be specified as follows:\\
 
 This seed will determine the placement of the players and the ball at
 the beginning of each episode. Due to non-determinism in the player
-policies and server, it is not sufficient to precisely replicate full
-games. It \textit{only} replicates the starting conditions for each
-episode. The player's behavior, observations, and physics all proceed
+policies, it is not sufficient to precisely replicate full games. It
+\textit{only} replicates the starting conditions for each episode. The
+player's behavior, observations, and physics all proceed
 stochastically.
 
 \section{State Spaces}
@@ -193,16 +193,33 @@ are encoded a floating point values and normalized to the range of
 [-1,1]. Invalid features are given a value of -2. The features are as
 follows:
 
+\begin{figure}[htp]
+  \centering
+  \includegraphics[width=.7\textwidth]{figures/playfieldCoords}
+  \caption{\textbf{Normalized Coordinates in the HFO play field}:
+    These coordinates are used for reporting the agent's position in
+    the high-level feature set as well specifying targets for the
+    mid-level actions (Section \ref{sec:mid_level_actions}). The
+    red-rectangle shows the boundaries of the reported positions,
+    which exceed the play field boundaries by 10\% in each
+    direction. Positions exceeding this rectangle are bounded (via
+    min/max) to the edges of the rectangle. All distance features are
+    normalized against the max HFO distance shown in orange.}
+  \label{fig:playfieldCoords}
+\end{figure}
+
 \subsubsection{High Level State Feature List}
 \begin{enumerate}
 \setcounter{enumi}{-1}
-\item{\textbf{X position} - The agent’s x position on the field.}
-\item{\textbf{Y position} - The agent’s y position on the field.}
+\item{\textbf{X position} - The agent’s normalized x-position on the
+  field. See Figure \ref{fig:playfieldCoords}.}
+\item{\textbf{Y position} - The agent’s normalized y-position on the
+  field. See Figure \ref{fig:playfieldCoords}.}
 \item{\textbf{Orientation} - The direction that the agent is facing.}
-\item{\textbf{Ball Distance} - Distance to the ball.}
+\item{\textbf{Ball Distance} - Normalized distance to the ball.}
 \item{\textbf{Ball Angle} - Angle to the ball.}
 \item{\textbf{Able to Kick} - Boolean indicating if the agent can kick the ball.}
-\item{\textbf{Goal Center Distance} - Distance from the agent to the center of the goal.}
+\item{\textbf{Goal Center Distance} - Normalized distance from the agent to the center of the goal.}
 \item{\textbf{Goal Center Angle} - Angle from the agent to the center of the goal.}
 \item{\textbf{Goal Opening Angle} - The size of the largest open angle
   of the agent to the goal, shown as $\theta_g$ in Figure
@@ -210,11 +227,11 @@ follows:
 \item [$T$] {\textbf{Teammate i's Goal Opening Angle} - For each
   teammate i: i’s goal opening angle. Invalid if agent is not playing
   offense.}
-\item [$1$] {\textbf{Distance to Opponent} - If an opponent is present,
-  distance to the closest opponent. This feature is absent if there
-  are no opponents.}
+\item [$1$] {\textbf{Distance to Opponent} - If an opponent is
+  present, normalized distance to the closest opponent. This feature
+  is absent if there are no opponents.}
 \item [$T$] {\textbf{Distance from Teammate i to Opponent} - For each
-  teammate i: the distance from the teammate to the closest
+  teammate i: the normalized distance from the teammate to the closest
   opponent. This feature is absent if there are no opponents. If
   teammates are present but not detected, this feature is considered
   invalid and given the value of -2.}
@@ -223,8 +240,8 @@ follows:
   \ref{fig:openAngle}. If teammates are present but not detected, this
   feature is considered invalid and given the value of -2.}
 \item [$3T$] {\textbf{Distance, Angle, and Uniform Number of
-    Teammates} - For each teammate i: the distance, angle, and uniform
-  number of that teammate.}
+    Teammates} - For each teammate i: the normalized distance, angle,
+  and uniform number of that teammate.}
 \end{enumerate}
 
 There are a total of $9 + 5*\textrm{num\_teammates}$ features with an
@@ -243,7 +260,7 @@ opponent is present.
 
 \subsection {Low Level Feature Set}
 The state features used by HFO are designed with the mindset of
-providing an overcomplete, basic, egocentric viewpoint. The features
+providing an over-complete, basic, egocentric viewpoint. The features
 are basic in the sense that they provide distances and angles to
 relevant points of interest, but do not include higher level
 perceptions such as the largest angle between a goal post and
@@ -421,6 +438,7 @@ are available through the same interface. It is the responsibility of
 the user to faithfully report which action spaces were used.
 
 \subsection{Low Level Actions}
+\label{sec:low_level_actions}
 \begin{itemize}
 \item{\textbf{Dash}(power, degrees): Moves the agent with power [-100,
     100] where negative values move backwards. The relative direction
@@ -435,11 +453,28 @@ the user to faithfully report which action spaces were used.
 \item{\textbf{Kick}(power, degrees): Kick the ball with power [0, 100]
   in relative direction [-180, 180]. Has no effect if the agent does
   not possess the ball.}
-\item{\textbf{Quit}: Indicates to the agent server that you wish to
-  terminate the HFO environment.}
+\end{itemize}
+
+\subsection{Mid Level Actions}
+\label{sec:mid_level_actions}
+\begin{itemize}
+\item{\textbf{Kick$\_$To}(target$_x$, target$_y$, speed): Kicks the
+  ball to the specified target point with the desired speed. Valid
+  values for target$_{x,y} \in [-1,1]$ and speed $\in [0,3]$.}
+\item{\textbf{Move$\_$To}(target$_x$, target$_y$): Moves to the
+  specified target point using the max dash speed. Valid values for
+  target$_{x,y} \in [-1,1]$.}
+\item{\textbf{Dribble$\_$To}(target$_x$, target$_y$): Dribbles the
+  ball to the specified target point. Attempts to fetch the ball if
+  the agent doesn't already possess it. Performs some checks to avoid
+  opponents and keeps good control of the ball. Valid values for
+  target$_{x,y} \in [-1,1]$.}
+\item{\textbf{Intercept}(): Moves to intercept the ball, taking into
+  account the ball velocity. More efficient than chasing the ball.}
 \end{itemize}
 
 \subsection{High Level Actions}
+\label{sec:high_level_actions}
 \begin{itemize}
 \item{\textbf{Move}(): Re-positions the agent according to the
   strategy given by Agent2D. The \textit{move} command works only when
@@ -454,6 +489,13 @@ the user to faithfully report which action spaces were used.
   detected.}
 \item{\textbf{Dribble}(): Advances the ball towards the goal using a
   combination of short kicks and moves.}
+\end{itemize}
+
+\subsection{Special Actions}
+\begin{itemize}
+\item{\textbf{NO-OP}: Indicates that the agent should take no action.}
+\item{\textbf{Quit}: Indicates to the agent server that you wish to
+  terminate the HFO environment.}
 \end{itemize}
 
 \section{Developing a New Agent}
