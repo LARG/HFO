@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <iostream>
 #include <sstream>
+#include <stdarg.h>
 
 using namespace hfo;
 
@@ -46,6 +47,41 @@ std::string HFOEnvironment::ActionToString(Action action) {
   }
   return ss.str();
 };
+
+int HFOEnvironment::NumParams(action_t action) {
+ switch (action) {
+   case DASH:
+     return 2;
+   case TURN:
+     return 1;
+   case TACKLE:
+     return 1;
+   case KICK:
+     return 2;
+   case KICK_TO:
+     return 3;
+   case MOVE_TO:
+     return 2;
+   case DRIBBLE_TO:
+     return 2;
+   case INTERCEPT:
+     return 0;
+   case MOVE:
+     return 0;
+   case SHOOT:
+     return 0;
+   case PASS:
+     return 1;
+   case DRIBBLE:
+     return 0;
+   case NOOP:
+     return 0;
+   case QUIT:
+     return 0;
+ }
+ std::cerr << "Unrecognized Action: " << action;
+ return -1;
+}
 
 bool HFOEnvironment::ParseConfig(const std::string& message, Config& config) {
   config.num_offense = -1;
@@ -203,13 +239,30 @@ const std::vector<float>& HFOEnvironment::getState() {
   return feature_vec;
 }
 
-status_t HFOEnvironment::act(Action action) {
+status_t HFOEnvironment::act(action_t action, ...) {
   status_t game_status;
-  // Send the action
-  if (send(sockfd, &action, sizeof(Action), 0) < 0) {
+  // Send the action_type
+  if (send(sockfd, &action, sizeof(action_t), 0) < 0) {
     perror("[Agent Client] ERROR sending from socket");
     close(sockfd);
     exit(1);
+  }
+  // Send the arguments
+  int n_args = NumParams(action);
+  if (n_args > 0) {
+    float params[n_args];
+    va_list vl;
+    va_start(vl, action);
+    for (int i = 0; i < n_args; ++i) {
+      params[i] = va_arg(vl, double);
+    }
+    va_end(vl);
+    // Send the arguments
+    if (send(sockfd, &params, sizeof(float) * n_args, 0) < 0) {
+      perror("[Agent Client] ERROR sending from socket");
+      close(sockfd);
+      exit(1);
+    }
   }
   // Get the game status
   if (recv(sockfd, &game_status, sizeof(status_t), 0) < 0) {

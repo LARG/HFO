@@ -25,9 +25,6 @@ protected:
   const static int num_basic_features = 9;
   // Number of features for each player or opponent in game.
   const static int features_per_teammate = 5;
-  int numTeammates; // Number of teammates in HFO
-  int numOpponents; // Number of opponents in HFO
-  bool playingOffense; // Are we playing offense or defense?
 };
 
 #endif // HIGHLEVEL_FEATURE_EXTRACTOR_H

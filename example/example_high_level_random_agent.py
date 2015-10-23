@@ -11,9 +11,9 @@ except:
   exit()
 
 def get_random_action():
-  """ Returns a random high-level action """
-  high_lv_actions = [HFO_Actions.SHOOT, HFO_Actions.PASS, HFO_Actions.DRIBBLE]
-  return (random.choice(high_lv_actions), 0, 0)
+  """Returns a random high-level action. Pass is omitted for simplicity."""
+  high_lv_actions = [HFO_Actions.SHOOT, HFO_Actions.DRIBBLE]
+  return random.choice(high_lv_actions)
 
 def play_hfo(num):
   """ Method called by a thread to play 5 games of HFO """
@@ -27,11 +27,11 @@ def play_hfo(num):
         if state[5] == 1: #state[5]  is 1 when player has the ball
           status = hfo_env.act(get_random_action())
         else:
-          status = hfo_env.act((HFO_Actions.MOVE, 0, 0))
+          status = hfo_env.act(HFO_Actions.MOVE)
   except:
     pass
   finally:
-    print "Agent " + str(num) + " exiting." 
+    print "Agent " + str(num) + " exiting."
     hfo_env.cleanup()
 
 def main():

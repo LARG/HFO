@@ -10,10 +10,7 @@ using namespace rcsc;
 LowLevelFeatureExtractor::LowLevelFeatureExtractor(int num_teammates,
                                                    int num_opponents,
                                                    bool playing_offense) :
-    FeatureExtractor(),
-    numTeammates(num_teammates),
-    numOpponents(num_opponents),
-    playingOffense(playing_offense)
+    FeatureExtractor(num_teammates, num_opponents, playing_offense)
 {
   assert(numTeammates >= 0);
   assert(numOpponents >= 0);

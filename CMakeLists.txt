@@ -109,6 +109,21 @@ target_link_libraries(low_level_random_agent hfo-lib)
 add_executable(high_level_random_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/high_level_random_agent.cpp)
 set_target_properties(high_level_random_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
 target_link_libraries(high_level_random_agent hfo-lib)
+
+add_executable(mid_level_move_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/mid_level_move_agent.cpp)
+set_target_properties(mid_level_move_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+target_link_libraries(mid_level_move_agent hfo-lib)
+
+add_executable(mid_level_kick_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/mid_level_kick_agent.cpp)
+set_target_properties(mid_level_kick_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+target_link_libraries(mid_level_kick_agent hfo-lib)
+
+add_executable(mid_level_dribble_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/mid_level_dribble_agent.cpp)
+set_target_properties(mid_level_dribble_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+target_link_libraries(mid_level_dribble_agent hfo-lib)
+
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ USE_SOURCE_PERMISSIONS)
+
+
 
 install(DIRECTORY ${RCSSSERVER_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/bin DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ USE_SOURCE_PERMISSIONS)

@@ -22,9 +22,8 @@ int main() {
       // Get the vector of state features for the current state
       const std::vector<float>& feature_vec = hfo.getState();
       // Create a dash action
-      Action a = {DASH, 20.0, 0.0};
       // Perform the dash and recieve the current game status
-      status = hfo.act(a);
+      status = hfo.act(DASH, 20.0);
     }
     // Check what the outcome of the episode was
     cout << "Episode " << episode << " ended with status: ";
