@@ -7,7 +7,7 @@ option(BUILD_SOCCERWINDOW "Build Soccerwindow Visualizer" ON)
 add_definitions(-DELOG)
 
 ExternalProject_Add(rcssserver
-  GIT_REPOSITORY "git@github.com:mhauskn/rcssserver.git"
+  GIT_REPOSITORY "https://github.com/mhauskn/rcssserver.git"
   GIT_TAG "master"
   CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release
   UPDATE_COMMAND ""
@@ -19,7 +19,7 @@ link_directories(${BINARY_DIR}/lib)
 set(RCSSSERVER_BINARY_DIR ${BINARY_DIR}/bin)
 
 ExternalProject_Add(librcsc
-  GIT_REPOSITORY "git@github.com:mhauskn/librcsc.git"
+  GIT_REPOSITORY "https://github.com/mhauskn/librcsc.git"
   GIT_TAG "master"
   CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release
   UPDATE_COMMAND ""
@@ -34,7 +34,7 @@ set(LIBRCSC_LINK_DIR ${BINARY_DIR}/lib)
 if(BUILD_SOCCERWINDOW)
   ExternalProject_Add(soccerwindow2
     DEPENDS librcsc
-    GIT_REPOSITORY "git@github.com:mhauskn/soccerwindow2.git"
+    GIT_REPOSITORY "https://github.com/mhauskn/soccerwindow2.git"
     GIT_TAG "master"
     CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DLIBRCSC_INCLUDE_DIR=${LIBRCSC_INCLUDE_DIR} -DLIBRCSC_LINK_DIR=${LIBRCSC_LINK_DIR}
     UPDATE_COMMAND ""
