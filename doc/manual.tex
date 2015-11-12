@@ -152,7 +152,7 @@ File $\rightarrow$ Save Image. To convert the saved pngs into a
 movie:\\
 
 \noindent \verb+ avconv -r 10 -start_number 0 -i 3v3/image-%05d.png -f mp4 -c:v libx264+\\
-\noindent \verb+ -s 1024x768 -qp 0 -vf "crop=iw/2.5:8.38*ih/10:iw/2:ih/10,transpose=1" +\\
+\noindent \verb+ -s 1024x768 -vf "crop=iw/2.5:8.38*ih/10:iw/2:ih/10,transpose=1" +\\
 \noindent \verb+ -pix_fmt yuv420p test.mp4 +\\
 
 This command autocrops offensive half of the playfield and rotates it
