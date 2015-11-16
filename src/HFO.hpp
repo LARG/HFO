@@ -29,6 +29,7 @@ enum action_t
   SHOOT,      // [High-Level] Shoot(): Shoot the ball
   PASS,       // [High-Level] Pass(teammate_unum [0,11]): Pass to the most open teammate
   DRIBBLE,    // [High-Level] Dribble(): Offensive dribble
+  CATCH,      // [High-Level] Catch(): Catch the ball (Goalie only!)
   NOOP,       // Do nothing
   QUIT        // Special action to quit the game
 };

@@ -41,6 +41,12 @@ std::string HFOEnvironment::ActionToString(Action action) {
     case DRIBBLE:
       ss << "Dribble";
       break;
+    case CATCH:
+      ss << "Catch";
+      break;
+    case NOOP:
+      ss << "No-op";
+      break;
     case QUIT:
       ss << "Quit";
       break;
@@ -73,6 +79,8 @@ int HFOEnvironment::NumParams(action_t action) {
    case PASS:
      return 1;
    case DRIBBLE:
+     return 0;
+   case CATCH:
      return 0;
    case NOOP:
      return 0;

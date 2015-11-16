@@ -22,12 +22,13 @@ class HFO_Actions:
   [High-Level] Shoot(): Shoot the ball
   [High-Level] Pass(teammate_unum): Pass to teammate
   [High-Level] Dribble(): Offensive dribble
+  [High-Level] Catch(): Catch the ball (Goalie Only)
   NOOP(): Do Nothing
   QUIT(): Quit the game
 
   '''
   DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
-    MOVE, SHOOT, PASS, DRIBBLE, NOOP, QUIT = range(14)
+    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT = range(15)
 
 class HFO_Status:
   ''' Current status of the HFO game. '''
@@ -59,6 +60,7 @@ class HFOEnvironment(object):
       HFO_Actions.SHOOT : 0,
       HFO_Actions.PASS : 1,
       HFO_Actions.DRIBBLE : 0,
+      HFO_Actions.CATCH : 0,
       HFO_Actions.NOOP : 0,
       HFO_Actions.QUIT : 0}.get(action_type, -1);
 

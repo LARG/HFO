@@ -496,6 +496,9 @@ void Agent::actionImpl() {
     case DRIBBLE:
       this->doDribble();
       break;
+    case CATCH:
+      this->doCatch();
+      break;
     case NOOP:
       break;
     case QUIT:
