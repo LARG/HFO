@@ -31,7 +31,7 @@ def launch(cmd, name = 'Unknown', necessary = True, supressOutput = True):
 def main(args, team1='left', team2='right'):
   """Sets up the teams, launches the server and monitor, starts the trainer.
   """
-  if not os.path.exists(args.logDir):
+  if args.logging and not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
   num_agents   = args.offenseAgents + args.defenseAgents
   binary_dir   = os.path.dirname(os.path.realpath(__file__))
