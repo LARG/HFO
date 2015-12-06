@@ -25,9 +25,10 @@ def play_hfo(num):
       while status == HFO_Status.IN_GAME:
         state = hfo_env.getState()
         if state[5] == 1: #state[5]  is 1 when player has the ball
-          status = hfo_env.act(get_random_action())
+          hfo_env.act(get_random_action())
         else:
-          status = hfo_env.act(HFO_Actions.MOVE)
+          hfo_env.act(HFO_Actions.MOVE)
+        status = hfo_env.step()
   except:
     pass
   finally:

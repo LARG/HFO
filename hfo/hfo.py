@@ -41,9 +41,12 @@ class HFOEnvironment(object):
 
   '''
   def __init__(self):
-    self.socket = None # Socket connection to server
-    self.numFeatures = None # Given by the server in handshake
-    self.features = None # The state features
+    self.socket = None           # Socket connection to server
+    self.numFeatures = None      # Given by the server in handshake
+    self.features = None         # The state features
+    self.requested_action = None # Action to execute and parameters
+    self.say_msg = None          # Outgoing message to say
+    self.hear_msg = None         # Incoming heard message
 
   def NumParams(self, action_type):
     ''' Returns the number of required parameters for each action type. '''
@@ -125,7 +128,24 @@ class HFOEnvironment(object):
     n_params = self.NumParams(action_type)
     assert n_params == len(args) - 1, 'Incorrect number of params to act: '\
       'Required %d provided %d'%(n_params, len(args)-1)
-    self.socket.send(struct.pack('i'+'f'*n_params, *args))
+    self.requested_action = args
+
+  def say(self, message):
+    ''' Send a communication message to other agents. '''
+    self.say_msg = message
+
+  def hear(self):
+    ''' Receive incoming communications from other players. '''
+    return self.hear_msg
+
+  def step(self):
+    ''' Indicates the agent is done and the environment should
+        progress. Returns the game status after the step'''
+    # Send action and parameters
+    self.socket.send(struct.pack('i'+'f'*(len(self.requested_action)-1),
+                                 *self.requested_action))
+    # TODO: [Sanmit] Send self.say_msg
+    self.say_msg = ''
     # Get the current game status
     data = self.socket.recv(struct.calcsize("i"))
     status = struct.unpack("i", data)[0]
@@ -136,6 +156,8 @@ class HFOEnvironment(object):
       self.cleanup()
       exit(1)
     self.features = struct.unpack('f'*self.numFeatures, state_data)
+    self.hear_msg = ''
+    # TODO: [Sanmit] Receive self.hear_msg
     return status
 
   def cleanup(self):

@@ -424,6 +424,7 @@ void Agent::actionImpl() {
     perror("[Agent Server] ERROR sending state features from socket");
     exit(1);
   }
+  // TODO: [Sanmit] Send the communication heard by the agent
 
   // Get the action type
   action_t action;
@@ -442,6 +443,9 @@ void Agent::actionImpl() {
       exit(1);
     }
   }
+  // TODO: [Sanmit] Receive the outgoing communication
+  // TODO: [Sanmit] "Say" in the actual game
+
   if (action == SHOOT) {
     const ShootGenerator::Container & cont =
         ShootGenerator::instance().courses(this->world(), false);

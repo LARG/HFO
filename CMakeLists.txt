@@ -122,6 +122,10 @@ add_executable(mid_level_dribble_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/mid_l
 set_target_properties(mid_level_dribble_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
 target_link_libraries(mid_level_dribble_agent hfo-lib)
 
+add_executable(communication_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/communication_agent.cpp)
+set_target_properties(communication_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+target_link_libraries(communication_agent hfo-lib)
+
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ USE_SOURCE_PERMISSIONS)
 
 

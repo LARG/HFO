@@ -56,7 +56,9 @@ int main(int argc, char** argv) {
       // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
       // Perform the action and recieve the current game status
-      status = hfo.act(get_random_low_lv_action(), arg1, arg2);
+      hfo.act(get_random_low_lv_action(), arg1, arg2);
+
+      status = hfo.step();
     }
   }
 };

@@ -85,13 +85,24 @@ class HFOEnvironment {
   // Get the current state of the domain. Returns a reference to feature_vec.
   const std::vector<float>& getState();
 
-  // Take an action and recieve the resulting game status
-  status_t act(action_t action, ...);
+  // Specify action type to take followed by parameters for that action
+  virtual void act(action_t action, ...);
+
+  // Send/receive communication from other agents
+  virtual void say(const std::string& message);
+  virtual std::string hear();
+
+  // Indicates the agent is done and the environment should
+  // progress. Returns the game status after the step
+  virtual status_t step();
 
  protected:
   int numFeatures; // The number of features in this domain
   int sockfd; // Socket file desriptor for connection to agent server
   std::vector<float> feature_vec; // Holds the features
+  action_t requested_action; // Action requested
+  std::vector<float> action_params; // Action parameters
+  std::string say_msg, hear_msg; // Messages to hear/say
 
   // Handshake with the agent server to ensure data is being correctly
   // passed. Also sets the number of features to expect.

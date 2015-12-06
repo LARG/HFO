@@ -35,14 +35,16 @@ int main(int argc, char** argv) {
         // Valid kick speed varies in the range [0, 3]
         if (dist_to_target < .1) {
           // Max power kick to goal
-          status = hfo.act(KICK_TO, 1., 0., 3.0);
+          hfo.act(KICK_TO, 1., 0., 3.0);
         } else {
           // Kick to center of hfo field
-          status = hfo.act(KICK_TO, 0., 0., dist_to_target);
+          hfo.act(KICK_TO, 0., 0., dist_to_target);
         }
       } else {
-        status = hfo.act(INTERCEPT);
+        hfo.act(INTERCEPT);
       }
+      // Advance the environment and get the game status
+      status = hfo.step();
     }
   }
   hfo.act(QUIT);

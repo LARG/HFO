@@ -247,31 +247,50 @@ const std::vector<float>& HFOEnvironment::getState() {
   return feature_vec;
 }
 
-status_t HFOEnvironment::act(action_t action, ...) {
+void HFOEnvironment::act(action_t action, ...) {
+  requested_action = action;
+  int n_args = NumParams(action);
+  if (n_args > action_params.size()) {
+    action_params.resize(n_args);
+  }
+  va_list vl;
+  va_start(vl, action);
+  for (int i = 0; i < n_args; ++i) {
+    action_params[i] = va_arg(vl, double);
+  }
+  va_end(vl);
+}
+
+void HFOEnvironment::say(const std::string& message) {
+  // TODO: [Sanmit] Bounds check message?
+  say_msg = message;
+}
+
+std::string HFOEnvironment::hear() {
+  return hear_msg;
+}
+
+status_t HFOEnvironment::step() {
   status_t game_status;
+
   // Send the action_type
-  if (send(sockfd, &action, sizeof(action_t), 0) < 0) {
+  if (send(sockfd, &requested_action, sizeof(action_t), 0) < 0) {
     perror("[Agent Client] ERROR sending from socket");
     close(sockfd);
     exit(1);
   }
   // Send the arguments
-  int n_args = NumParams(action);
+  int n_args = NumParams(requested_action);
   if (n_args > 0) {
-    float params[n_args];
-    va_list vl;
-    va_start(vl, action);
-    for (int i = 0; i < n_args; ++i) {
-      params[i] = va_arg(vl, double);
-    }
-    va_end(vl);
-    // Send the arguments
-    if (send(sockfd, &params, sizeof(float) * n_args, 0) < 0) {
+    if (send(sockfd, action_params.data(), sizeof(float) * n_args, 0) < 0) {
       perror("[Agent Client] ERROR sending from socket");
       close(sockfd);
       exit(1);
     }
   }
+  // TODO: [Sanmit] Send say_msg
+  say_msg.clear();
+
   // Get the game status
   if (recv(sockfd, &game_status, sizeof(status_t), 0) < 0) {
     perror("[Agent Client] ERROR recieving from socket");
@@ -284,5 +303,8 @@ status_t HFOEnvironment::act(action_t action, ...) {
     close(sockfd);
     exit(1);
   }
+  hear_msg.clear();
+  // TODO: [Sanmit] Receive comm_msg
+
   return game_status;
 }

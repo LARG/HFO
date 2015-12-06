@@ -31,8 +31,10 @@ int main(int argc, char** argv) {
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
-      // Perform the action and recieve the current game status
-      status = hfo.act(get_random_high_lv_action());
+      // Perform the action
+      hfo.act(get_random_high_lv_action());
+      // Advance the environment and get the game status
+      status = hfo.step();
     }
   }
   hfo.act(QUIT);

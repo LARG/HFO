@@ -32,7 +32,9 @@ int main(int argc, char** argv) {
       // Dribble in a circle around center field
       float target_x = sin((step % 360) * PI/180);
       float target_y = cos((step % 360) * PI/180);
-      status = hfo.act(DRIBBLE_TO, target_x, target_y);
+      hfo.act(DRIBBLE_TO, target_x, target_y);
+      // Advance the environment and get the game status
+      status = hfo.step();
       step += 2;
     }
   }
