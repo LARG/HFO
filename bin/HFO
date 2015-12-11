@@ -34,12 +34,10 @@ def main(args, team1='left', team2='right'):
   if not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
   num_agents   = args.offenseAgents + args.defenseAgents
-  num_offense  = args.offenseAgents + args.offenseNPCs
   binary_dir   = os.path.dirname(os.path.realpath(__file__))
   server_port  = args.port + num_agents
   coach_port   = args.port + num_agents + 1
   olcoach_port = args.port + num_agents + 2
-  offense_on_ball = (num_offense + 1) if args.offenseOnBall else 0
   serverCommand = os.path.join(binary_dir, SERVER_BIN)
   serverOptions = ' server::port=%i server::coach_port=%i ' \
                   'server::olcoach_port=%i server::coach=1 ' \
@@ -57,7 +55,7 @@ def main(args, team1='left', team2='right'):
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
-                    offense_on_ball, args.seed, args.maxUntouchedTime)
+                    args.offenseOnBall, args.seed, args.maxUntouchedTime)
                   # server::record_messages=on -- useful for debug
   try:
     # Launch the Server
@@ -94,40 +92,48 @@ def main(args, team1='left', team2='right'):
 
 def parseArgs():
   import argparse
-  p = argparse.ArgumentParser(description='Start Half Field Offense.')
+  p = argparse.ArgumentParser(description='Start Half Field Offense.',
+                              formatter_class=argparse.RawTextHelpFormatter)
   p.add_argument('--headless', dest='headless', action='store_true',
-                 help='Run without a monitor')
+                 help='Run without a monitor.')
   p.add_argument('--trials', dest='numTrials', type=int, default=-1,
-                 help='Number of trials to run')
+                 help='Number of trials to run.\n'\
+                 'Negative values mean unlimited. Default: -1.')
   p.add_argument('--frames', dest='numFrames', type=int, default=-1,
-                 help='Number of frames to run for')
+                 help='Number of frames to run for.\n'\
+                 'Negative values mean unlimited. Default: -1.')
   p.add_argument('--frames-per-trial', dest='maxFramesPerTrial', type=int,
-                 default=1000, help='Max number of frames per trial. '\
-                 'Negative values mean unlimited.')
+                 default=1000, help='Max number of frames per trial.\n'\
+                 'Negative values mean unlimited. Default: 1000.')
   p.add_argument('--untouched-time', dest='maxUntouchedTime', type=int,
-                 default=100, help='Ends trial if ball is untouched for this long. '\
-                 'Negative values mean unlimited.')
+                 default=100, help='Ends trial if ball is untouched for this long.\n'\
+                'Negative values mean unlimited. Default: 100.')
   p.add_argument('--offense-agents', dest='offenseAgents', type=int, default=0,
-                 help='Number of offensive agents')
+                 help='Number of offensive agents. Default: 0.')
   p.add_argument('--defense-agents', dest='defenseAgents', type=int, default=0,
-                 help='Number of defensive agents')
+                 help='Number of defensive agents. Default: 0.')
   p.add_argument('--offense-npcs', dest='offenseNPCs', type=int, default=0,
-                 help='Number of offensive uncontrolled players')
+                 help='Number of offensive uncontrolled players. Default: 0.')
   p.add_argument('--defense-npcs', dest='defenseNPCs', type=int, default=0,
-                 help='Number of defensive uncontrolled players')
+                 help='Number of defensive uncontrolled players. Default: 0.')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
-                 help='Run server in non-sync mode')
+                 help='Run server in non-sync mode.')
   p.add_argument('--port', dest='port', type=int, default=6000,
-                 help='Agent server\'s port. rcssserver, coach, and ol_coach'\
-                 ' will be incrementally allocated the following ports.')
+                 help='Agent server\'s port. Default: 6000.\n'\
+                 'rcssserver, coach, and ol_coach will be '\
+                 'incrementally allocated the following ports.')
   p.add_argument('--no-logging', dest='logging', action='store_false',
                  default=True, help='Disable rcssserver logging.')
   p.add_argument('--log-dir', dest='logDir', default='log/',
-                 help='Directory to store logs.')
+                 help='Directory to store logs. Default: log/')
   p.add_argument('--record', dest='record', action='store_true',
                  help='Record logs of states and actions.')
-  p.add_argument('--offense-on-ball', dest='offenseOnBall', action='store_true',
-                 help='Offense starts with the ball.')
+  p.add_argument('--offense-on-ball', dest='offenseOnBall', type=int,
+                 default=0, help='Ball given to the player represented by the value.\n'\
+                 'If value greater than the number of offense players, '\
+                 'ball given to a random offense player.\n'\
+                 'If value non-positive, ball is not given to any player.\n'\
+                 'Default: 0.')
   p.add_argument('--fullstate', dest='fullstate', action='store_true',
                  help='Server provides full-state information to agents.')
   p.add_argument('--seed', dest='seed', type=int, default=-1,
