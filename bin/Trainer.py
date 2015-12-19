@@ -342,10 +342,13 @@ class Trainer(object):
 
   def listenAndProcess(self, retry_count=None):
     """ Gather messages and process them. """
-    msg = self.recv(retry_count)
-    assert((msg[0] == '(') and (msg[-1] == ')')),'|%s|' % msg
-    msg = self.parseMsg(msg)
-    self.handleMsg(msg)
+    try:
+      msg = self.recv(retry_count)
+      assert((msg[0] == '(') and (msg[-1] == ')')),'|%s|' % msg
+      msg = self.parseMsg(msg)
+      self.handleMsg(msg)
+    except TimeoutError:
+      pass
 
   def disconnectPlayer(self, player, player_num, on_offense):
     """Wait on a launched player to disconnect from the server. """
@@ -470,7 +473,7 @@ class Trainer(object):
         necDef = set([(self._defenseTeamName,str(x)) for x in sorted_defense_agent_unums])
         necAgents = necOff.union(necDef)
         while self.checkLive(necProcesses) and self._agentReady != necAgents:
-          self.listenAndProcess(10)
+          self.listenAndProcess()
 
       # Broadcast the HFO configuration
       offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))

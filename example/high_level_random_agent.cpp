@@ -11,7 +11,7 @@ using namespace hfo;
 
 // Returns a random high-level action
 action_t get_random_high_lv_action() {
-  action_t action_indx = (action_t) ((rand() % 4) + MOVE);
+  action_t action_indx = (action_t) ((rand() % 5) + MOVE);
   return action_indx;
 }
 
