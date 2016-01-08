@@ -49,13 +49,15 @@ def main(args, team1='left', team2='right'):
                   'server::coach_w_referee=1 server::hfo_max_trial_time=%i ' \
                   'server::hfo_max_trials=%i server::hfo_max_frames=%i ' \
                   'server::hfo_offense_on_ball=%i server::random_seed=%i ' \
-                  'server::hfo_max_untouched_time=%i' \
+                  'server::hfo_max_untouched_time=%i ' \
+                  'server::say_msg_size=%i' \
                   %(server_port, coach_port, olcoach_port,
                     args.logging, args.logging, args.logging,
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
-                    args.offenseOnBall, args.seed, args.maxUntouchedTime)
+                    args.offenseOnBall, args.seed, args.maxUntouchedTime, 
+                    args.messageSize)
                   # server::record_messages=on -- useful for debug
   try:
     # Launch the Server
@@ -130,6 +132,8 @@ def parseArgs():
                  help='Server provides full-state information to agents.')
   p.add_argument('--seed', dest='seed', type=int, default=-1,
                  help='Seed the server\'s RNG. Default: time.')
+  p.add_argument('--messageSize', dest='messageSize', type=int, default=1000,
+                 help='Message size limit for communication')
   args = p.parse_args()
   if args.offenseAgents not in xrange(0, 11):
     p.error('argument --offense-agents: invalid choice: '\
