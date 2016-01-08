@@ -29,6 +29,7 @@
 #endif
 
 #include "agent.h"
+#include "custom_message.h"
 
 #include "strategy.h"
 #include "field_analyzer.h"
@@ -100,6 +101,7 @@
 #include <rcsc/param/cmd_line_parser.h>
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <cstdlib>
@@ -120,8 +122,10 @@ Agent::Agent()
       M_field_evaluator(createFieldEvaluator()),
       M_action_generator(createActionGenerator()),
       lastTrainerMessageTime(-1),
+      lastTeammateMessageTime(-1),
       server_port(6008),
       client_connected(false),
+
       num_teammates(-1),
       num_opponents(-1),
       playing_offense(false)
@@ -422,9 +426,39 @@ void Agent::actionImpl() {
   if (send(newsockfd, &(features.front()),
            features.size() * sizeof(float), 0) < 0) {
     perror("[Agent Server] ERROR sending state features from socket");
+    close(sockfd);
     exit(1);
   }
-  // TODO: [Sanmit] Send the communication heard by the agent
+
+  // [Sanmit] Send the communication heard by the agent
+  // Hear for teammate messages and send them via socket to the HFO interface. 
+  std::string teammateMessage = "";
+  // Received a new message
+  if (audioSensor().teammateMessageTime().cycle() > lastTeammateMessageTime){
+    // Receive all teammate messages
+    std::list<HearMessage> teammateMessages = audioSensor().teammateMessages();
+    for (std::list<HearMessage>::iterator msgIterator = teammateMessages.begin(); msgIterator != teammateMessages.end(); msgIterator++){
+      if ((*msgIterator).unum_ != world().self().unum()){
+        teammateMessage = (*msgIterator).str_;
+        break;  // For now we just take one. Remove this and concatenate messages if desired -- though technically, agents should only be able to hear one message.  
+      }
+    }
+  }
+  // Send message size 
+  uint32_t hearMsgLength = teammateMessage.size();
+  if (send(newsockfd, &hearMsgLength, sizeof(uint32_t), 0) < 0){
+    perror("[Agent Server] ERROR sending hear message length from socket");
+    close(sockfd);
+    exit(1);
+  }
+  // Send message
+  if (hearMsgLength > 0){  
+    if (send(newsockfd, teammateMessage.c_str(), teammateMessage.size(), 0) < 0){
+      perror("[Agent Server] ERROR sending hear message from socket");
+      close(sockfd);
+      exit(1);
+    }
+  }
 
   // Get the action type
   action_t action;
@@ -443,8 +477,44 @@ void Agent::actionImpl() {
       exit(1);
     }
   }
-  // TODO: [Sanmit] Receive the outgoing communication
-  // TODO: [Sanmit] "Say" in the actual game
+  // [Sanmit] Receive the outgoing communication
+  // Receive message length
+  uint32_t sayMsgLength;
+  if (recv(newsockfd, &sayMsgLength, sizeof(uint32_t), 0) < 0){
+    perror("[Agent Server] ERROR recv size of say message from socket");
+    close(sockfd);
+    exit(1);
+  }
+
+  std::cout << "[AGENT.CPP] Say message length " << sayMsgLength << std::endl;
+
+  // Receive message   
+  std::vector<char> sayMsgBuffer; 
+  sayMsgBuffer.resize(sayMsgLength);
+  std::string msgString = "";
+
+  // Check message size
+  if (sayMsgLength > ServerParam::i().playerSayMsgSize()){
+    perror("[Agent Server] ERROR message size too large. Increase size by starting bin/HFO with larger --messageSize argument");
+    close(sockfd);
+    exit(1);
+  }
+  if (sayMsgLength > 0) { 
+    
+    if (recv(newsockfd, &sayMsgBuffer[0], sayMsgLength, 0) < 0){
+      perror("[Agent Server] ERROR recv say message from socket");
+      close(sockfd);
+      exit(1);
+    }
+    msgString.assign(&(sayMsgBuffer[0]),sayMsgBuffer.size());
+
+    // [Sanmit] "Say" in the actual game
+    addSayMessage(new CustomMessage(msgString));
+
+    std::cout << "\n\n[AGENT SERVER] " << msgString << std::endl;
+
+  }
+
 
   if (action == SHOOT) {
     const ShootGenerator::Container & cont =
@@ -704,7 +774,8 @@ Agent::communicationImpl()
 {
     if ( M_communication )
     {
-        M_communication->execute( this );
+      // [Sanmit]: Turning this off since it adds default communication messages which can conflict with our comm messages.
+      //        M_communication->execute( this );
     }
 }
 

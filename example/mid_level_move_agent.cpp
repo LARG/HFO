@@ -31,12 +31,15 @@ int main(int argc, char** argv) {
     }
     std::cout << "target (x,y) = " << target_x << ", " << target_y << std::endl;
     while (status == IN_GAME) {
+
       // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
       // Perform the action
       hfo.act(MOVE_TO, target_x, target_y);
       // Advance the environment and get the game status
       status = hfo.step();
+    
+      std::cout << "Status: " << status << " (IN_GAME = " << IN_GAME << ")\n";
     }
   }
   hfo.act(QUIT);

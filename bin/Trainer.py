@@ -119,6 +119,7 @@ class Trainer(object):
       agent_cmd += ' -g'
     if self._record:
       agent_cmd += ' --record'
+    # Comment next two lines to show output from agent.cpp and the server
     kwargs = {'stdout':open('/dev/null', 'w'),
               'stderr':open('/dev/null', 'w')}
     p = subprocess.Popen(agent_cmd.split(' '), shell = False, **kwargs)

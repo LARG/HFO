@@ -45,8 +45,8 @@ class HFOEnvironment(object):
     self.numFeatures = None      # Given by the server in handshake
     self.features = None         # The state features
     self.requested_action = None # Action to execute and parameters
-    self.say_msg = None          # Outgoing message to say
-    self.hear_msg = None         # Incoming heard message
+    self.say_msg = ''          # Outgoing message to say
+    self.hear_msg = ''         # Incoming heard message
 
   def NumParams(self, action_type):
     ''' Returns the number of required parameters for each action type. '''
@@ -94,6 +94,12 @@ class HFOEnvironment(object):
       self.cleanup()
       exit(1)
     self.features = struct.unpack('f'*self.numFeatures, state_data)
+    # Get first hear message 
+    hearMsgLengthData = self.socket.recv(struct.calcsize('I'))
+    hearMsgLength = struct.unpack('I', hearMsgLengthData)[0]
+    if hearMsgLength > 0:
+      hearMsgData = self.socket.recv(struct.calcsize('c')*hearMsgLength)
+      self.hear_msg = struct.unpack(str(hearMsgLength)+'s', hearMsgData)[0]
 
   def handshakeAgentServer(self, feature_set):
     '''Handshake with the agent's server. '''
@@ -144,11 +150,16 @@ class HFOEnvironment(object):
     # Send action and parameters
     self.socket.send(struct.pack('i'+'f'*(len(self.requested_action)-1),
                                  *self.requested_action))
-    # TODO: [Sanmit] Send self.say_msg
+    # [Sanmit] Send self.say_msg
+    self.socket.send(struct.pack('I', len(self.say_msg)))
+    if len(self.say_msg) > 0:
+      self.socket.send(struct.pack(str(len(self.say_msg))+'s', self.say_msg))
     self.say_msg = ''
+    
     # Get the current game status
     data = self.socket.recv(struct.calcsize("i"))
     status = struct.unpack("i", data)[0]
+      
     # Get the next state features
     state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
     if not state_data:
@@ -157,7 +168,13 @@ class HFOEnvironment(object):
       exit(1)
     self.features = struct.unpack('f'*self.numFeatures, state_data)
     self.hear_msg = ''
-    # TODO: [Sanmit] Receive self.hear_msg
+    # [Sanmit] Receive self.hear_msg
+    hearMsgLengthData = self.socket.recv(struct.calcsize('I'))
+    hearMsgLength = struct.unpack('I', hearMsgLengthData)[0]
+    if hearMsgLength > 0:
+      hearMsgData = self.socket.recv(struct.calcsize('c')*hearMsgLength)
+      self.hear_msg = struct.unpack(str(hearMsgLength)+'s', hearMsgData)[0]
+    
     return status
 
   def cleanup(self):
