@@ -9,7 +9,6 @@ using namespace hfo;
 // This agent demonstrates the use of the MOVE_TO action to visit the
 // corners of the play field. Before running this program, first Start
 // HFO server: $./bin/HFO --offense-agents 1
-
 int main(int argc, char** argv) {
   int port = 6000;
   if (argc > 1) {

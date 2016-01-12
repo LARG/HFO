@@ -79,6 +79,7 @@ protected:
  protected:
   FeatureExtractor* feature_extractor;
   long lastTrainerMessageTime; // Last time the trainer sent a message
+  long lastTeammateMessageTime; // Last time a teammate sent a message
   int server_port; // Port to start the server on
   bool client_connected; // Has the client connected and handshake?
   int sockfd, newsockfd; // Server sockets
