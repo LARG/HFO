@@ -140,7 +140,7 @@ def parseArgs():
                  help='Server provides full-state information to agents.')
   p.add_argument('--seed', dest='seed', type=int, default=-1,
                  help='Seed the server\'s RNG. Default: time.')
-  p.add_argument('--messageSize', dest='messageSize', type=int, default=1000,
+  p.add_argument('--message-size', dest='messageSize', type=int, default=1000,
                  help='Message size limit for communication')
   args = p.parse_args()
   if args.offenseAgents not in xrange(0, 11):

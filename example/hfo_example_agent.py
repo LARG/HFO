@@ -4,10 +4,7 @@
 import sys
 
 # First Start the server: $> bin/start.py
-
 if __name__ == '__main__':
-
-
   port = 6000
   if len(sys.argv) > 1:
     port = int(sys.argv[1])
@@ -31,8 +28,6 @@ if __name__ == '__main__':
       # Take an action and get the current game status
       hfo.act(HFO_Actions.DASH, 20.0, 0)
       hfo.step()
-      
-    
     print 'Episode', episode, 'ended with',
     # Check what the outcome of the episode was
     if status == HFO_Status.GOAL:

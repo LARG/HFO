@@ -125,7 +125,6 @@ Agent::Agent()
       lastTeammateMessageTime(-1),
       server_port(6008),
       client_connected(false),
-
       num_teammates(-1),
       num_opponents(-1),
       playing_offense(false)
@@ -486,8 +485,6 @@ void Agent::actionImpl() {
     exit(1);
   }
 
-  std::cout << "[AGENT.CPP] Say message length " << sayMsgLength << std::endl;
-
   // Receive message   
   std::vector<char> sayMsgBuffer; 
   sayMsgBuffer.resize(sayMsgLength);
@@ -500,7 +497,6 @@ void Agent::actionImpl() {
     exit(1);
   }
   if (sayMsgLength > 0) { 
-    
     if (recv(newsockfd, &sayMsgBuffer[0], sayMsgLength, 0) < 0){
       perror("[Agent Server] ERROR recv say message from socket");
       close(sockfd);
@@ -510,9 +506,6 @@ void Agent::actionImpl() {
 
     // [Sanmit] "Say" in the actual game
     addSayMessage(new CustomMessage(msgString));
-
-    std::cout << "\n\n[AGENT SERVER] " << msgString << std::endl;
-
   }
 
 

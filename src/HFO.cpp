@@ -207,9 +207,6 @@ void HFOEnvironment::connectToAgentServer(int server_port,
     }  
     hear_msg.assign(&(hearMsgBuffer[0]), hearMsgBuffer.size());
   }
-
-
-
 }
 
 void HFOEnvironment::handshakeAgentServer(feature_set_t feature_set) {
@@ -363,7 +360,6 @@ status_t HFOEnvironment::step() {
     }  
     hear_msg.assign(&(hearMsgBuffer[0]), hearMsgBuffer.size());
   }
-
   return game_status;
 }
 
