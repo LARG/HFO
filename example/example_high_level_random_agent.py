@@ -28,7 +28,7 @@ def play_hfo(num):
           hfo_env.act(get_random_action())
         else:
           hfo_env.act(HFO_Actions.MOVE)
-        status = hfo_env.step()
+        (status, playerIndex) = hfo_env.step()
   except:
     pass
   finally:

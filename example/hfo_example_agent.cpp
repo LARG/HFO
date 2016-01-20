@@ -17,6 +17,7 @@ int main() {
   hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
   // Play 5 episodes
   for (int episode=0; episode<5; episode++) {
+    vector<int> game_status;
     status_t status = IN_GAME;
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
@@ -24,7 +25,8 @@ int main() {
       // Perform the dash
       hfo.act(DASH, 20.0);
       // Advance the environment and recieve current game status
-      status = hfo.step();
+      game_status = hfo.step();
+      status = (status_t)game_status[0];
     }
     // Check what the outcome of the episode was
     cout << "Episode " << episode << " ended with status: ";

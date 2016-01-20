@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
   // feature set. See manual for more information on feature sets.
   hfo.connectToAgentServer(port, HIGH_LEVEL_FEATURE_SET);
   for (int episode=0; ; episode++) {
+    vector<int> game_status;
     status_t status = IN_GAME;
     int step = 0;
     while (status == IN_GAME) {
@@ -34,7 +35,8 @@ int main(int argc, char** argv) {
       float target_y = cos((step % 360) * PI/180);
       hfo.act(DRIBBLE_TO, target_x, target_y);
       // Advance the environment and get the game status
-      status = hfo.step();
+      game_status = hfo.step();
+      status = (status_t)game_status[0];
       step += 2;
     }
   }

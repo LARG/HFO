@@ -269,8 +269,9 @@ SamplePlayer::actionImpl()
             hfo::LOW_LEVEL_FEATURE_SET, num_teammates, num_opponents, playing_offense);
       }
     } else {
-      hfo::status_t game_status = Agent::getGameStatus(
+      std::vector<int> full_status =  Agent::getGameStatus(
           audioSensor(), lastTrainerMessageTime);
+      hfo::status_t game_status = (hfo::status_t)full_status[0];
       elog.addText(Logger::WORLD, "GameStatus %d", game_status);
       elog.flush();
       feature_extractor->ExtractFeatures(this->world());

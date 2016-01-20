@@ -364,15 +364,19 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
   }
 }
 
-status_t Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
+std::vector<int> Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
                                   long& lastTrainerMessageTime) {
+  
+  std::vector<int> status;
   status_t game_status = IN_GAME;
+  int playerIndex = -1;   // Keeps track of which defender stopped the shot
   if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
     const std::string& message = audio_sensor.trainerMessage();
     bool recognized_message = true;
     if (message.compare("GOAL") == 0) {
       game_status = GOAL;
-    } else if (message.compare("CAPTURED_BY_DEFENSE") == 0) {
+    } else if (message.find("CAPTURED_BY_DEFENSE") != std::string::npos) { 
+      playerIndex = atoi((message.substr(message.find("-")+1)).c_str());
       game_status = CAPTURED_BY_DEFENSE;
     } else if (message.compare("OUT_OF_BOUNDS") == 0) {
       game_status = OUT_OF_BOUNDS;
@@ -385,7 +389,9 @@ status_t Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
       lastTrainerMessageTime = audio_sensor.trainerMessageTime().cycle();
     }
   }
-  return game_status;
+  status.push_back(game_status);
+  status.push_back(playerIndex);  
+  return status;
 }
 
 /*!
@@ -403,20 +409,20 @@ void Agent::actionImpl() {
   }
 
   // Update and send the game status
-  status_t game_status = getGameStatus(audioSensor(), lastTrainerMessageTime);
-  if (send(newsockfd, &game_status, sizeof(int), 0) < 0) {
-    perror("[Agent Server] ERROR sending from socket");
+  std::vector<int> game_status = getGameStatus(audioSensor(), lastTrainerMessageTime);
+  if (send(newsockfd, &(game_status.front()), game_status.size() * sizeof(int), 0) < 0){
+    perror("[Agent Server] ERROR sending game state from socket");
     close(sockfd);
-    exit(1);
+    exit(1);   
   }
-
+  
   // Update and send the state features
   const std::vector<float>& features =
       feature_extractor->ExtractFeatures(this->world());
 
 #ifdef ELOG
   if (config().record()) {
-    elog.addText(Logger::WORLD, "GameStatus %d", game_status);
+    elog.addText(Logger::WORLD, "GameStatus %d", game_status[0]);
     elog.flush();
     feature_extractor->LogFeatures();
   }

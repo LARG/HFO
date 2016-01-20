@@ -27,13 +27,13 @@ if __name__ == '__main__':
       features = hfo.getState()
       # Take an action and get the current game status
       hfo.act(HFO_Actions.DASH, 20.0, 0)
-      hfo.step()
+      (status, playerIndex) = hfo.step()
     print 'Episode', episode, 'ended with',
     # Check what the outcome of the episode was
     if status == HFO_Status.GOAL:
       print 'goal'
     elif status == HFO_Status.CAPTURED_BY_DEFENSE:
-      print 'captured by defense'
+      print 'captured by defense', playerIndex
     elif status == HFO_Status.OUT_OF_BOUNDS:
       print 'out of bounds'
     elif status == HFO_Status.OUT_OF_TIME:

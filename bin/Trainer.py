@@ -220,8 +220,9 @@ class Trainer(object):
       self._numGoalFrames += self._frame - self._lastTrialStart
     elif event == 'OUT_OF_BOUNDS':
       self._numBallsOOB += 1
-    elif event == 'CAPTURED_BY_DEFENSE':
+    elif 'CAPTURED_BY_DEFENSE' in event:
       self._numBallsCaptured += 1
+      event = "CAPTURED_BY_DEFENSE"   # This clears the defender number from the printout below, but it doesn't really matter here. 
     elif event == 'OUT_OF_TIME':
       self._numOutOfTime += 1
     elif event == 'HFO_FINISHED':

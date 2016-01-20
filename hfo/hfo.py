@@ -117,8 +117,8 @@ class HFOEnvironment(object):
     # Send what we recieved
     self.socket.send(struct.pack("i", self.numFeatures))
     # Get the current game status
-    data = self.socket.recv(struct.calcsize("i"))
-    status = struct.unpack("i", data)[0]
+    data = self.socket.recv(struct.calcsize("i")*2)
+    status = struct.unpack("ii", data)[0]
     assert status == HFO_Status.IN_GAME, "Status check failed"
     print '[Agent Client] Handshake complete'
 
@@ -157,8 +157,9 @@ class HFOEnvironment(object):
     self.say_msg = ''
     
     # Get the current game status
-    data = self.socket.recv(struct.calcsize("i"))
-    status = struct.unpack("i", data)[0]
+    data = self.socket.recv(struct.calcsize("i") * 2)
+    status = struct.unpack("ii", data)[0]
+    playerIndex = struct.unpack("ii", data)[1]
       
     # Get the next state features
     state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
@@ -175,7 +176,7 @@ class HFOEnvironment(object):
       hearMsgData = self.socket.recv(struct.calcsize('c')*hearMsgLength)
       self.hear_msg = struct.unpack(str(hearMsgLength)+'s', hearMsgData)[0]
     
-    return status
+    return (status, playerIndex)
 
   def cleanup(self):
     ''' Send a quit and close the connection to the agent's server. '''

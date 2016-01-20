@@ -43,7 +43,7 @@ public:
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
 
   // Get the current game status
-  static hfo::status_t getGameStatus(const rcsc::AudioSensor& audio_sensor,
+  static std::vector<int> getGameStatus(const rcsc::AudioSensor& audio_sensor,
                                      long& lastTrainerMessageTime);
 
   // Returns the feature extractor corresponding to the feature_set_t

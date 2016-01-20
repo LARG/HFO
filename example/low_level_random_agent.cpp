@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
   hfo.connectToAgentServer(port, LOW_LEVEL_FEATURE_SET);
   // Play 5 episodes
   for (int episode=0; ; episode++) {
+    vector<int> game_status;
     status_t status = IN_GAME;
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
@@ -58,7 +59,8 @@ int main(int argc, char** argv) {
       // Perform the action and recieve the current game status
       hfo.act(get_random_low_lv_action(), arg1, arg2);
 
-      status = hfo.step();
+      game_status = hfo.step();
+      status = (status_t)game_status[0];
     }
   }
 };

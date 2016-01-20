@@ -94,7 +94,7 @@ class HFOEnvironment {
 
   // Indicates the agent is done and the environment should
   // progress. Returns the game status after the step
-  virtual status_t step();
+  virtual std::vector<int> step();
 
  protected:
   int numFeatures; // The number of features in this domain

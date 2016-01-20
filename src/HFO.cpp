@@ -248,13 +248,13 @@ void HFOEnvironment::handshakeAgentServer(feature_set_t feature_set) {
     exit(1);
   }
   // Recieve the game status
-  status_t status;
-  if (recv(sockfd, &status, sizeof(status_t), 0) < 0) {
-    perror("[Agent Client] ERROR recv from socket");
+  std::vector<int> game_status(2, -1);
+  if (recv(sockfd, &(game_status.front()), 2 * sizeof(int), 0) < 0) {
+    perror("[Agent Client] ERROR receiving game status from socket");
     close(sockfd);
     exit(1);
   }
-  if (status != IN_GAME) {
+  if ((status_t)game_status[0] != IN_GAME) {
     std::cout << "[Agent Client] Handshake failed: status check." << std::endl;
     close(sockfd);
     exit(1);
@@ -289,8 +289,8 @@ std::string HFOEnvironment::hear() {
   return hear_msg;
 }
 
-status_t HFOEnvironment::step() {
-  status_t game_status;
+std::vector<int> HFOEnvironment::step() {
+  std::vector<int> game_status(2, -1);
 
   // Send the action_type
   if (send(sockfd, &requested_action, sizeof(action_t), 0) < 0) {
@@ -328,14 +328,14 @@ status_t HFOEnvironment::step() {
   say_msg.clear();
 
   // Get the game status
-  if (recv(sockfd, &game_status, sizeof(status_t), 0) < 0) {
-    perror("[Agent Client] ERROR recieving from socket");
+  if (recv(sockfd, &(game_status.front()), 2 * sizeof(int), 0) < 0) {
+    perror("[Agent Client] ERROR receiving game status from socket");
     close(sockfd);
     exit(1);
   }
   // Get the next game state
   if (recv(sockfd, &(feature_vec.front()), numFeatures * sizeof(float), 0) < 0) {
-    perror("[Agent Client] ERROR recieving state features from socket");
+    perror("[Agent Client] ERROR receiving state features from socket");
     close(sockfd);
     exit(1);
   }
@@ -345,7 +345,7 @@ status_t HFOEnvironment::step() {
   // Message length
   uint32_t msgLength;
   if (recv(sockfd, &msgLength, sizeof(uint32_t), 0) < 0){
-    perror("[Agent Client] ERROR recieving hear message length from socket");
+    perror("[Agent Client] ERROR receiving hear message length from socket");
     close(sockfd);
     exit(1);
   }
@@ -354,7 +354,7 @@ status_t HFOEnvironment::step() {
     std::vector<char> hearMsgBuffer;
     hearMsgBuffer.resize(msgLength);
     if (recv(sockfd, &hearMsgBuffer[0], msgLength, 0) < 0){
-      perror("[Agent Client] ERROR recieving hear message from socket");
+      perror("[Agent Client] ERROR receiving hear message from socket");
       close(sockfd);
       exit(1);
     }  
