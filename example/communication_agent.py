@@ -42,9 +42,9 @@ if __name__ == '__main__':
     print 'Episode', episode, 'ended with',
     # Check what the outcome of the episode was
     if status == HFO_Status.GOAL:
-      print 'goal'
+      print 'goal', hfo.playerOnBall().unum
     elif status == HFO_Status.CAPTURED_BY_DEFENSE:
-      print 'captured by defense'
+      print 'captured by defense', hfo.playerOnBall().unum 
     elif status == HFO_Status.OUT_OF_BOUNDS:
       print 'out of bounds'
     elif status == HFO_Status.OUT_OF_TIME:

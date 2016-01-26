@@ -41,10 +41,10 @@ int main(int argc, char** argv) {
     cout << "Episode " << episode << " ended with status: ";
     switch (status) {
       case GOAL:
-        cout << "goal" << endl;
+        cout << "goal " << hfo.playerOnBall().unum << endl;
         break;
       case CAPTURED_BY_DEFENSE:
-        cout << "captured by defense " << endl;
+        cout << "captured by defense " << hfo.playerOnBall().unum << endl;
         break;
       case OUT_OF_BOUNDS:
         cout << "out of bounds" << endl;

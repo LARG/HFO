@@ -46,7 +46,6 @@ int main(int argc, char** argv) {
       // Advance the environment and get the game status
       status = hfo.step();
     }
-  
     // Check what the outcome of the episode was
     cout << "Episode " << episode << " ended with status: ";
     switch (status) {
@@ -66,11 +65,6 @@ int main(int argc, char** argv) {
         cout << "Unknown status " << status << endl;
         exit(1);
     }
-
-
-  
-  
-  
   }
   hfo.act(QUIT);
 };

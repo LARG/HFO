@@ -34,7 +34,6 @@
 #include "feature_extractor.h"
 
 #include <rcsc/player/player_agent.h>
-#include <rcsc/types.h>
 #include <vector>
 
 class Agent : public rcsc::PlayerAgent {
@@ -43,7 +42,7 @@ public:
   virtual ~Agent();
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
 
-  // Get the current game status
+  // Get the current game status, and the side and uniform number of the player holding the ball
   static std::vector<int> getGameStatus(const rcsc::AudioSensor& audio_sensor,
                                      long& lastTrainerMessageTime);
 

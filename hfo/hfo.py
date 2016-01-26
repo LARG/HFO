@@ -170,8 +170,8 @@ class HFOEnvironment(object):
     
     # Get the current game status
     data = self.socket.recv(struct.calcsize("iii"))
-    status = struct.unpack("iii", data)[0]
-    self.player_on_ball = HFO_Player(struct.unpack("iii", data)[1], struct.unpack("iii",data)[2])
+    status, side, unum = struct.unpack("iii", data)
+    self.player_on_ball = HFO_Player(side,unum)
       
     # Get the next state features
     state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)

@@ -248,8 +248,8 @@ void HFOEnvironment::handshakeAgentServer(feature_set_t feature_set) {
     exit(1);
   }
   // Recieve the game status
-  std::vector<int> game_status(3, -1);
-  if (recv(sockfd, &(game_status.front()), 3 * sizeof(int), 0) < 0) {
+  int game_status[3];
+  if (recv(sockfd, &(game_status[0]), 3 * sizeof(int), 0) < 0) {
     perror("[Agent Client] ERROR receiving game status from socket");
     close(sockfd);
     exit(1);
@@ -259,6 +259,8 @@ void HFOEnvironment::handshakeAgentServer(feature_set_t feature_set) {
     close(sockfd);
     exit(1);
   }
+  player_on_ball.side = (SideID)game_status[1];
+  player_on_ball.unum = game_status[2];
   std::cout << "[Agent Client] Handshake complete" << std::endl;
 }
 
@@ -332,14 +334,14 @@ status_t HFOEnvironment::step() {
   say_msg.clear();
 
   // Get the game status
-  std::vector<int> full_status(3,-1);
-  if (recv(sockfd, &(full_status.front()), 3 * sizeof(int), 0) < 0) {
+  int full_status[3];
+  if (recv(sockfd, &(full_status[0]), 3 * sizeof(int), 0) < 0) {
     perror("[Agent Client] ERROR receiving game status from socket");
     close(sockfd);
     exit(1);
   }
   game_status = (status_t)full_status[0];
-  player_on_ball.side = (rcsc::SideID)full_status[1];
+  player_on_ball.side = (SideID)full_status[1];
   player_on_ball.unum = full_status[2];
 
   // Get the next game state

@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <rcsc/types.h>
 
 namespace hfo {
 
@@ -53,6 +52,12 @@ enum status_t
   OUT_OF_TIME          // Trial has ended due to time limit
 };
 
+enum SideID {
+  RIGHT = -1,
+  NEUTRAL = 0,
+  LEFT = 1
+};
+
 // Configuration of the HFO domain including the team names and player
 // numbers for each team. This struct is populated by ParseConfig().
 struct Config {
@@ -65,7 +70,7 @@ struct Config {
 };
 
 struct Player {
-  rcsc::SideID side;    // SideID is an enum: 1 = LEFT, 0 = NEUTRAL, -1 = RIGHT 
+  SideID side;    
   int unum;
 };
 
