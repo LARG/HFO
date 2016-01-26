@@ -37,14 +37,14 @@ if __name__ == '__main__':
       hfo_env.act(HFO_Actions.DASH, 20.0, 0)
       # Do something with outgoing communication
       hfo_env.say('Message')
-      (status, playerIndex) = hfo_env.step() 
+      status = hfo_env.step() 
   
     print 'Episode', episode, 'ended with',
     # Check what the outcome of the episode was
     if status == HFO_Status.GOAL:
       print 'goal'
     elif status == HFO_Status.CAPTURED_BY_DEFENSE:
-      print 'captured by defense', playerIndex
+      print 'captured by defense'
     elif status == HFO_Status.OUT_OF_BOUNDS:
       print 'out of bounds'
     elif status == HFO_Status.OUT_OF_TIME:

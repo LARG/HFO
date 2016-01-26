@@ -34,6 +34,7 @@
 #include "feature_extractor.h"
 
 #include <rcsc/player/player_agent.h>
+#include <rcsc/types.h>
 #include <vector>
 
 class Agent : public rcsc::PlayerAgent {

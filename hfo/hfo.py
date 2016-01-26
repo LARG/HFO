@@ -1,4 +1,4 @@
-import socket, struct, thread, time
+import socket, struct, thread, time, collections
 
 class HFO_Features:
   ''' An enum of the possible HFO feature sets. For descriptions see
@@ -30,10 +30,17 @@ class HFO_Actions:
   DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
     MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT = range(15)
 
+
+HFO_Player = collections.namedtuple("HFO_Player", "side unum")    
+
 class HFO_Status:
   ''' Current status of the HFO game. '''
   IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME = range(5)
 
+class HFO_SideID:
+  ''' Team side for a player or object''' 
+  RIGHT, NEUTRAL, LEFT = range(-1, 2)
+  
 
 class HFOEnvironment(object):
   ''' The HFOEnvironment is designed to be the main point of contact
@@ -47,6 +54,7 @@ class HFOEnvironment(object):
     self.requested_action = None # Action to execute and parameters
     self.say_msg = ''          # Outgoing message to say
     self.hear_msg = ''         # Incoming heard message
+    self.player_on_ball = None  # Current player holding the ball
 
   def NumParams(self, action_type):
     ''' Returns the number of required parameters for each action type. '''
@@ -117,8 +125,8 @@ class HFOEnvironment(object):
     # Send what we recieved
     self.socket.send(struct.pack("i", self.numFeatures))
     # Get the current game status
-    data = self.socket.recv(struct.calcsize("i")*2)
-    status = struct.unpack("ii", data)[0]
+    data = self.socket.recv(struct.calcsize("iii"))
+    status = struct.unpack("iii", data)[0]
     assert status == HFO_Status.IN_GAME, "Status check failed"
     print '[Agent Client] Handshake complete'
 
@@ -144,6 +152,10 @@ class HFOEnvironment(object):
     ''' Receive incoming communications from other players. '''
     return self.hear_msg
 
+  def playerOnBall(self):
+    ''' Get the current player holding the ball'''
+    return self.player_on_ball
+
   def step(self):
     ''' Indicates the agent is done and the environment should
         progress. Returns the game status after the step'''
@@ -157,9 +169,9 @@ class HFOEnvironment(object):
     self.say_msg = ''
     
     # Get the current game status
-    data = self.socket.recv(struct.calcsize("i") * 2)
-    status = struct.unpack("ii", data)[0]
-    playerIndex = struct.unpack("ii", data)[1]
+    data = self.socket.recv(struct.calcsize("iii"))
+    status = struct.unpack("iii", data)[0]
+    self.player_on_ball = HFO_Player(struct.unpack("iii", data)[1], struct.unpack("iii",data)[2])
       
     # Get the next state features
     state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
@@ -176,7 +188,7 @@ class HFOEnvironment(object):
       hearMsgData = self.socket.recv(struct.calcsize('c')*hearMsgLength)
       self.hear_msg = struct.unpack(str(hearMsgLength)+'s', hearMsgData)[0]
     
-    return (status, playerIndex)
+    return status
 
   def cleanup(self):
     ''' Send a quit and close the connection to the agent's server. '''

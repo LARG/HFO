@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
   // Play 5 episodes
   for (int episode=0; ; episode++) {
     int step = 0;
-    vector<int> game_status;
     status_t status = IN_GAME;
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
@@ -41,8 +40,7 @@ int main(int argc, char** argv) {
       // Do something with outgoing communication
       hfo.say("Message");
       // Advance the environment and get the game status
-      game_status = hfo.step();
-      status = (status_t)game_status[0];
+      status = hfo.step();
       step+=2;
     }
   }

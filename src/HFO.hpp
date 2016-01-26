@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <rcsc/types.h>
 
 namespace hfo {
 
@@ -63,6 +64,11 @@ struct Config {
   std::vector<int> defense_nums; // Defensive player numbers
 };
 
+struct Player {
+  rcsc::SideID side;    // SideID is an enum: 1 = LEFT, 0 = NEUTRAL, -1 = RIGHT 
+  int unum;
+};
+
 class HFOEnvironment {
  public:
   HFOEnvironment();
@@ -92,9 +98,12 @@ class HFOEnvironment {
   virtual void say(const std::string& message);
   virtual std::string hear();
 
+  // Get the current player holding the ball 
+  virtual Player playerOnBall();
+
   // Indicates the agent is done and the environment should
   // progress. Returns the game status after the step
-  virtual std::vector<int> step();
+  virtual status_t step();
 
  protected:
   int numFeatures; // The number of features in this domain
@@ -103,6 +112,7 @@ class HFOEnvironment {
   action_t requested_action; // Action requested
   std::vector<float> action_params; // Action parameters
   std::string say_msg, hear_msg; // Messages to hear/say
+  Player player_on_ball;
 
   // Handshake with the agent server to ensure data is being correctly
   // passed. Also sets the number of features to expect.

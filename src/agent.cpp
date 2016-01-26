@@ -366,23 +366,40 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
 
 std::vector<int> Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
                                   long& lastTrainerMessageTime) {
-  
   std::vector<int> status;
   status_t game_status = IN_GAME;
   int playerIndex = -1;   // Keeps track of which defender stopped the shot
+  int playerTeam = 1;     // 1 = offense, -1 = defense, 0 = no possession
   if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
     const std::string& message = audio_sensor.trainerMessage();
     bool recognized_message = true;
-    if (message.compare("GOAL") == 0) {
+    if (message.find("GOAL") != std::string::npos){
+      playerIndex = atoi((message.substr(message.find("-")+1)).c_str());
+      playerTeam = 1;  
       game_status = GOAL;
     } else if (message.find("CAPTURED_BY_DEFENSE") != std::string::npos) { 
       playerIndex = atoi((message.substr(message.find("-")+1)).c_str());
+      playerTeam = -1;
       game_status = CAPTURED_BY_DEFENSE;
     } else if (message.compare("OUT_OF_BOUNDS") == 0) {
       game_status = OUT_OF_BOUNDS;
     } else if (message.compare("OUT_OF_TIME") == 0) {
       game_status = OUT_OF_TIME;
-    } else {
+    } else if (message.find("IN_GAME") != std::string::npos){
+      switch (message.at(message.find("-")+1)){
+        case 'L':
+          playerTeam = 1;
+          break;
+        case 'R':
+          playerTeam = -1;
+          break;
+        case 'U':
+          playerTeam = 0;
+          break;
+      }
+      playerIndex = atoi((message.substr(message.find("-")+2)).c_str());
+    }
+    else {
       recognized_message = false;
     }
     if (recognized_message) {
@@ -390,7 +407,8 @@ std::vector<int> Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
     }
   }
   status.push_back(game_status);
-  status.push_back(playerIndex);  
+  status.push_back(playerTeam);
+  status.push_back(playerIndex);
   return status;
 }
 

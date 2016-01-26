@@ -22,7 +22,6 @@ int main(int argc, char** argv) {
   float target_x = 1.0;
   float target_y = 1.0;
   for (int episode=0; ; episode++) {
-    vector<int> game_status;
     status_t status = IN_GAME;
     if (episode % 2 != 0) {
       target_x *= -1;
@@ -36,8 +35,7 @@ int main(int argc, char** argv) {
       // Perform the action
       hfo.act(MOVE_TO, target_x, target_y);
       // Advance the environment and get the game status
-      game_status = hfo.step();
-      status = (status_t)game_status[0];
+      status = hfo.step();
     }
   }
   hfo.act(QUIT);

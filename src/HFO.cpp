@@ -248,13 +248,13 @@ void HFOEnvironment::handshakeAgentServer(feature_set_t feature_set) {
     exit(1);
   }
   // Recieve the game status
-  std::vector<int> game_status(2, -1);
-  if (recv(sockfd, &(game_status.front()), 2 * sizeof(int), 0) < 0) {
+  std::vector<int> game_status(3, -1);
+  if (recv(sockfd, &(game_status.front()), 3 * sizeof(int), 0) < 0) {
     perror("[Agent Client] ERROR receiving game status from socket");
     close(sockfd);
     exit(1);
   }
-  if ((status_t)game_status[0] != IN_GAME) {
+  if (game_status[0] != IN_GAME) {
     std::cout << "[Agent Client] Handshake failed: status check." << std::endl;
     close(sockfd);
     exit(1);
@@ -289,8 +289,12 @@ std::string HFOEnvironment::hear() {
   return hear_msg;
 }
 
-std::vector<int> HFOEnvironment::step() {
-  std::vector<int> game_status(2, -1);
+Player HFOEnvironment::playerOnBall(){
+  return player_on_ball;
+}
+
+status_t HFOEnvironment::step() {
+  status_t game_status;
 
   // Send the action_type
   if (send(sockfd, &requested_action, sizeof(action_t), 0) < 0) {
@@ -328,11 +332,16 @@ std::vector<int> HFOEnvironment::step() {
   say_msg.clear();
 
   // Get the game status
-  if (recv(sockfd, &(game_status.front()), 2 * sizeof(int), 0) < 0) {
+  std::vector<int> full_status(3,-1);
+  if (recv(sockfd, &(full_status.front()), 3 * sizeof(int), 0) < 0) {
     perror("[Agent Client] ERROR receiving game status from socket");
     close(sockfd);
     exit(1);
   }
+  game_status = (status_t)full_status[0];
+  player_on_ball.side = (rcsc::SideID)full_status[1];
+  player_on_ball.unum = full_status[2];
+
   // Get the next game state
   if (recv(sockfd, &(feature_vec.front()), numFeatures * sizeof(float), 0) < 0) {
     perror("[Agent Client] ERROR receiving state features from socket");
