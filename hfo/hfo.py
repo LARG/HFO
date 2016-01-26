@@ -126,7 +126,8 @@ class HFOEnvironment(object):
     self.socket.send(struct.pack("i", self.numFeatures))
     # Get the current game status
     data = self.socket.recv(struct.calcsize("iii"))
-    status = struct.unpack("iii", data)[0]
+    status, side, unum = struct.unpack("iii", data)
+    self.player_on_ball = HFO_Player(side,unum)
     assert status == HFO_Status.IN_GAME, "Status check failed"
     print '[Agent Client] Handshake complete'
 
