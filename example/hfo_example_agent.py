@@ -19,7 +19,7 @@ if __name__ == '__main__':
   # Connect to the agent server on port 6000 with the specified
   # feature set. See feature sets in hfo.py/hfo.hpp.
   hfo.connectToAgentServer(port, HFO_Features.HIGH_LEVEL_FEATURE_SET)
-  # Play 5 episodes
+  # Play 100 episodes
   for episode in xrange(100):
     status = HFO_Status.IN_GAME
     while status == HFO_Status.IN_GAME:
