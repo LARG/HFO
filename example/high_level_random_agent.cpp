@@ -36,6 +36,26 @@ int main(int argc, char** argv) {
       // Advance the environment and get the game status
       status = hfo.step();
     }
+
+    // Check what the outcome of the episode was
+    cout << "Episode " << episode << " ended with status: ";
+    switch (status) {
+      case GOAL:
+        cout << "goal " << hfo.playerOnBall().unum << endl;
+        break;
+      case CAPTURED_BY_DEFENSE:
+        cout << "captured by defense " << hfo.playerOnBall().unum << endl;
+        break;
+      case OUT_OF_BOUNDS:
+        cout << "out of bounds" << endl;
+        break;
+      case OUT_OF_TIME:
+        cout << "out of time" << endl;
+        break;
+      default:
+        cout << "Unknown status " << status << endl;
+        exit(1);
+    }
   }
   hfo.act(QUIT);
 };

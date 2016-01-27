@@ -52,6 +52,12 @@ enum status_t
   OUT_OF_TIME          // Trial has ended due to time limit
 };
 
+enum SideID {
+  RIGHT = -1,
+  NEUTRAL = 0,
+  LEFT = 1
+};
+
 // Configuration of the HFO domain including the team names and player
 // numbers for each team. This struct is populated by ParseConfig().
 struct Config {
@@ -61,6 +67,11 @@ struct Config {
   int num_defense; // Number of defensive players
   std::vector<int> offense_nums; // Offensive player numbers
   std::vector<int> defense_nums; // Defensive player numbers
+};
+
+struct Player {
+  SideID side;    
+  int unum;
 };
 
 class HFOEnvironment {
@@ -92,6 +103,9 @@ class HFOEnvironment {
   virtual void say(const std::string& message);
   virtual std::string hear();
 
+  // Get the current player holding the ball 
+  virtual Player playerOnBall();
+
   // Indicates the agent is done and the environment should
   // progress. Returns the game status after the step
   virtual status_t step();
@@ -103,6 +117,7 @@ class HFOEnvironment {
   action_t requested_action; // Action requested
   std::vector<float> action_params; // Action parameters
   std::string say_msg, hear_msg; // Messages to hear/say
+  Player player_on_ball;
 
   // Handshake with the agent server to ensure data is being correctly
   // passed. Also sets the number of features to expect.

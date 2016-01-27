@@ -39,18 +39,18 @@ if __name__ == '__main__':
       hfo_env.say('Message')
       status = hfo_env.step() 
   
-  print 'Episode', episode, 'ended with',
-  # Check what the outcome of the episode was
-  if status == HFO_Status.GOAL:
-    print 'goal'
-  elif status == HFO_Status.CAPTURED_BY_DEFENSE:
-    print 'captured by defense'
-  elif status == HFO_Status.OUT_OF_BOUNDS:
-    print 'out of bounds'
-  elif status == HFO_Status.OUT_OF_TIME:
-    print 'out of time'
-  else:
-    print 'Unknown status', status
-    exit()
+    print 'Episode', episode, 'ended with',
+    # Check what the outcome of the episode was
+    if status == HFO_Status.GOAL:
+      print 'goal', hfo.playerOnBall().unum
+    elif status == HFO_Status.CAPTURED_BY_DEFENSE:
+      print 'captured by defense', hfo.playerOnBall().unum 
+    elif status == HFO_Status.OUT_OF_BOUNDS:
+      print 'out of bounds'
+    elif status == HFO_Status.OUT_OF_TIME:
+      print 'out of time'
+    else:
+      print 'Unknown status', status
+      exit()
   # Cleanup when finished
   hfo_env.cleanup()

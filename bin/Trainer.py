@@ -215,18 +215,23 @@ class Trainer(object):
     assert body[0] == 'referee', 'Expected referee message.'
     _,ts,event = body
     self._frame = int(ts)
-    if event == 'GOAL':
+    endOfTrial = False
+    if 'GOAL' in event:
       self._numGoals += 1
       self._numGoalFrames += self._frame - self._lastTrialStart
+      endOfTrial = True
     elif event == 'OUT_OF_BOUNDS':
       self._numBallsOOB += 1
-    elif event == 'CAPTURED_BY_DEFENSE':
+      endOfTrial = True
+    elif 'CAPTURED_BY_DEFENSE' in event:
       self._numBallsCaptured += 1
+      endOfTrial = True
     elif event == 'OUT_OF_TIME':
       self._numOutOfTime += 1
+      endOfTrial = True
     elif event == 'HFO_FINISHED':
       self._done = True
-    if event in {'GOAL','OUT_OF_BOUNDS','CAPTURED_BY_DEFENSE','OUT_OF_TIME'}:
+    if endOfTrial: 
       self._numTrials += 1
       print 'EndOfTrial: %d / %d %d %s'%\
         (self._numGoals, self._numTrials, self._frame, event)

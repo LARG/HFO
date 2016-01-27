@@ -19,21 +19,21 @@ if __name__ == '__main__':
   # Connect to the agent server on port 6000 with the specified
   # feature set. See feature sets in hfo.py/hfo.hpp.
   hfo.connectToAgentServer(port, HFO_Features.HIGH_LEVEL_FEATURE_SET)
-  # Play 5 episodes
-  for episode in xrange(5):
+  # Play 100 episodes
+  for episode in xrange(100):
     status = HFO_Status.IN_GAME
     while status == HFO_Status.IN_GAME:
       # Grab the state features from the environment
       features = hfo.getState()
       # Take an action and get the current game status
       hfo.act(HFO_Actions.DASH, 20.0, 0)
-      hfo.step()
+      status = hfo.step()
     print 'Episode', episode, 'ended with',
     # Check what the outcome of the episode was
     if status == HFO_Status.GOAL:
-      print 'goal'
+      print 'goal', hfo.playerOnBall().unum
     elif status == HFO_Status.CAPTURED_BY_DEFENSE:
-      print 'captured by defense'
+      print 'captured by defense', hfo.playerOnBall().unum 
     elif status == HFO_Status.OUT_OF_BOUNDS:
       print 'out of bounds'
     elif status == HFO_Status.OUT_OF_TIME:
