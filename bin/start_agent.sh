@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BINARY_DIR=`dirname $0` #"$( cd "$( dirname "$0" )" && pwd )"
-CONFIG_DIR=$BINARY_DIR/../config
+BINARY_DIR=`dirname $0`/teams/base #"$( cd "$( dirname "$0" )" && pwd )"
+CONFIG_DIR=$BINARY_DIR/config
 
 player="${BINARY_DIR}/agent"
 coach="${BINARY_DIR}/sample_coach"

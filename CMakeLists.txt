@@ -41,7 +41,7 @@ if(BUILD_SOCCERWINDOW)
     INSTALL_COMMAND "")
   ExternalProject_Get_Property(soccerwindow2 BINARY_DIR)
   set(SOCCERWINDOW2_BINARY_DIR ${BINARY_DIR}/bin)
-  install(DIRECTORY ${SOCCERWINDOW2_BINARY_DIR} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ USE_SOURCE_PERMISSIONS)
+  install(DIRECTORY ${SOCCERWINDOW2_BINARY_DIR} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} USE_SOURCE_PERMISSIONS)
 endif()
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -79,9 +79,15 @@ list(APPEND LINK_LIBS rcsc_agent rcsc_geom rcsc_param rcsc_ann
 
 add_library(player_chain_action STATIC ${PLAYER_SOURCES} ${CHAIN_ACTION_SOURCES})
 add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/sample_coach.cpp)
-add_executable(sample_player ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCE_DIR}/agent.cpp)
+add_executable(sample_player ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCE_DIR}/agent.cpp) 
 add_executable(sample_trainer ${SOURCE_DIR}/main_trainer.cpp ${SOURCE_DIR}/sample_trainer.cpp)
 add_executable(agent ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_agent.cpp ${SOURCE_DIR}/agent.cpp)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
+set_target_properties(sample_coach PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
+set_target_properties(sample_player PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
+set_target_properties(sample_trainer PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
+set_target_properties(agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
+
 add_library(hfo-lib SHARED ${SOURCE_DIR}/HFO.hpp ${SOURCE_DIR}/HFO.cpp)
 set_target_properties(hfo-lib PROPERTIES OUTPUT_NAME hfo)
 set_target_properties(hfo-lib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
@@ -126,8 +132,6 @@ add_executable(communication_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/communica
 set_target_properties(communication_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
 target_link_libraries(communication_agent hfo-lib)
 
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ USE_SOURCE_PERMISSIONS)
-
-
-
-install(DIRECTORY ${RCSSSERVER_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/bin DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ USE_SOURCE_PERMISSIONS)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} USE_SOURCE_PERMISSIONS)
+install(DIRECTORY ${RCSSSERVER_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/bin DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} USE_SOURCE_PERMISSIONS)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin USE_SOURCE_PERMISSIONS)

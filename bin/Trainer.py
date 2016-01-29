@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys, numpy, time, os, subprocess
+import sys, numpy, time, os, subprocess, teams
 from Communicator import ClientCommunicator, TimeoutError
 
 class DoneError(Exception):
@@ -51,36 +51,6 @@ class Trainer(object):
     self._connectedPlayers = []
     self.initMsgHandlers()
 
-  def launch_npc(self, player_num, play_offense, wait_until_join=True):
-    """Launches a player using sample_player binary
-
-    Returns a Popen process object
-    """
-    print 'Launch npc %s-%d'%(self._offenseTeamName if play_offense
-                              else self._defenseTeamName, player_num)
-    if play_offense:
-      team_name = self._offenseTeamName
-    else:
-      team_name = self._defenseTeamName
-    binary_dir = os.path.dirname(os.path.realpath(__file__))
-    config_dir = os.path.join(binary_dir, '../config/formations-dt')
-    player_conf = os.path.join(binary_dir, '../config/player.conf')
-    player_cmd = os.path.join(binary_dir, 'sample_player')
-    player_cmd += ' -t %s -p %i --config_dir %s ' \
-                  ' --log_dir %s --player-config %s' \
-                  %(team_name, self._serverPort, config_dir,
-                    self._logDir, player_conf)
-    if self._record:
-        player_cmd += ' --record'
-    if player_num == 1:
-        player_cmd += ' -g'
-    kwargs = {'stdout':open('/dev/null', 'w'),
-              'stderr':open('/dev/null', 'w')}
-    p = subprocess.Popen(player_cmd.split(' '), shell = False, **kwargs)
-    if wait_until_join:
-      self.waitOnPlayer(player_num, play_offense)
-    return p
-
   def launch_agent(self, agent_num, agent_ext_num, play_offense, port, wait_until_join=True):
     """Launches a learning agent using the agent binary
 
@@ -105,9 +75,9 @@ class Trainer(object):
       self._agentNumInt.append(internal_player_num)
       numTeammates = self._numDefense - 1
       numOpponents = self._numOffense
-    binary_dir = os.path.dirname(os.path.realpath(__file__))
-    config_dir = os.path.join(binary_dir, '../config/formations-dt')
-    player_conf = os.path.join(binary_dir, '../config/player.conf')
+    binary_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams', 'base')
+    config_dir = os.path.join(binary_dir, 'config/formations-dt')
+    player_conf = os.path.join(binary_dir, '/config/player.conf')
     agent_cmd =  os.path.join(binary_dir, 'agent')
     agent_cmd += ' -t %s -p %i --numTeammates %i --numOpponents %i' \
                  ' --playingOffense %i --serverPort %i --log_dir %s' \
@@ -127,45 +97,46 @@ class Trainer(object):
       self.waitOnPlayer(agent_ext_num, play_offense)
     return p
 
-  def getDefensiveRoster(self, team_name):
-    """Returns a list of player numbers on a given team that are thought
-    to prefer defense. This map is not set in stone as the players on
-    some teams can adapt and change their roles.
-
-    """
-    if team_name == 'Borregos':
-      return [9,10,8,11,7,4,6,2,3,5]
-    elif team_name == 'WrightEagle':
-      return [5,2,8,9,10,6,3,11,4,7]
-    else:
-      return [2,3,4,5,6,7,8,11,9,10]
-
-  def getOffensiveRoster(self, team_name):
-    """Returns a list of player numbers on a given team that are thought
-    to prefer offense. This map is not set in stone as the players on
-    some teams can adapt and change their roles.
-
-    """
-    if team_name == 'Borregos':
-      return [2,4,6,5,3,7,9,10,8,11]
-    elif team_name == 'WrightEagle':
-      return [11,4,7,3,6,10,8,9,2,5]
-    else:
-      return [11,7,8,9,10,6,3,2,4,5]
-
   def addTeam(self, team_name):
     """ Adds a team to the team list"""
-    self._teams.append(team_name)
+    # Check whether team name valid, and map to a format acceptable to third party binary
+    nameMap = {'base':'base', 'helios':'HELIOS'}
+    if team_name not in nameMap.keys():
+      print 'Invalid team name: ', team_name 
+      sys.exit(1)
+    # Create side specific team  
+    if len(self._teams) == 0: 
+      self._teams.append(nameMap[team_name] + '_left')
+    elif len(self._teams) == 1:
+      self._teams.append(nameMap[team_name] + '_right')
+    else:
+      print 'Too many teams added!'
+      sys.exit(1)
 
-  def setTeams(self):
+  def createTeam(self, name):
+    teamDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams')   
+    if 'HELIOS' in name:
+      print 'Creating team HELIOS'
+      return teams.Helios(name, os.path.join(teamDir, 'helios', 'helios-13Eindhoven'), os.path.join(teamDir, 'helios', 'local', 'lib'), 'helios_player', host='localhost', port=self._serverPort)
+    elif 'base' in name:
+      print 'Creating team Agent2d (base)'
+      return teams.Agent2d(name, os.path.join(teamDir, 'base'), None, 'sample_player', self._logDir, self._record, host='localhost', port=self._serverPort)
+    else:
+      print 'Invalid team found'
+      sys.exit(1)
+
+  def getTeams(self):
     """ Sets the offensive and defensive teams and player rosters. """
     self._offenseTeamInd = 0
     self._offenseTeamName = self._teams[self._offenseTeamInd]
     self._defenseTeamName = self._teams[1-self._offenseTeamInd]
-    offensive_roster = self.getOffensiveRoster(self._offenseTeamName)
-    defensive_roster = self.getDefensiveRoster(self._defenseTeamName)
-    self._offenseOrder = [1] + offensive_roster # 1 for goalie
-    self._defenseOrder = [1] + defensive_roster # 1 for goalie
+    # set up offense
+    offenseTeam = self.createTeam(self._offenseTeamName)    
+    self._offenseOrder = [1] + offenseTeam._offense_order # 1 for goalie
+    # set up defense
+    defenseTeam = self.createTeam(self._defenseTeamName)
+    self._defenseOrder = [1] + defenseTeam._defense_order # 1 for goalie
+    return (offenseTeam, defenseTeam)
 
   def teamToInd(self, team_name):
     """ Returns the index of a given team. """
@@ -429,7 +400,7 @@ class Trainer(object):
   def run(self, necProcesses):
     """ Run the trainer """
     try:
-      self.setTeams()
+      (offenseTeam, defenseTeam) = self.getTeams()
       offense_unums = self._offenseOrder[1: self._numOffense + 1]
       sorted_offense_agent_unums = sorted(self._offenseOrder[1:self._offenseAgents+1])
       defense_unums = self._defenseOrder[: self._numDefense]
@@ -446,7 +417,8 @@ class Trainer(object):
           necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
           agent_num += 1
         else:
-          player = self.launch_npc(player_num, play_offense=True)
+          player = offenseTeam.launch_npc(player_num)
+          self.waitOnPlayer(player_num, True)
           if player_num in offense_unums:
             self._npcPopen.append(player)
             necProcesses.append([player, 'offense_npc_' + str(player_num)])
@@ -464,7 +436,8 @@ class Trainer(object):
           necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
           agent_num += 1
         else:
-          player = self.launch_npc(player_num, play_offense=False)
+          player = defenseTeam.launch_npc(player_num)
+          self.waitOnPlayer(player_num, False)
           if player_num in defense_unums:
             self._npcPopen.append(player)
             necProcesses.append([player, 'defense_npc_' + str(player_num)])

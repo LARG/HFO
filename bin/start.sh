@@ -8,8 +8,8 @@ echo " Copyright 2007-2012.  Hidehisa Akiyama and Hiroki Shimora"
 echo " All rights reserved."
 echo "******************************************************************"
 
-BINARY_DIR=`dirname $0`
-CONFIG_DIR=$BINARY_DIR/../config
+BINARY_DIR=`dirname $0`/teams/base
+CONFIG_DIR=$BINARY_DIR/config
 
 player="${BINARY_DIR}/sample_player"
 coach="${BINARY_DIR}/sample_coach"
