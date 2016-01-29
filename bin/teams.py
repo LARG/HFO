@@ -6,7 +6,7 @@ class Team(object):
   """ Abstract class. Handles launching players from 3rd party binaries. 
   """
   def __init__(self, name, binaryPath, libDir, options, offenseOrder, defenseOrder):
-  """ 
+    """ 
       Creates a team
 
       name: name of the team
@@ -15,7 +15,7 @@ class Team(object):
       options: team-specific parameters for executable in string format
       offenseOrder: order to prioritize offensive unums (do not include 0)
       defenseOrder: order to prioritize defensive unums (do not include 0)
-  """
+    """
     self._name = name
     self._binary_path = binaryPath
     self._lib_dir = libDir
@@ -31,8 +31,6 @@ class Team(object):
 
     Returns a Popen process object
     """   
-    print 'Launch npc %s' % (self._name)
-
     player_cmd = self._binary_path
     player_cmd += ' %s' % (self._options)
     if launchOpts != None:
@@ -62,6 +60,7 @@ class Agent2d(Team):
     launchOpts = None
     if player_num == 1:
       launchOpts = '-g'
+    print 'Launch npc %s-%d' % (self._name, player_num)
     return super(Agent2d, self).launch_npc(launchOpts)
 
 class Helios(Team):
@@ -78,6 +77,7 @@ class Helios(Team):
     launchOpts = None
     if player_num == 1:
       launchOpts = '-g'
+    print 'Launch npc %s-%d' % (self._name, player_num)
     return super(Helios, self).launch_npc(launchOpts)
 
 
