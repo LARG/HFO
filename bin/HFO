@@ -120,10 +120,10 @@ def parseArgs():
                  help='Number of offensive uncontrolled players. Default: 0.')
   p.add_argument('--defense-npcs', dest='defenseNPCs', type=int, default=0,
                  help='Number of defensive uncontrolled players. Default: 0.')
-  p.add_argument('--offense-team', dest='offenseTeam', type=str, default='left',
-                 help='Team name to pull offensive NPCs from. Default: left.') 
-  p.add_argument('--defense-team', dest='defenseTeam', type=str, default='right',
-                 help='Team name to pull defensive NPCs from. Default: right')
+  p.add_argument('--offense-team', dest='offenseTeam', type=str, default='base',
+                 help='Team name to pull offensive NPCs from. Options: {base, helios} Default: base.') 
+  p.add_argument('--defense-team', dest='defenseTeam', type=str, default='base',
+                 help='Team name to pull defensive NPCs from. Options: {base, helios} Default: base')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
                  help='Run server in non-sync mode.')
   p.add_argument('--port', dest='port', type=int, default=6000,
