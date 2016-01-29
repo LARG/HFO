@@ -62,10 +62,10 @@ cmake_install.cmake
 CMakeFiles/
 
 # Executeables
-bin/agent
-bin/sample_coach
-bin/sample_player
-bin/sample_trainer
+bin/teams/base/agent
+bin/teams/base/sample_coach
+bin/teams/base/sample_player
+bin/teams/base/sample_trainer
 bin/rcssserver
 bin/soccerwindow2
 example/hfo_example_agent
@@ -74,6 +74,7 @@ example/low_level_random_agent
 example/mid_level_move_agent
 example/mid_level_kick_agent
 example/mid_level_dribble_agent
+example/communication_agent
 
 # Dependency directories
 librcsc-prefix/

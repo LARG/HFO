@@ -52,7 +52,9 @@ class Trainer(object):
     self.initMsgHandlers()
 
   def launch_npc(self, player_num, play_offense, wait_until_join=True):
-    """Launches a player using sample_player binary
+    """
+      OBSOLETE -- Should we delete this method?
+      Launches a player using sample_player binary
 
     Returns a Popen process object
     """
@@ -105,9 +107,9 @@ class Trainer(object):
       self._agentNumInt.append(internal_player_num)
       numTeammates = self._numDefense - 1
       numOpponents = self._numOffense
-    binary_dir = os.path.dirname(os.path.realpath(__file__))
-    config_dir = os.path.join(binary_dir, '../config/formations-dt')
-    player_conf = os.path.join(binary_dir, '../config/player.conf')
+    binary_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams', 'base')
+    config_dir = os.path.join(binary_dir, 'config/formations-dt')
+    player_conf = os.path.join(binary_dir, '/config/player.conf')
     agent_cmd =  os.path.join(binary_dir, 'agent')
     agent_cmd += ' -t %s -p %i --numTeammates %i --numOpponents %i' \
                  ' --playingOffense %i --serverPort %i --log_dir %s' \
@@ -128,7 +130,9 @@ class Trainer(object):
     return p
 
   def getDefensiveRoster(self, team_name):
-    """Returns a list of player numbers on a given team that are thought
+    """
+      OBSOLETE -- Should we delete this method?
+      Returns a list of player numbers on a given team that are thought
     to prefer defense. This map is not set in stone as the players on
     some teams can adapt and change their roles.
 
@@ -141,7 +145,9 @@ class Trainer(object):
       return [2,3,4,5,6,7,8,11,9,10]
 
   def getOffensiveRoster(self, team_name):
-    """Returns a list of player numbers on a given team that are thought
+    """
+      OBSOLETE -- Should we delete this method?
+      Returns a list of player numbers on a given team that are thought
     to prefer offense. This map is not set in stone as the players on
     some teams can adapt and change their roles.
 

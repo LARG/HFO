@@ -23,8 +23,14 @@ class Team(object):
     self._offense_order = offenseOrder
     self._defense_order = defenseOrder
 
+  def launch_npc(self, player_num):
+    """
+      Abstract method that should be overrided by subclasses. Launches an npc with player number player_num.
+      The method that overrides this should call start_npc_process. See examples below. 
+    """
+    pass
 
-  def launch_npc(self, launchOpts=None):
+  def start_npc_proc(self, launchOpts=None):
     """Launches a player using the team-specific binary
        launchOpts should be used to append player specific options 
        (e.g., helios uses '-g' to signify launching a goalie )
@@ -61,7 +67,7 @@ class Agent2d(Team):
     if player_num == 1:
       launchOpts = '-g'
     print 'Launch npc %s-%d' % (self._name, player_num)
-    return super(Agent2d, self).launch_npc(launchOpts)
+    return self.start_npc_proc(launchOpts)
 
 class Helios(Team):
 
@@ -78,7 +84,7 @@ class Helios(Team):
     if player_num == 1:
       launchOpts = '-g'
     print 'Launch npc %s-%d' % (self._name, player_num)
-    return super(Helios, self).launch_npc(launchOpts)
+    return self.start_npc_proc(launchOpts)
 
 
 
