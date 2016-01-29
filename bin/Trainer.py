@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys, numpy, time, os, subprocess
+import sys, numpy, time, os, subprocess, teams
 from Communicator import ClientCommunicator, TimeoutError
 
 class DoneError(Exception):
@@ -157,15 +157,30 @@ class Trainer(object):
     """ Adds a team to the team list"""
     self._teams.append(team_name)
 
-  def setTeams(self):
+  def createTeam(self, name):
+    teamDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams')   
+    if 'HELIOS' in name:
+      print 'Creating team HELIOS'
+      return teams.Helios(name, os.path.join(teamDir, 'helios', 'helios-13Eindhoven'), os.path.join(teamDir, 'helios', 'local', 'lib'), 'helios_player', host='localhost', port=self._serverPort)
+    # Agent2d (base) is the default
+    else:
+      print 'Creating team Agent2d (base)'
+      return teams.Agent2d(name, os.path.join(teamDir, 'base'), None, 'sample_player', self._logDir, self._record, host='localhost', port=self._serverPort)
+
+  def getTeams(self):
     """ Sets the offensive and defensive teams and player rosters. """
     self._offenseTeamInd = 0
     self._offenseTeamName = self._teams[self._offenseTeamInd]
     self._defenseTeamName = self._teams[1-self._offenseTeamInd]
-    offensive_roster = self.getOffensiveRoster(self._offenseTeamName)
-    defensive_roster = self.getDefensiveRoster(self._defenseTeamName)
-    self._offenseOrder = [1] + offensive_roster # 1 for goalie
-    self._defenseOrder = [1] + defensive_roster # 1 for goalie
+    # set up offense
+    offenseTeam = self.createTeam(self._offenseTeamName)    
+    # set up defense
+    defenseTeam = self.createTeam(self._defenseTeamName)
+#    offensive_roster = self.getOffensiveRoster(self._offenseTeamName)
+#    defensive_roster = self.getDefensiveRoster(self._defenseTeamName)
+    self._offenseOrder = [1] + offenseTeam._offense_order # 1 for goalie
+    self._defenseOrder = [1] + defenseTeam._defense_order # 1 for goalie
+    return (offenseTeam, defenseTeam)
 
   def teamToInd(self, team_name):
     """ Returns the index of a given team. """
@@ -429,7 +444,7 @@ class Trainer(object):
   def run(self, necProcesses):
     """ Run the trainer """
     try:
-      self.setTeams()
+      (offenseTeam, defenseTeam) = self.getTeams()
       offense_unums = self._offenseOrder[1: self._numOffense + 1]
       sorted_offense_agent_unums = sorted(self._offenseOrder[1:self._offenseAgents+1])
       defense_unums = self._defenseOrder[: self._numDefense]
@@ -446,7 +461,8 @@ class Trainer(object):
           necProcesses.append([agent, 'offense_agent_' + str(agent_num)])
           agent_num += 1
         else:
-          player = self.launch_npc(player_num, play_offense=True)
+          player = offenseTeam.launch_npc(player_num)
+          self.waitOnPlayer(player_num, True)
           if player_num in offense_unums:
             self._npcPopen.append(player)
             necProcesses.append([player, 'offense_npc_' + str(player_num)])
@@ -464,7 +480,8 @@ class Trainer(object):
           necProcesses.append([agent, 'defense_agent_' + str(agent_num)])
           agent_num += 1
         else:
-          player = self.launch_npc(player_num, play_offense=False)
+          player = defenseTeam.launch_npc(player_num)
+          self.waitOnPlayer(player_num, False)
           if player_num in defense_unums:
             self._npcPopen.append(player)
             necProcesses.append([player, 'defense_npc_' + str(player_num)])
