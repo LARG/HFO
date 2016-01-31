@@ -76,6 +76,8 @@ void FeatureExtractor::addPlayerFeatures(rcsc::PlayerObject& player,
                                          const rcsc::Vector2D& self_pos,
                                          const rcsc::AngleDeg& self_ang) {
   assert(player.posValid());
+  // Player uniform number
+  addFeature(player.unum());
   // Angle dist to player.
   addLandmarkFeatures(player.pos(), self_pos, self_ang);
   // Player's body angle

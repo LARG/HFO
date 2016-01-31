@@ -4,6 +4,7 @@
 
 #include "lowlevel_feature_extractor.h"
 #include <rcsc/common/server_param.h>
+#include <rcsc/player/intercept_table.h>
 
 using namespace rcsc;
 
@@ -30,8 +31,18 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
   const Vector2D& self_pos = self.pos();
   const AngleDeg& self_ang = self.body();
   addFeature(self.posValid() ? FEAT_MAX : FEAT_MIN);
-  // ADD_FEATURE(self_pos.x);
-  // ADD_FEATURE(self_pos.y);
+
+  // Agent's X,Y position
+  float tolerance_x = .1 * SP.pitchHalfLength();
+  float tolerance_y = .1 * SP.pitchHalfWidth();
+  if (playingOffense) {
+    addNormFeature(self_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+  } 
+  else {
+    addNormFeature(self_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+  }
+  addNormFeature(self_pos.y, -SP.pitchHalfWidth() - tolerance_y, SP.pitchHalfWidth() + tolerance_y);
+ 
 
   // Direction and speed of the agent.
   addFeature(self.velValid() ? FEAT_MAX : FEAT_MIN);
@@ -54,6 +65,10 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
   //   std::cout << "FaceAngle: " << self.face() << std::endl;
   // }
 
+
+  // Agent's uniform number
+  addFeature(self.unum());
+
   addNormFeature(self.stamina(), 0., observedStaminaMax);
   addFeature(self.isFrozen() ? FEAT_MAX : FEAT_MIN);
 
@@ -61,6 +76,9 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
   // std::cout << "catchProb: " << self.catchProbability() << std::endl;
   // std::cout << "tackleProb: " << self.tackleProbability() << std::endl;
   // std::cout << "fouldProb: " << self.foulProbability() << std::endl;
+
+  // Agent is fastest teammate to ball 
+  addFeature(wm.interceptTable()->selfReachCycle() < wm.interceptTable()->teammateReachCycle() ? FEAT_MAX : FEAT_MIN); 
 
   // Features indicating if we are colliding with an object
   addFeature(self.collidesWithBall()   ? FEAT_MAX : FEAT_MIN);
@@ -185,6 +203,6 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
     }
   }
   assert(featIndx == numFeatures);
-  checkFeatures();
+//  checkFeatures();
   return feature_vec;
 }
