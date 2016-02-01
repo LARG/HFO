@@ -43,7 +43,6 @@ class Trainer(object):
     # =============== MISC =============== #
     self._offenseTeamName = '' # Name of the offensive team
     self._defenseTeamName = '' # Name of the defensive team
-    self._teams = [] # Team indexes for offensive and defensive teams
     self._isPlaying = False # Is a game being played?
     self._done = False # Are we finished?
     self._agentPopen = [] # Agent's processes
@@ -132,10 +131,6 @@ class Trainer(object):
     self._defenseTeamName = defenseTeam._name
     self._defenseOrder = [1] + defenseTeam._defense_order # 1 for goalie
     return (offenseTeam, defenseTeam)
-
-  def teamToInd(self, team_name):
-    """ Returns the index of a given team. """
-    return self._teams.index(team_name)
 
   def parseMsg(self, msg):
     """ Parse a message """
