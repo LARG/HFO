@@ -34,8 +34,6 @@ def main(args):
   if args.logging and not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
   num_agents   = args.offenseAgents + args.defenseAgents
-  team1        = args.offenseTeam
-  team2        = args.defenseTeam
   binary_dir   = os.path.dirname(os.path.realpath(__file__))
   server_port  = args.port + num_agents
   coach_port   = args.port + num_agents + 1
@@ -58,7 +56,7 @@ def main(args):
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
-                    args.offenseOnBall, args.seed, args.maxUntouchedTime, 
+                    args.offenseOnBall, args.seed, args.maxUntouchedTime,
                     args.messageSize)
                   # server::record_messages=on -- useful for debug
   try:
@@ -76,12 +74,8 @@ def main(args):
     from Trainer import Trainer
     trainer = Trainer(args=args, server_port=server_port, coach_port=coach_port)
     trainer.initComm()
-    # Add Team1
-    trainer.addTeam(team1)
-    # Add Team2
-    trainer.addTeam(team2)
     # Run
-    trainer.run(necProcesses)
+    trainer.run(necProcesses, args.offenseTeam, args.defenseTeam)
   except KeyboardInterrupt:
     print '[start.py] Exiting for CTRL-C'
   finally:
@@ -96,6 +90,8 @@ def main(args):
 
 def parseArgs():
   import argparse
+  team_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams')
+  installed_teams = os.listdir(team_dir)
   p = argparse.ArgumentParser(description='Start Half Field Offense.',
                               formatter_class=argparse.RawTextHelpFormatter)
   p.add_argument('--headless', dest='headless', action='store_true',
@@ -121,9 +117,9 @@ def parseArgs():
   p.add_argument('--defense-npcs', dest='defenseNPCs', type=int, default=0,
                  help='Number of defensive uncontrolled players. Default: 0.')
   p.add_argument('--offense-team', dest='offenseTeam', type=str, default='base',
-                 help='Team name to pull offensive NPCs from. Options: {base, helios} Default: base.') 
+                 help='Offense team binary. Options: '+str(installed_teams)+'. Default: base.') 
   p.add_argument('--defense-team', dest='defenseTeam', type=str, default='base',
-                 help='Team name to pull defensive NPCs from. Options: {base, helios} Default: base')
+                 help='Defense team binary. Options: '+str(installed_teams)+'. Default: base.')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
                  help='Run server in non-sync mode.')
   p.add_argument('--port', dest='port', type=int, default=6000,
@@ -169,6 +165,10 @@ def parseArgs():
     p.error('Defense players (defense-agents + defense-npcs): '\
             'invalid choice: ' + str(args.defenseAgents + args.defenseNPCs) +\
             ' (choose from [0,11])')
+  if args.offenseTeam not in installed_teams:
+    p.error('Unrecognized offense team: ' + str(args.offenseTeam))
+  if args.defenseTeam not in installed_teams:
+    p.error('Unrecognized defense team: ' + str(args.defenseTeam))
   return args
 
 if __name__ == '__main__':

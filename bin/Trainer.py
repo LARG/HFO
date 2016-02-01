@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys, numpy, time, os, subprocess, teams
+import sys, numpy, time, os, subprocess, Teams
 from Communicator import ClientCommunicator, TimeoutError
 
 class DoneError(Exception):
@@ -97,44 +97,39 @@ class Trainer(object):
       self.waitOnPlayer(agent_ext_num, play_offense)
     return p
 
-  def addTeam(self, team_name):
-    """ Adds a team to the team list"""
-    # Check whether team name valid, and map to a format acceptable to third party binary
-    nameMap = {'base':'base', 'helios':'HELIOS'}
-    if team_name not in nameMap.keys():
-      print 'Invalid team name: ', team_name 
-      sys.exit(1)
-    # Create side specific team  
-    if len(self._teams) == 0: 
-      self._teams.append(nameMap[team_name] + '_left')
-    elif len(self._teams) == 1:
-      self._teams.append(nameMap[team_name] + '_right')
-    else:
-      print 'Too many teams added!'
-      sys.exit(1)
-
-  def createTeam(self, name):
-    teamDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams')   
-    if 'HELIOS' in name:
-      print 'Creating team HELIOS'
-      return teams.Helios(name, os.path.join(teamDir, 'helios', 'helios-13Eindhoven'), os.path.join(teamDir, 'helios', 'local', 'lib'), 'helios_player', host='localhost', port=self._serverPort)
-    elif 'base' in name:
+  def createTeam(self, requested_team_name, play_offense):
+    """ Given a team name, returns the team object. """
+    teams_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams')
+    if requested_team_name == 'helios':
+      print 'Creating team Helios'
+      team_name = 'HELIOS_' + ('left' if play_offense else 'right')
+      team_dir = os.path.join(teams_dir, 'helios', 'helios-13Eindhoven')
+      lib_dir = os.path.join(teams_dir, 'helios', 'local', 'lib')
+      return Teams.Helios(team_name, team_dir, lib_dir,
+                          binaryName='helios_player', host='localhost',
+                          port=self._serverPort)
+    elif requested_team_name == 'base':
       print 'Creating team Agent2d (base)'
-      return teams.Agent2d(name, os.path.join(teamDir, 'base'), None, 'sample_player', self._logDir, self._record, host='localhost', port=self._serverPort)
+      team_name = 'base_' + ('left' if play_offense else 'right')
+      team_dir = os.path.join(teams_dir, 'base')
+      lib_dir = None
+      return Teams.Agent2d(team_name, team_dir, lib_dir,
+                           binaryName='sample_player', logDir=self._logDir,
+                           record=self._record, host='localhost',
+                           port=self._serverPort)
     else:
-      print 'Invalid team found'
+      print 'Unknown team requested: ' + requested_team_name
       sys.exit(1)
 
-  def getTeams(self):
+  def getTeams(self, offense_team_name, defense_team_name):
     """ Sets the offensive and defensive teams and player rosters. """
-    self._offenseTeamInd = 0
-    self._offenseTeamName = self._teams[self._offenseTeamInd]
-    self._defenseTeamName = self._teams[1-self._offenseTeamInd]
-    # set up offense
-    offenseTeam = self.createTeam(self._offenseTeamName)    
+    # Set up offense team
+    offenseTeam = self.createTeam(offense_team_name, play_offense=True)
+    self._offenseTeamName = offenseTeam._name
     self._offenseOrder = [1] + offenseTeam._offense_order # 1 for goalie
-    # set up defense
-    defenseTeam = self.createTeam(self._defenseTeamName)
+    # Set up defense team
+    defenseTeam = self.createTeam(defense_team_name, play_offense=False)
+    self._defenseTeamName = defenseTeam._name
     self._defenseOrder = [1] + defenseTeam._defense_order # 1 for goalie
     return (offenseTeam, defenseTeam)
 
@@ -397,10 +392,10 @@ class Trainer(object):
         return False
     return True
 
-  def run(self, necProcesses):
+  def run(self, necProcesses, offense_team_name, defense_team_name):
     """ Run the trainer """
     try:
-      (offenseTeam, defenseTeam) = self.getTeams()
+      (offenseTeam, defenseTeam) = self.getTeams(offense_team_name, defense_team_name)
       offense_unums = self._offenseOrder[1: self._numOffense + 1]
       sorted_offense_agent_unums = sorted(self._offenseOrder[1:self._offenseAgents+1])
       defense_unums = self._defenseOrder[: self._numDefense]
