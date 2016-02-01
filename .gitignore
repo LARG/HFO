@@ -62,10 +62,7 @@ cmake_install.cmake
 CMakeFiles/
 
 # Executeables
-bin/teams/base/agent
-bin/teams/base/sample_coach
-bin/teams/base/sample_player
-bin/teams/base/sample_trainer
+bin/teams/
 bin/rcssserver
 bin/soccerwindow2
 example/hfo_example_agent

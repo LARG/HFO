@@ -3,6 +3,7 @@ project(hfo)
 include(ExternalProject)
 
 option(BUILD_SOCCERWINDOW "Build Soccerwindow Visualizer" ON)
+option(INSTALL_ADDITIONAL_TEAMS "Install additional team binaries" ON)
 
 add_definitions(-DELOG)
 
@@ -42,6 +43,19 @@ if(BUILD_SOCCERWINDOW)
   ExternalProject_Get_Property(soccerwindow2 BINARY_DIR)
   set(SOCCERWINDOW2_BINARY_DIR ${BINARY_DIR}/bin)
   install(DIRECTORY ${SOCCERWINDOW2_BINARY_DIR} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} USE_SOURCE_PERMISSIONS)
+endif()
+
+if(INSTALL_ADDITIONAL_TEAMS)
+  ExternalProject_Add(hfo-teams
+    GIT_REPOSITORY "https://github.com/mhauskn/hfo-teams.git"
+    GIT_TAG "master"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    UPDATE_COMMAND ""
+    INSTALL_COMMAND "")
+  ExternalProject_Get_Property(hfo-teams SOURCE_DIR)
+  set(TEAMS_SOURCE_DIR ${SOURCE_DIR}/teams)
+  install(DIRECTORY ${TEAMS_SOURCE_DIR} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin USE_SOURCE_PERMISSIONS)
 endif()
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
