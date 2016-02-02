@@ -22,7 +22,7 @@ int main() {
       // Get the vector of state features for the current state
       const std::vector<float>& feature_vec = hfo.getState();
       // Perform the dash
-      hfo.act(DASH, 20.0);
+      hfo.act(DASH, 20.0, 0.0);
       // Advance the environment and recieve current game status
       status = hfo.step();
     }

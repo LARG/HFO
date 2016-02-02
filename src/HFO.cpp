@@ -188,15 +188,14 @@ void HFOEnvironment::connectToAgentServer(int server_port,
     close(sockfd);
     exit(1);
   }
-  // Get first hear message
-  // Message length
+  // First get the length of the hear message
   uint32_t msgLength;
   if (recv(sockfd, &msgLength, sizeof(uint32_t), 0) < 0){
     perror("[Agent Client] ERROR recieving hear message length from socket");
     close(sockfd);
     exit(1);
   }
-  // Message
+  // Next, receive the message
   if (msgLength > 0){
     std::vector<char> hearMsgBuffer;
     hearMsgBuffer.resize(msgLength);
@@ -204,7 +203,7 @@ void HFOEnvironment::connectToAgentServer(int server_port,
       perror("[Agent Client] ERROR recieving hear message from socket");
       close(sockfd);
       exit(1);
-    }  
+    }
     hear_msg.assign(&(hearMsgBuffer[0]), hearMsgBuffer.size());
   }
 }
@@ -283,7 +282,6 @@ void HFOEnvironment::act(action_t action, ...) {
 }
 
 void HFOEnvironment::say(const std::string& message) {
-  // TODO: [Sanmit] Bounds check message?
   say_msg = message;
 }
 
@@ -291,13 +289,12 @@ std::string HFOEnvironment::hear() {
   return hear_msg;
 }
 
-Player HFOEnvironment::playerOnBall(){
+Player HFOEnvironment::playerOnBall() {
   return player_on_ball;
 }
 
 status_t HFOEnvironment::step() {
   status_t game_status;
-
   // Send the action_type
   if (send(sockfd, &requested_action, sizeof(action_t), 0) < 0) {
     perror("[Agent Client] ERROR sending from socket");
@@ -313,26 +310,23 @@ status_t HFOEnvironment::step() {
       exit(1);
     }
   }
-  // [Sanmit] Send say_msg
-  // Send message length
+  // Send the message length
   uint32_t sendMsgLength = say_msg.size();
-  if (send(sockfd, &sendMsgLength, sizeof(uint32_t), 0) < 0){
+  if (send(sockfd, &sendMsgLength, sizeof(uint32_t), 0) < 0) {
     perror("[Agent Client] ERROR sending from socket");
     close(sockfd);
     exit(1);
   }
-  // Send message
-  if (sendMsgLength > 0){  
-    if (send(sockfd, say_msg.c_str(), say_msg.size(), 0) < 0){        
+  // Send the say message
+  if (sendMsgLength > 0) {
+    if (send(sockfd, say_msg.c_str(), say_msg.size(), 0) < 0) {
       perror("[Agent Client] ERROR sending from socket");
       close(sockfd);
       exit(1);
     }
-  }  
-
-  // Clear say message buffer 
+  }
+  // Clear say message buffer
   say_msg.clear();
-
   // Get the game status
   int full_status[3];
   if (recv(sockfd, &(full_status[0]), 3 * sizeof(int), 0) < 0) {
@@ -343,35 +337,31 @@ status_t HFOEnvironment::step() {
   game_status = (status_t)full_status[0];
   player_on_ball.side = (SideID)full_status[1];
   player_on_ball.unum = full_status[2];
-
   // Get the next game state
   if (recv(sockfd, &(feature_vec.front()), numFeatures * sizeof(float), 0) < 0) {
     perror("[Agent Client] ERROR receiving state features from socket");
     close(sockfd);
     exit(1);
   }
-  // [Sanmit] Receive comm_msg
   // Clear last message
   hear_msg.clear();
-  // Message length
+  // Receive message length
   uint32_t msgLength;
-  if (recv(sockfd, &msgLength, sizeof(uint32_t), 0) < 0){
+  if (recv(sockfd, &msgLength, sizeof(uint32_t), 0) < 0) {
     perror("[Agent Client] ERROR receiving hear message length from socket");
     close(sockfd);
     exit(1);
   }
-  // Message
-  if (msgLength > 0){
+  // Receive the message
+  if (msgLength > 0) {
     std::vector<char> hearMsgBuffer;
     hearMsgBuffer.resize(msgLength);
-    if (recv(sockfd, &hearMsgBuffer[0], msgLength, 0) < 0){
+    if (recv(sockfd, &hearMsgBuffer[0], msgLength, 0) < 0) {
       perror("[Agent Client] ERROR receiving hear message from socket");
       close(sockfd);
       exit(1);
-    }  
+    }
     hear_msg.assign(&(hearMsgBuffer[0]), hearMsgBuffer.size());
   }
   return game_status;
 }
-
-

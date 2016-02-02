@@ -70,7 +70,7 @@ struct Config {
 };
 
 struct Player {
-  SideID side;    
+  SideID side;
   int unum;
 };
 
@@ -103,7 +103,7 @@ class HFOEnvironment {
   virtual void say(const std::string& message);
   virtual std::string hear();
 
-  // Get the current player holding the ball 
+  // Get the current player holding the ball
   virtual Player playerOnBall();
 
   // Indicates the agent is done and the environment should
