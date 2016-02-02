@@ -252,6 +252,12 @@ void Agent::startServer(int server_port) {
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = INADDR_ANY;
   serv_addr.sin_port = htons(server_port);
+  int reuse = 1;
+  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
+                 (const char*)&reuse, sizeof(reuse)) < 0) {
+    perror("[Agent Server] setsockopt(SO_REUSEADDR) failed");
+    exit(1);
+  }
   if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
     perror("[Agent Server] ERROR on binding");
     exit(1);
