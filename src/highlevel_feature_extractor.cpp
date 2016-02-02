@@ -52,7 +52,7 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   // addFeature(self_pos.y);
 
   // Feature[2]: Self Angle
-  addNormFeature(self_ang, -2*M_PI, 2*M_PI); // addFeature(self_ang);
+  addNormFeature(self_ang, -M_PI, M_PI); // addFeature(self_ang);
 
   float r;
   float th;
@@ -62,7 +62,7 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   // Feature[3]: Dist to ball
   addNormFeature(r, 0, maxR); // addFeature(r);
   // Feature[4]: Ang to ball
-  addNormFeature(th, -2*M_PI, 2*M_PI); // addFeature(th);
+  addNormFeature(th, -M_PI, M_PI); // addFeature(th);
   // Feature[5]: Able to kick
   addNormFeature(self.isKickable(), false, true); // addFeature(self.isKickable());
 
@@ -75,7 +75,7 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   // Feature[6]: Goal Center Distance
   addNormFeature(r, 0, maxR); // addFeature(r);
   // Feature[7]: Angle to goal center
-  addNormFeature(th, -2*M_PI, 2*M_PI); // addFeature(th);
+  addNormFeature(th, -M_PI, M_PI); // addFeature(th);
   // Feature[8]: largest open goal angle
   addNormFeature(calcLargestGoalAngle(wm, self_pos), 0, M_PI);
   // addFeature(calcLargestGoalAngle(wm, self_pos));
