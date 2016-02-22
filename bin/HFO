@@ -35,9 +35,9 @@ def main(args):
     os.makedirs(args.logDir)
   num_agents   = args.offenseAgents + args.defenseAgents
   binary_dir   = os.path.dirname(os.path.realpath(__file__))
-  server_port  = args.port + num_agents
-  coach_port   = args.port + num_agents + 1
-  olcoach_port = args.port + num_agents + 2
+  server_port  = args.port
+  coach_port   = args.port + 1
+  olcoach_port = args.port + 2
   serverCommand = os.path.join(binary_dir, SERVER_BIN)
   serverOptions = ' server::port=%i server::coach_port=%i ' \
                   'server::olcoach_port=%i server::coach=1 ' \

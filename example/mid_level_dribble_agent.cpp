@@ -7,23 +7,29 @@
 using namespace std;
 using namespace hfo;
 
-// This agent demonstrates the use of the DRIBBLE_TO action. Before
-// running this program, first Start HFO server: $./bin/HFO
-// --offense-agents 1
-
 #define PI 3.14159265
 
+// This agent demonstrates the use of the DRIBBLE_TO action. Before
+// running this program, first Start HFO server:
+// $./bin/HFO --offense-agents 1
+
+// Server Connection Options. See printouts from bin/HFO.
+feature_set_t features = HIGH_LEVEL_FEATURE_SET;
+string config_dir = "bin/teams/base/config/formations-dt";
+int unum = 11;
+int port = 6001;
+string server_addr = "localhost";
+string team_name = "base_left";
+bool goalie = false;
+
 int main(int argc, char** argv) {
-  int port = 6000;
-  if (argc > 1) {
-    port = atoi(argv[1]);
-  }
   // Create the HFO environment
   HFOEnvironment hfo;
-  // Connect to the agent's server on port 6000 and request low-level
-  // feature set. See manual for more information on feature sets.
-  hfo.connectToAgentServer(port, HIGH_LEVEL_FEATURE_SET);
-  for (int episode=0; ; episode++) {
+  // Connect to the server and request low-level feature set. See
+  // manual for more information on feature sets.
+  hfo.connectToServer(features, config_dir, unum, port, server_addr,
+                           team_name, goalie);
+  for (int episode=0; episode<10; episode++) {
     status_t status = IN_GAME;
     int step = 0;
     while (status == IN_GAME) {
@@ -37,6 +43,9 @@ int main(int argc, char** argv) {
       status = hfo.step();
       step += 2;
     }
+    // Check what the outcome of the episode was
+    cout << "Episode " << episode << " ended with status: "
+         << StatusToString(status) << std::endl;;
   }
   hfo.act(QUIT);
 };

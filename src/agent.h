@@ -1,37 +1,11 @@
-// -*-c++-*-
-
-/*
- *Copyright:
-
- Copyright (C) Hidehisa AKIYAMA
-
- This code is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 3, or (at your option)
- any later version.
-
- This code is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this code; see the file COPYING.  If not, write to
- the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
- *EndCopyright:
- */
-
-/////////////////////////////////////////////////////////////////////
-
 #ifndef AGENT_H
 #define AGENT_H
 
 #include "action_generator.h"
 #include "field_evaluator.h"
 #include "communication.h"
-#include "HFO.hpp"
 #include "feature_extractor.h"
+#include "common.hpp"
 
 #include <rcsc/player/player_agent.h>
 #include <vector>
@@ -41,10 +15,6 @@ public:
   Agent();
   virtual ~Agent();
   virtual FieldEvaluator::ConstPtr getFieldEvaluator() const;
-
-  // Get the current game status, and the side and uniform number of the player holding the ball
-  static std::vector<int> getGameStatus(const rcsc::AudioSensor& audio_sensor,
-                                     long& lastTrainerMessageTime);
 
   // Returns the feature extractor corresponding to the feature_set_t
   static FeatureExtractor* getFeatureExtractor(hfo::feature_set_t feature_set,
@@ -70,26 +40,38 @@ protected:
   virtual FieldEvaluator::ConstPtr createFieldEvaluator() const;
   virtual ActionGenerator::ConstPtr createActionGenerator() const;
 
-  // Start the server and listen for a connection.
-  void startServer(int server_port=6008);
-  void listenForConnection();
-  // Transmit information to the client and ensure it can recieve.
-  void clientHandshake();
-
  protected:
-  FeatureExtractor* feature_extractor;
-  long lastTrainerMessageTime; // Last time the trainer sent a message
-  long lastTeammateMessageTime; // Last time a teammate sent a message
-  int server_port; // Port to start the server on
-  bool client_connected; // Has the client connected and handshake?
-  int sockfd, newsockfd; // Server sockets
-  int num_teammates, num_opponents;
-  bool playing_offense;
+  hfo::feature_set_t feature_set;      // Requested feature set
+  FeatureExtractor* feature_extractor; // Extracts the features
+  long lastTrainerMessageTime;         // Last time the trainer sent a message
+  long lastTeammateMessageTime;        // Last time a teammate sent a message
+  long lastDecisionTime;               // Last time we made a decision
+  hfo::status_t game_status;           // Current status of the game
+  hfo::Player player_on_ball;          // Player in posession of the ball
+  std::vector<float> state;            // Vector of current state features
+  std::string say_msg, hear_msg;       // Messages to/from teammates
+  hfo::action_t action;                // Currently requested action
+  std::vector<float> params;           // Parameters of current action
+
+ public:
+  inline const std::vector<float>& getState() { return state; }
+  inline hfo::status_t getGameStatus() { return game_status; }
+  inline const hfo::Player& getPlayerOnBall() { return player_on_ball; }
+  inline const std::string& getHearMsg() { return hear_msg; }
+  inline long cycle() { return world().time().cycle(); }
+  inline long getLastDecisionTime() { return lastDecisionTime; }
+
+  inline void setFeatureSet(hfo::feature_set_t fset) { feature_set = fset; }
+  inline std::vector<float>* mutable_params() { return &params; }
+  inline void setAction(hfo::action_t a) { action = a; }
+  inline void setSayMsg(const std::string& message) { say_msg = message; }
 
  private:
   bool doPreprocess();
+  bool doSmartKick();
   bool doShoot();
   bool doPass();
+  bool doPassTo(int receiver);
   bool doDribble();
   bool doMove();
   bool doForceKick();

@@ -1,29 +1,3 @@
-// -*-c++-*-
-
-/*
- *Copyright:
-
- Copyright (C) Hidehisa AKIYAMA
-
- This code is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 3, or (at your option)
- any later version.
-
- This code is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this code; see the file COPYING.  If not, write to
- the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
- *EndCopyright:
- */
-
-/////////////////////////////////////////////////////////////////////
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -121,13 +95,13 @@ Agent::Agent()
       M_communication(),
       M_field_evaluator(createFieldEvaluator()),
       M_action_generator(createActionGenerator()),
+      feature_set(LOW_LEVEL_FEATURE_SET),
+      feature_extractor(NULL),
       lastTrainerMessageTime(-1),
       lastTeammateMessageTime(-1),
-      server_port(6008),
-      client_connected(false),
-      num_teammates(-1),
-      num_opponents(-1),
-      playing_offense(false)
+      lastDecisionTime(-1),
+      game_status(IN_GAME),
+      action(NOOP)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
@@ -176,10 +150,9 @@ Agent::Agent()
 }
 
 Agent::~Agent() {
-  delete feature_extractor;
-  std::cout << "[Agent Server] Closing Server." << std::endl;
-  close(newsockfd);
-  close(sockfd);
+  if (feature_extractor != NULL) {
+    delete feature_extractor;
+  }
 }
 
 bool Agent::initImpl(CmdLineParser & cmd_parser) {
@@ -189,11 +162,6 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
     result &= Strategy::instance().init(cmd_parser);
 
     rcsc::ParamMap my_params("Additional options");
-    my_params.add()
-        ("numTeammates", "", &num_teammates)
-        ("numOpponents", "", &num_opponents)
-        ("playingOffense", "", &playing_offense)
-        ("serverPort", "", &server_port);
     cmd_parser.parse(my_params);
     if (cmd_parser.count("help") > 0) {
         my_params.printHelp(std::cout);
@@ -233,121 +201,7 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
                   << std::endl;
     }
 
-    assert(num_teammates >= 0);
-    assert(num_opponents >= 0);
-
-    startServer(server_port);
     return true;
-}
-
-void Agent::startServer(int server_port) {
-  std::cout << "[Agent Server] Starting Server on Port " << server_port << std::endl;
-  struct sockaddr_in serv_addr;
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0) {
-    perror("[Agent Server] ERROR opening socket");
-    exit(1);
-  }
-  bzero((char *) &serv_addr, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_addr.s_addr = INADDR_ANY;
-  serv_addr.sin_port = htons(server_port);
-  int reuse = 1;
-  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
-                 (const char*)&reuse, sizeof(reuse)) < 0) {
-    perror("[Agent Server] setsockopt(SO_REUSEADDR) failed");
-    exit(1);
-  }
-  if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-    perror("[Agent Server] ERROR on binding");
-    exit(1);
-  }
-  listen(sockfd, 5);
-}
-
-void Agent::listenForConnection() {
-  int rv;
-  struct pollfd ufd;
-  ufd.fd = sockfd;
-  ufd.events = POLLIN;
-  rv = poll(&ufd, 1, 1000);
-  if (rv == -1) {
-    perror("poll"); // error occurred in poll()
-  } else if (rv == 0) {
-    std::cout << "[Agent Server] Waiting for client to connect... " << std::endl;
-  } else {
-    if (ufd.revents & POLLIN) {
-      struct sockaddr_in cli_addr;
-      socklen_t clilen = sizeof(cli_addr);
-      newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-      if (newsockfd < 0) {
-        perror("[Agent Server] ERROR on accept");
-        close(sockfd);
-        exit(1);
-      }
-      std::cout << "[Agent Server] Connected" << std::endl;
-      clientHandshake();
-    }
-  }
-}
-
-void Agent::clientHandshake() {
-  // Send float 123.2345
-  float f = 123.2345;
-  if (send(newsockfd, &f, sizeof(float), 0) < 0) {
-    perror("[Agent Server] ERROR sending from socket");
-    close(sockfd);
-    exit(1);
-  }
-  // Recieve float 5432.321
-  if (recv(newsockfd, &f, sizeof(float), 0) < 0) {
-    perror("[Agent Server] ERROR recv from socket");
-    close(sockfd);
-    exit(1);
-  }
-  // Check that error is within bounds
-  if (abs(f - 5432.321) > 1e-4) {
-    perror("[Agent Server] Handshake failed. Improper float recieved.");
-    close(sockfd);
-    exit(1);
-  }
-  // Recieve the feature set to use
-  hfo::feature_set_t feature_set;
-  if (recv(newsockfd, &feature_set, sizeof(int), 0) < 0) {
-    perror("[Agent Server] PERROR recv from socket");
-    close(sockfd);
-    exit(1);
-  }
-  // Create the corresponding FeatureExtractor
-  if (feature_extractor != NULL) {
-    delete feature_extractor;
-  }
-  feature_extractor = getFeatureExtractor(feature_set, num_teammates,
-                                          num_opponents, playing_offense);
-  // Send the number of features
-  int numFeatures = feature_extractor->getNumFeatures();
-  assert(numFeatures > 0);
-  if (send(newsockfd, &numFeatures, sizeof(int), 0) < 0) {
-    perror("[Agent Server] ERROR sending from socket");
-    close(sockfd);
-    exit(1);
-  }
-  // Check that client has recieved correctly
-  int client_response = -1;
-  if (recv(newsockfd, &client_response, sizeof(int), 0) < 0) {
-    perror("[Agent Server] ERROR recv from socket");
-    close(sockfd);
-    exit(1);
-  }
-  if (client_response != numFeatures) {
-    perror("[Agent Server] Client incorrectly parsed the number of features.");
-    close(sockfd);
-    exit(1);
-  }
-  std::cout << "[Agent Server] Handshake complete" << std::endl;
-  client_connected = true;
-  rcsc::FreeMessage<5> *free_msg = new FreeMessage<5>("ready");
-  addSayMessage(free_msg);
 }
 
 FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
@@ -370,188 +224,64 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
   }
 }
 
-std::vector<int> Agent::getGameStatus(const rcsc::AudioSensor& audio_sensor,
-                                  long& lastTrainerMessageTime) {
-  std::vector<int> status;
-  status_t game_status = IN_GAME;
-  int playerIndex = -1;   // Keeps track of which defender stopped the shot
-  int playerTeam = hfo::LEFT;     
-  if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
-    const std::string& message = audio_sensor.trainerMessage();
-    bool recognized_message = true;
-    if (message.find("GOAL") != std::string::npos){
-      playerIndex = atoi((message.substr(message.find("-")+1)).c_str());
-      playerTeam = hfo::LEFT;  
-      game_status = GOAL;
-    } else if (message.find("CAPTURED_BY_DEFENSE") != std::string::npos) { 
-      playerIndex = atoi((message.substr(message.find("-")+1)).c_str());
-      playerTeam = hfo::RIGHT;
-      game_status = CAPTURED_BY_DEFENSE;
-    } else if (message.compare("OUT_OF_BOUNDS") == 0) {
-      game_status = OUT_OF_BOUNDS;
-    } else if (message.compare("OUT_OF_TIME") == 0) {
-      game_status = OUT_OF_TIME;
-    } else if (message.find("IN_GAME") != std::string::npos){
-      switch (message.at(message.find("-")+1)){
-        case 'L':
-          playerTeam = hfo::LEFT;
-          break;
-        case 'R':
-          playerTeam = hfo::RIGHT;
-          break;
-        case 'U':
-          playerTeam = hfo::NEUTRAL;
-          break;
-      }
-      playerIndex = atoi((message.substr(message.find("-")+2)).c_str());
-    }
-    else {
-      recognized_message = false;
-    }
-    if (recognized_message) {
-      lastTrainerMessageTime = audio_sensor.trainerMessageTime().cycle();
-    }
-  }
-  status.push_back(game_status);
-  status.push_back(playerTeam);
-  status.push_back(playerIndex);
-  return status;
-}
-
 /*!
   main decision
   virtual method in super class
 */
 void Agent::actionImpl() {
+  lastDecisionTime = world().time().cycle();
   // For now let's not worry about turning the neck or setting the vision.
   this->setViewAction(new View_Tactical());
   this->setNeckAction(new Neck_TurnToBallOrScan());
-
-  if (!client_connected) {
-    listenForConnection();
-    return;
+  // Process new trainer messages
+  if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
+    const std::string& message = audioSensor().trainerMessage();
+    if (feature_extractor == NULL) {
+      hfo::Config hfo_config;
+      if (hfo::ParseConfig(message, hfo_config)) {
+        bool playing_offense = world().ourSide() == rcsc::LEFT;
+        int num_teammates = playing_offense ?
+            hfo_config.num_offense - 1 : hfo_config.num_defense - 1;
+        int num_opponents = playing_offense ?
+            hfo_config.num_defense : hfo_config.num_offense;
+        feature_extractor = getFeatureExtractor(
+            feature_set, num_teammates, num_opponents, playing_offense);
+      }
+    }
+    hfo::ParseGameStatus(message, game_status);
+    hfo::ParsePlayerOnBall(message, player_on_ball);
+    lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
   }
-
-  // Update and send the game status
-  std::vector<int> game_status = getGameStatus(audioSensor(), lastTrainerMessageTime);
-  if (send(newsockfd, &(game_status.front()), game_status.size() * sizeof(int), 0) < 0){
-    perror("[Agent Server] ERROR sending game state from socket");
-    close(sockfd);
-    exit(1);   
+  // Process new teammate message
+  hear_msg.clear();
+  if (audioSensor().teammateMessageTime().cycle() > lastTeammateMessageTime) {
+    const std::list<HearMessage> teammateMessages = audioSensor().teammateMessages();
+    for (std::list<HearMessage>::const_iterator msgIter = teammateMessages.begin();
+         msgIter != teammateMessages.end(); msgIter++) {
+      if ((*msgIter).unum_ != world().self().unum()) {
+        hear_msg = (*msgIter).str_;
+        break;  // For now we just take one.
+      }
+    }
+    lastTeammateMessageTime = audioSensor().teammateMessageTime().cycle();
   }
-  
-  // Update and send the state features
-  const std::vector<float>& features =
-      feature_extractor->ExtractFeatures(this->world());
-
 #ifdef ELOG
-  if (config().record()) {
-    elog.addText(Logger::WORLD, "GameStatus %d", game_status[0]);
+  if (config().record() && feature_extractor != NULL) {
+    elog.addText(Logger::WORLD, "GameStatus %d", game_status);
     elog.flush();
     feature_extractor->LogFeatures();
   }
 #endif
-
-  if (send(newsockfd, &(features.front()),
-           features.size() * sizeof(float), 0) < 0) {
-    perror("[Agent Server] ERROR sending state features from socket");
-    close(sockfd);
-    exit(1);
+  // Update state features
+  if (feature_extractor != NULL) {
+    state = feature_extractor->ExtractFeatures(this->world());
   }
-
-  // [Sanmit] Send the communication heard by the agent
-  // Hear for teammate messages and send them via socket to the HFO interface. 
-  std::string teammateMessage = "";
-  // Received a new message
-  if (audioSensor().teammateMessageTime().cycle() > lastTeammateMessageTime){
-    // Receive all teammate messages
-    std::list<HearMessage> teammateMessages = audioSensor().teammateMessages();
-    for (std::list<HearMessage>::iterator msgIterator = teammateMessages.begin(); msgIterator != teammateMessages.end(); msgIterator++){
-      if ((*msgIterator).unum_ != world().self().unum()){
-        teammateMessage = (*msgIterator).str_;
-        break;  // For now we just take one. Remove this and concatenate messages if desired -- though technically, agents should only be able to hear one message.  
-      }
-    }
+  if (!say_msg.empty()) {
+    addSayMessage(new CustomMessage(say_msg));
+    say_msg.clear();
   }
-  // Send message size 
-  uint32_t hearMsgLength = teammateMessage.size();
-  if (send(newsockfd, &hearMsgLength, sizeof(uint32_t), 0) < 0){
-    perror("[Agent Server] ERROR sending hear message length from socket");
-    close(sockfd);
-    exit(1);
-  }
-  // Send message
-  if (hearMsgLength > 0){  
-    if (send(newsockfd, teammateMessage.c_str(), teammateMessage.size(), 0) < 0){
-      perror("[Agent Server] ERROR sending hear message from socket");
-      close(sockfd);
-      exit(1);
-    }
-  }
-
-  // Get the action type
-  action_t action;
-  if (recv(newsockfd, &action, sizeof(action_t), 0) < 0) {
-    perror("[Agent Server] ERROR recv from socket");
-    close(sockfd);
-    exit(1);
-  }
-  // Get the parameters for that action
-  int n_args = HFOEnvironment::NumParams(action);
-  float params[n_args];
-  if (n_args > 0) {
-    if (recv(newsockfd, &params, sizeof(float)*n_args, 0) < 0) {
-      perror("[Agent Server] ERROR recv from socket");
-      close(sockfd);
-      exit(1);
-    }
-  }
-  // [Sanmit] Receive the outgoing communication
-  // Receive message length
-  uint32_t sayMsgLength;
-  if (recv(newsockfd, &sayMsgLength, sizeof(uint32_t), 0) < 0){
-    perror("[Agent Server] ERROR recv size of say message from socket");
-    close(sockfd);
-    exit(1);
-  }
-
-  // Receive message   
-  std::vector<char> sayMsgBuffer; 
-  sayMsgBuffer.resize(sayMsgLength);
-  std::string msgString = "";
-
-  // Check message size
-  if (sayMsgLength > ServerParam::i().playerSayMsgSize()){
-    perror("[Agent Server] ERROR message size too large. Increase size by starting bin/HFO with larger --messageSize argument");
-    close(sockfd);
-    exit(1);
-  }
-  if (sayMsgLength > 0) { 
-    if (recv(newsockfd, &sayMsgBuffer[0], sayMsgLength, 0) < 0){
-      perror("[Agent Server] ERROR recv say message from socket");
-      close(sockfd);
-      exit(1);
-    }
-    msgString.assign(&(sayMsgBuffer[0]),sayMsgBuffer.size());
-
-    // [Sanmit] "Say" in the actual game
-    addSayMessage(new CustomMessage(msgString));
-  }
-
-
-  if (action == SHOOT) {
-    const ShootGenerator::Container & cont =
-        ShootGenerator::instance().courses(this->world(), false);
-    ShootGenerator::Container::const_iterator best_shoot
-        = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
-    Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
-                   best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
-  } else if (action == PASS) {
-    Force_Pass pass;
-    int receiver = int(params[0]);
-    pass.get_pass_to_player(this->world(), receiver);
-    pass.execute(this);
-  }
+  // Execute the action
+  assert(hfo::NumParams(action) <= params.size());
   switch(action) {
     case DASH:
       this->doDash(params[0], params[1]);
@@ -566,19 +296,25 @@ void Agent::actionImpl() {
       this->doKick(params[0], params[1]);
       break;
     case KICK_TO:
-      Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                              feature_extractor->absoluteYPos(params[1])),
-                     params[2], params[2] * 0.99, 3).execute(this);
+      if (feature_extractor != NULL) {
+        Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
+                                feature_extractor->absoluteYPos(params[1])),
+                       params[2], params[2] * 0.99, 3).execute(this);
+      }
       break;
     case MOVE_TO:
-      Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                              feature_extractor->absoluteYPos(params[1])), 0.25,
-                     ServerParam::i().maxDashPower()).execute(this);
+      if (feature_extractor != NULL) {
+        Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
+                                feature_extractor->absoluteYPos(params[1])), 0.25,
+                       ServerParam::i().maxDashPower()).execute(this);
+      }
       break;
     case DRIBBLE_TO:
-      Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                            feature_extractor->absoluteYPos(params[1])), 1.0,
-                   ServerParam::i().maxDashPower(), 2).execute(this);
+      if (feature_extractor != NULL) {
+        Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
+                              feature_extractor->absoluteYPos(params[1])), 1.0,
+                     ServerParam::i().maxDashPower(), 2).execute(this);
+      }
       break;
     case INTERCEPT:
       Body_Intercept().execute(this);
@@ -587,8 +323,11 @@ void Agent::actionImpl() {
       this->doMove();
       break;
     case SHOOT:
+      this->doSmartKick();
       break;
     case PASS:
+      std::cout << "Inagent pass: 0: " << params[0] << std::endl;
+      this->doPassTo(int(params[0]));
       break;
     case DRIBBLE:
       this->doDribble();
@@ -600,12 +339,10 @@ void Agent::actionImpl() {
       break;
     case QUIT:
       std::cout << "[Agent Server] Got quit from agent." << std::endl;
-      close(sockfd);
       exit(0);
     default:
       std::cerr << "[Agent Server] ERROR Unsupported Action: "
                 << action << std::endl;
-      close(sockfd);
       exit(1);
   }
 }
@@ -795,11 +532,12 @@ Agent::handlePlayerType()
 void
 Agent::communicationImpl()
 {
-    if ( M_communication )
-    {
-      // [Sanmit]: Turning this off since it adds default communication messages which can conflict with our comm messages.
-      //        M_communication->execute( this );
-    }
+  // Disabled since it adds default communication messages which
+  // can conflict with our comm messages.
+  // if ( M_communication )
+  // {
+  //   M_communication->execute( this );
+  // }
 }
 
 /*-------------------------------------------------------------------*/
@@ -943,6 +681,18 @@ Agent::doShoot()
     return false;
 }
 
+bool
+Agent::doSmartKick()
+{
+    const ShootGenerator::Container & cont =
+        ShootGenerator::instance().courses(this->world(), false);
+    ShootGenerator::Container::const_iterator best_shoot
+        = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
+    Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
+                   best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
+    return true;
+}
+
 
 /*-------------------------------------------------------------------*/
 /*!
@@ -953,6 +703,15 @@ Agent::doPass()
 {
     rcsc::Body_Pass pass;
     pass.get_best_pass(this->world(), NULL, NULL, NULL);
+    pass.execute(this);
+    return true;
+}
+
+bool
+Agent::doPassTo(int receiver)
+{
+    Force_Pass pass;
+    pass.get_pass_to_player(this->world(), receiver);
     pass.execute(this);
     return true;
 }

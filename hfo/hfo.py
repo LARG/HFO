@@ -1,15 +1,15 @@
-import socket, struct, thread, time, collections
+from ctypes import *
+import numpy as np
+from numpy.ctypeslib import as_ctypes
+import os
 
-class HFO_Features:
-  ''' An enum of the possible HFO feature sets. For descriptions see
-  https://github.com/mhauskn/HFO/blob/master/doc/manual.pdf
-  '''
-  LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = range(2)
+hfo_lib = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__),
+                                        'libhfo_c.so'))
 
+''' Possible feature sets '''
+LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = range(2)
 
-class HFO_Actions:
-  ''' An enum of the possible HFO actions
-
+''' An enum of the possible HFO actions
   [Low-Level] Dash(power, relative_direction)
   [Low-Level] Turn(direction)
   [Low-Level] Tackle(direction)
@@ -24,174 +24,117 @@ class HFO_Actions:
   [High-Level] Dribble(): Offensive dribble
   [High-Level] Catch(): Catch the ball (Goalie Only)
   NOOP(): Do Nothing
-  QUIT(): Quit the game
-
-  '''
-  DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
+  QUIT(): Quit the game '''
+DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
     MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT = range(15)
 
+''' Possible game status
+  [IN_GAME] Game is currently active
+  [GOAL] A goal has been scored by the offense
+  [CAPTURED_BY_DEFENSE] The defense has captured the ball
+  [OUT_OF_BOUNDS] Ball has gone out of bounds
+  [OUT_OF_TIME] Trial has ended due to time limit
+  [SERVER_DOWN] Server is not alive
+'''
+IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME, SERVER_DOWN = range(6)
 
-HFO_Player = collections.namedtuple("HFO_Player", "side unum")    
+''' Possible sides '''
+RIGHT, NEUTRAL, LEFT = range(-1,2)
 
-class HFO_Status:
-  ''' Current status of the HFO game. '''
-  IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME = range(5)
+class Player(Structure): pass
+Player._fields_ = [
+    ('side', c_int),
+    ('unum', c_int),
+]
 
-class HFO_SideID:
-  ''' Team side for a player or object''' 
-  RIGHT, NEUTRAL, LEFT = range(-1, 2)
-  
+hfo_lib.HFO_new.argtypes = None
+hfo_lib.HFO_new.restype = c_void_p
+hfo_lib.HFO_del.argtypes = [c_void_p]
+hfo_lib.HFO_del.restype = None
+hfo_lib.connectToServer.argtypes = [c_void_p, c_int, c_char_p, c_int,
+                                    c_int, c_char_p, c_char_p, c_bool]
+hfo_lib.connectToServer.restype = None
+hfo_lib.getStateSize.argtypes = [c_void_p]
+hfo_lib.getStateSize.restype = c_int
+hfo_lib.getState.argtypes = [c_void_p, c_void_p]
+hfo_lib.getState.restype = None
+hfo_lib.act.argtypes = [c_void_p, c_int, c_void_p]
+hfo_lib.act.restype = None
+hfo_lib.say.argtypes = [c_void_p, c_char_p]
+hfo_lib.say.restype = None
+hfo_lib.hear.argtypes = [c_void_p]
+hfo_lib.hear.restype = c_char_p
+hfo_lib.playerOnBall.argtypes = [c_void_p]
+hfo_lib.playerOnBall.restype = Player
+hfo_lib.step.argtypes = [c_void_p]
+hfo_lib.step.restype = c_int
+hfo_lib.numParams.argtypes = [c_int]
+hfo_lib.numParams.restype = c_int
+hfo_lib.actionToString.argtypes = [c_int]
+hfo_lib.actionToString.restype = c_char_p
+hfo_lib.statusToString.argtypes = [c_int]
+hfo_lib.statusToString.restype = c_char_p
 
 class HFOEnvironment(object):
-  ''' The HFOEnvironment is designed to be the main point of contact
-  between a learning agent and the Half-Field-Offense domain.
-
-  '''
   def __init__(self):
-    self.socket = None           # Socket connection to server
-    self.numFeatures = None      # Given by the server in handshake
-    self.features = None         # The state features
-    self.requested_action = None # Action to execute and parameters
-    self.say_msg = ''          # Outgoing message to say
-    self.hear_msg = ''         # Incoming heard message
-    self.player_on_ball = None  # Current player holding the ball
+    self.obj = hfo_lib.HFO_new()
 
-  def NumParams(self, action_type):
-    ''' Returns the number of required parameters for each action type. '''
-    return {
-      HFO_Actions.DASH : 2,
-      HFO_Actions.TURN : 1,
-      HFO_Actions.TACKLE : 1,
-      HFO_Actions.KICK : 2,
-      HFO_Actions.KICK_TO : 3,
-      HFO_Actions.MOVE_TO : 2,
-      HFO_Actions.DRIBBLE_TO : 2,
-      HFO_Actions.INTERCEPT : 0,
-      HFO_Actions.MOVE : 0,
-      HFO_Actions.SHOOT : 0,
-      HFO_Actions.PASS : 1,
-      HFO_Actions.DRIBBLE : 0,
-      HFO_Actions.CATCH : 0,
-      HFO_Actions.NOOP : 0,
-      HFO_Actions.QUIT : 0}.get(action_type, -1);
+  def __del__(self):
+    hfo_lib.HFO_del(self.obj)
 
-  def connectToAgentServer(self, server_port=6000,
-                           feature_set=HFO_Features.HIGH_LEVEL_FEATURE_SET):
-    '''Connect to the server that controls the agent on the specified port. '''
-    self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print '[Agent Client] Connecting to Agent Server on port', server_port
-    retry = 10
-    while retry > 0:
-      try:
-        self.socket.connect(('localhost', server_port))
-      except:
-        time.sleep(1)
-        retry -= 1
-        continue
-      else:
-        break
-    if retry <= 0:
-      print '[Agent Client] ERROR Unable to communicate with server'
-      exit(1)
-    print '[Agent Client] Connected'
-    self.handshakeAgentServer(feature_set)
-    # Get the initial state
-    state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
-    if not state_data:
-      print '[Agent Client] ERROR Recieved bad data from Server. Perhaps server closed?'
-      self.cleanup()
-      exit(1)
-    self.features = struct.unpack('f'*self.numFeatures, state_data)
-    # Get first hear message 
-    hearMsgLengthData = self.socket.recv(struct.calcsize('I'))
-    hearMsgLength = struct.unpack('I', hearMsgLengthData)[0]
-    if hearMsgLength > 0:
-      hearMsgData = self.socket.recv(struct.calcsize('c')*hearMsgLength)
-      self.hear_msg = struct.unpack(str(hearMsgLength)+'s', hearMsgData)[0]
+  def connectToServer(self,
+                      feature_set=LOW_LEVEL_FEATURE_SET,
+                      config_dir='bin/teams/base/config/formations-dt',
+                      uniform_number=11,
+                      server_port=6000,
+                      server_addr='localhost',
+                      team_name='base_left',
+                      play_goalie=False):
+    """ Connect to the server """
+    hfo_lib.connectToServer(self.obj, feature_set, config_dir, uniform_number,
+                            server_port, server_addr, team_name, play_goalie)
 
-  def handshakeAgentServer(self, feature_set):
-    '''Handshake with the agent's server. '''
-    # Recieve float 123.2345
-    data = self.socket.recv(struct.calcsize("f"))
-    f = struct.unpack("f", data)[0]
-    assert abs(f - 123.2345) < 1e-4, "Float handshake failed"
-    # Send float 5432.321
-    self.socket.send(struct.pack("f", 5432.321))
-    # Send the feature set request
-    self.socket.send(struct.pack("i", feature_set))
-    # Recieve the number of features
-    data = self.socket.recv(struct.calcsize("i"))
-    self.numFeatures = struct.unpack("i", data)[0]
-    # Send what we recieved
-    self.socket.send(struct.pack("i", self.numFeatures))
-    # Get the current game status
-    data = self.socket.recv(struct.calcsize("iii"))
-    status, side, unum = struct.unpack("iii", data)
-    self.player_on_ball = HFO_Player(side,unum)
-    assert status == HFO_Status.IN_GAME, "Status check failed"
-    print '[Agent Client] Handshake complete'
+  def getStateSize(self):
+    """ Returns the number of state features """
+    return hfo_lib.getStateSize(self.obj)
 
-  def getState(self):
-    '''Get the current state of the world. Returns a list of floats with
-    size numFeatures. '''
-    return self.features
+  def getState(self, state_data=None):
+    """ Returns the current state features """
+    if state_data is None:
+      state_data = np.zeros(self.getStateSize(), dtype=np.float32)
+    hfo_lib.getState(self.obj, as_ctypes(state_data))
+    return state_data
 
   def act(self, *args):
-    ''' Send an action and recieve the game status.'''
+    """ Performs an action in the environment """
     assert len(args) > 0, 'Not enough arguments provided to act'
     action_type = args[0]
-    n_params = self.NumParams(action_type)
+    n_params = hfo_lib.numParams(action_type)
     assert n_params == len(args) - 1, 'Incorrect number of params to act: '\
-      'Required %d provided %d'%(n_params, len(args)-1)
-    self.requested_action = args
+      'Required %d, provided %d'%(n_params, len(args)-1)
+    hfo_lib.act(self.obj, action_type,
+                as_ctypes(np.asarray(args[1:], dtype=np.float32)))
 
   def say(self, message):
-    ''' Send a communication message to other agents. '''
-    self.say_msg = message
+    """ Transmit a message """
+    hfo_lib.say(self.obj, message)
 
   def hear(self):
-    ''' Receive incoming communications from other players. '''
-    return self.hear_msg
+    """ Returns the message heard from another player """
+    return hfo_lib.hear(self.obj)
 
   def playerOnBall(self):
-    ''' Get the current player holding the ball'''
-    return self.player_on_ball
+    """ Returns a player object who last touched the ball """
+    return hfo_lib.playerOnBall(self.obj)
 
   def step(self):
-    ''' Indicates the agent is done and the environment should
-        progress. Returns the game status after the step'''
-    # Send action and parameters
-    self.socket.send(struct.pack('i'+'f'*(len(self.requested_action)-1),
-                                 *self.requested_action))
-    # [Sanmit] Send self.say_msg
-    self.socket.send(struct.pack('I', len(self.say_msg)))
-    if len(self.say_msg) > 0:
-      self.socket.send(struct.pack(str(len(self.say_msg))+'s', self.say_msg))
-    self.say_msg = ''
-    
-    # Get the current game status
-    data = self.socket.recv(struct.calcsize("iii"))
-    status, side, unum = struct.unpack("iii", data)
-    self.player_on_ball = HFO_Player(side,unum)
-      
-    # Get the next state features
-    state_data = self.socket.recv(struct.calcsize('f')*self.numFeatures)
-    if not state_data:
-      print '[Agent Client] ERROR Recieved bad data from Server. Perhaps server closed?'
-      self.cleanup()
-      exit(1)
-    self.features = struct.unpack('f'*self.numFeatures, state_data)
-    self.hear_msg = ''
-    # [Sanmit] Receive self.hear_msg
-    hearMsgLengthData = self.socket.recv(struct.calcsize('I'))
-    hearMsgLength = struct.unpack('I', hearMsgLengthData)[0]
-    if hearMsgLength > 0:
-      hearMsgData = self.socket.recv(struct.calcsize('c')*hearMsgLength)
-      self.hear_msg = struct.unpack(str(hearMsgLength)+'s', hearMsgData)[0]
-    
-    return status
+    """ Advances the state of the environment """
+    return hfo_lib.step(self.obj)
 
-  def cleanup(self):
-    ''' Send a quit and close the connection to the agent's server. '''
-    self.socket.send(struct.pack("i", HFO_Actions.QUIT))
-    self.socket.close()
+  def actionToString(self, action):
+    """ Returns a string representation of an action """
+    return hfo_lib.actionToString(action)
+
+  def statusToString(self, status):
+    """ Returns a string representation of a game status """
+    return hfo_lib.statusToString(status)

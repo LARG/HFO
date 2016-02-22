@@ -47,7 +47,7 @@ class Trainer(object):
     self._done = False # Are we finished?
     self._agentPopen = [] # Agent's processes
     self._npcPopen = [] # NPC's processes
-    self._connectedPlayers = []
+    self._connectedPlayers = [] # List of connected players
     self.initMsgHandlers()
 
   def launch_agent(self, agent_num, agent_ext_num, play_offense, port, wait_until_join=True):
@@ -55,8 +55,6 @@ class Trainer(object):
 
     Returns a Popen process object
     """
-    print 'Launch agent %s-%d'%(self._offenseTeamName if play_offense
-                                else self._defenseTeamName, agent_num)
     if play_offense:
       assert self._numOffense > 0
       team_name = self._offenseTeamName
@@ -64,37 +62,24 @@ class Trainer(object):
       # First offense number is reserved for inactive offensive goalie
       internal_player_num = agent_num + 1
       self._agentNumInt.append(internal_player_num)
-      numTeammates = self._numOffense - 1
-      numOpponents = self._numDefense
     else:
       assert self._numDefense > 0
       team_name = self._defenseTeamName
       self._agentTeams.append(team_name)
       internal_player_num = agent_num
       self._agentNumInt.append(internal_player_num)
-      numTeammates = self._numDefense - 1
-      numOpponents = self._numOffense
-    binary_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams', 'base')
+    binary_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                              'teams', 'base')
     config_dir = os.path.join(binary_dir, 'config/formations-dt')
-    player_conf = os.path.join(binary_dir, '/config/player.conf')
-    agent_cmd =  os.path.join(binary_dir, 'agent')
-    agent_cmd += ' -t %s -p %i --numTeammates %i --numOpponents %i' \
-                 ' --playingOffense %i --serverPort %i --log_dir %s' \
-                 ' --player-config %s --config_dir %s' \
-                 %(team_name, self._serverPort, numTeammates,
-                   numOpponents, play_offense, port, self._logDir,
-                   player_conf, config_dir)
-    if agent_ext_num == 1:
-      agent_cmd += ' -g'
-    if self._record:
-      agent_cmd += ' --record'
-    # Comment next two lines to show output from agent.cpp and the server
-    kwargs = {'stdout':open('/dev/null', 'w'),
-              'stderr':open('/dev/null', 'w')}
-    p = subprocess.Popen(agent_cmd.split(' '), shell = False, **kwargs)
+    print("Waiting for player-controlled agent %s-%d: config_dir=%s, "\
+          "uniform_number=%d, server_port=%d, server_addr=%s, team_name=%s, "\
+          "play_goalie=%r"
+          % (self._offenseTeamName if play_offense else self._defenseTeamName,
+             agent_num, config_dir, agent_ext_num, self._serverPort, "localhost",
+             team_name, agent_ext_num==1))
     if wait_until_join:
       self.waitOnPlayer(agent_ext_num, play_offense)
-    return p
+    return None
 
   def createTeam(self, requested_team_name, play_offense):
     """ Given a team name, returns the team object. """
@@ -192,12 +177,13 @@ class Trainer(object):
       endOfTrial = True
     elif event == 'HFO_FINISHED':
       self._done = True
-    if endOfTrial: 
+    if endOfTrial:
       self._numTrials += 1
       print 'EndOfTrial: %d / %d %d %s'%\
         (self._numGoals, self._numTrials, self._frame, event)
       self._numFrames += self._frame - self._lastTrialStart
       self._lastTrialStart = self._frame
+      self.getConnectedPlayers()
 
   def _hear(self, body):
     """ Handle a hear message. """
@@ -319,46 +305,37 @@ class Trainer(object):
 
   def disconnectPlayer(self, player, player_num, on_offense):
     """Wait on a launched player to disconnect from the server. """
-    # print 'Disconnect %s-%d'%(self._offenseTeamName if on_offense
-    #                           else self._defenseTeamName, player_num)
     team_name = self._offenseTeamName if on_offense else self._defenseTeamName
     self.send('(disconnect_player %s %d)'%(team_name, player_num))
     player.kill()
 
-  def waitOnPlayer(self, player_num, on_offense):
-    """Wait on a launched player to connect and be reported by the
-    server.
-
-    """
+  def getConnectedPlayers(self):
+    """ Get the list of connected players. Populates self._connectedPlayers. """
+    self._gotLook = False
     self.send('(look)')
     partial = ['ok','look']
-    self._numPlayers = 0
     def f(body):
+      self._gotLook = True
       del self._connectedPlayers[:]
       for i in xrange(4, len(body)):
         _,team,num = body[i][0][:3]
         if (team, num) not in self._connectedPlayers:
           self._connectedPlayers.append((team,num))
     self.registerMsgHandler(f,*partial,quiet=True)
-    team_name = self._offenseTeamName if on_offense else self._defenseTeamName
-    while (team_name, str(player_num)) not in self._connectedPlayers:
+    while not self._gotLook:
       self.listenAndProcess()
       self.send('(look)')
     self.ignoreMsg(*partial,quiet=True)
 
-  def checkIfAllPlayersConnected(self):
-    """ Returns true if all players are connected. """
-    print 'Checking all players are connected'
-    self.send('(look)')
-    partial = ['ok','look']
-    self._numPlayers = 0
-    def f(x):
-      self._numPlayers = len(x) - 4 # -4 for time, ball, goal_l, and goal_r
-      self.send('(look)')
-    self.registerMsgHandler(f,*partial,quiet=True)
-    while self._numPlayers != self._numOffense + self._numDefense:
-      self.listenAndProcess()
-    self.ignoreMsg(*partial,quiet=True)
+  def waitOnPlayer(self, player_num, on_offense):
+    """ Wait on a launched player to connect and be reported by the server. """
+    team_name = self._offenseTeamName if on_offense else self._defenseTeamName
+    while (team_name, str(player_num)) not in self._connectedPlayers:
+      self.getConnectedPlayers()
+
+  def allPlayersConnected(self):
+    """ Returns true all players are connected. """
+    return len(self._connectedPlayers) == self._numOffense + self._numDefense
 
   def startGame(self):
     """ Starts a game of HFO. """
@@ -382,7 +359,7 @@ class Trainer(object):
 
     """
     for p,name in necProcesses:
-      if p.poll() is not None:
+      if p is not None and p.poll() is not None:
         print 'Something necessary closed (%s), exiting' % name
         return False
     return True
@@ -434,15 +411,9 @@ class Trainer(object):
           else:
             self.disconnectPlayer(player, player_num, on_offense=False)
 
-      self.checkIfAllPlayersConnected()
-
-      if self._numAgents > 0:
-        print 'Agents awaiting your connections'
-        necOff = set([(self._offenseTeamName,str(x)) for x in sorted_offense_agent_unums])
-        necDef = set([(self._defenseTeamName,str(x)) for x in sorted_defense_agent_unums])
-        necAgents = necOff.union(necDef)
-        while self.checkLive(necProcesses) and self._agentReady != necAgents:
-          self.listenAndProcess()
+      print 'Checking all players connected'
+      while not self.allPlayersConnected():
+        self.getConnectedPlayers()
 
       # Broadcast the HFO configuration
       offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
@@ -456,7 +427,7 @@ class Trainer(object):
                   offense_nums, defense_nums))
       print 'Starting game'
       self.startGame()
-      while self.checkLive(necProcesses) and not self._done:
+      while self.allPlayersConnected() and self.checkLive(necProcesses) and not self._done:
         prevFrame = self._frame
         self.listenAndProcess()
     except TimeoutError:
