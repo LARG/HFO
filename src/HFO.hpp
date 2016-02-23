@@ -3,18 +3,17 @@
 
 #include <string>
 #include <vector>
-#include <rcsc/common/basic_client.h>
-#include <rcsc/player/player_config.h>
-#include <rcsc/player/world_model.h>
-#include "agent.h"
 #include "common.hpp"
+
+class Agent;
+namespace rcsc { class BasicClient; }
 
 namespace hfo {
 
 class HFOEnvironment {
  public:
-  HFOEnvironment() {};
-  virtual ~HFOEnvironment() {};
+  HFOEnvironment();
+  virtual ~HFOEnvironment();
 
   /**
    * Connect to the server on the specified port. The
@@ -54,9 +53,9 @@ class HFOEnvironment {
   // progress. Returns the game status after the step
   virtual status_t step();
 
- protected:
-  rcsc::BasicClient client;
-  Agent agent;
+ private:
+  rcsc::BasicClient* client;
+  Agent* agent;
 };
 
 } // namespace hfo

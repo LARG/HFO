@@ -8,7 +8,7 @@ if not os.path.isfile(hfo_c_lib):
 
 module1 = Extension('hfo.hfo_c_wrapper',
                     libraries = ['hfo_c'],
-                    include_dirs = ['src','src/chain_action','build/librcsc-prefix/src/librcsc'],
+                    include_dirs = ['src'],
                     library_dirs = ['hfo'],
                     extra_compile_args=['-D__STDC_CONSTANT_MACROS'],
                     sources=['hfo/hfo_c_wrapper.cpp'])
