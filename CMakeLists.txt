@@ -62,6 +62,10 @@ if(INSTALL_ADDITIONAL_TEAMS)
   endif()
 endif()
 
+if(APPLE)
+  set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+endif()
+
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin)
 include_directories(${SOURCE_DIR} ${SOURCE_DIR}/chain_action)

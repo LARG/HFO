@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ./bin/HFO --offense-agents=2 --no-sync &
-sleep 1
+sleep 5
 ./example/communication_agent 7 6000 &
-sleep 1
+sleep 5
 ./example/communication_agent 11 6000 &
 
 # The magic line

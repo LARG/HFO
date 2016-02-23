@@ -24,7 +24,8 @@ def main():
       else:
         hfo.act(MOVE)
       status = hfo.step()
-    print 'Episode', episode, 'ended with', hfo.statusToString(status)
+    # print 'Episode', episode, 'ended with', hfo.statusToString(status)
+    print('Episode %d ended with %s'%(episode, hfo.statusToString(status)))
 
 if __name__ == '__main__':
   main()

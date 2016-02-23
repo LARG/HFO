@@ -44,6 +44,7 @@ extern "C" {
     return ActionToString(action).c_str();
   }
   const char* statusToString(const hfo::status_t status) {
+    StatusToString(status); // TODO: OSX requires two calls...?!
     return StatusToString(status).c_str();
   }
 }

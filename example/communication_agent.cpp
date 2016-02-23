@@ -15,7 +15,7 @@ using namespace hfo;
 feature_set_t features = HIGH_LEVEL_FEATURE_SET;
 string config_dir = "bin/teams/base/config/formations-dt";
 int unum = 11;
-int port = 6001;
+int port = 6000;
 string server_addr = "localhost";
 string team_name = "base_left";
 bool goalie = false;
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
       float y_pos = feature_vec[1];
       float target_x = 0;
       float target_y = unum == 11 ? .3 : -.3;
-      bool in_position = (pow(x_pos-target_x, 2) + pow(y_pos-target_y,2)) < .0005;
+      bool in_position = (pow(x_pos-target_x, 2) + pow(y_pos-target_y,2)) < .001;
       bool able_to_kick = feature_vec[5] > 0;
       if (agent_on_ball == unum && in_position && able_to_kick) {
         int teammate_unum = unum == 11 ? 7 : 11;

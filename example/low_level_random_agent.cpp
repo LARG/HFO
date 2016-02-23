@@ -13,7 +13,7 @@ using namespace hfo;
 feature_set_t features = LOW_LEVEL_FEATURE_SET;
 string config_dir = "bin/teams/base/config/formations-dt";
 int unum = 11;
-int port = 6001;
+int port = 6000;
 string server_addr = "localhost";
 string team_name = "base_left";
 bool goalie = false;
@@ -23,7 +23,6 @@ float arg1, arg2;
 // Returns a random low-level action
 action_t get_random_low_lv_action() {
   action_t action_indx = (action_t) ((rand() % 4) + DASH);
-  std::cout << action_indx << std::endl;
   switch (action_indx) {
     case DASH:
       arg1 = (rand() / float(RAND_MAX)) * 200 - 100; // power: [-100, 100]
@@ -55,7 +54,7 @@ int main(int argc, char** argv) {
   // manual for more information on feature sets.
   hfo.connectToServer(features, config_dir, unum, port, server_addr,
                            team_name, goalie);
-  for (int episode=0; ; episode++) {
+  for (int episode=0; episode<10; episode++) {
     status_t status = IN_GAME;
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
@@ -65,6 +64,8 @@ int main(int argc, char** argv) {
       // Advance the environment and recieve current game status
       status = hfo.step();
     }
+    cout << "Episode " << episode << " ended with status: "
+         << StatusToString(status) << std::endl;;
   }
   hfo.act(QUIT);
 };

@@ -112,8 +112,8 @@ class HFOEnvironment(object):
     n_params = hfo_lib.numParams(action_type)
     assert n_params == len(args) - 1, 'Incorrect number of params to act: '\
       'Required %d, provided %d'%(n_params, len(args)-1)
-    hfo_lib.act(self.obj, action_type,
-                as_ctypes(np.asarray(args[1:], dtype=np.float32)))
+    params = np.asarray(args[1:], dtype=np.float32)
+    hfo_lib.act(self.obj, action_type, params.ctypes.data_as(POINTER(c_float)))
 
   def say(self, message):
     """ Transmit a message """

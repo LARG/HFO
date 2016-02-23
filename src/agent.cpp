@@ -326,7 +326,6 @@ void Agent::actionImpl() {
       this->doSmartKick();
       break;
     case PASS:
-      std::cout << "Inagent pass: 0: " << params[0] << std::endl;
       this->doPassTo(int(params[0]));
       break;
     case DRIBBLE:
