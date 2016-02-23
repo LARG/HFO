@@ -181,7 +181,6 @@ inline bool ParseConfig(const std::string& message, Config& config) {
   std::string key, val;
   iss >> key;
   if (header.compare(key) != 0) {
-    std::cerr << "Got unexpected message header: " << header;
     return false;
   }
   while (iss >> key) {

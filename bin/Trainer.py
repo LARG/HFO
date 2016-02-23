@@ -337,6 +337,18 @@ class Trainer(object):
     """ Returns true all players are connected. """
     return len(self._connectedPlayers) == self._numOffense + self._numDefense
 
+  def sendHFOConfig(self):
+    """ Broadcast the HFO configuration """
+    offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
+                             for i in xrange(1, self._numOffense + 1)])
+    defense_nums = ' '.join([str(self.convertToExtPlayer(self._defenseTeamName, i))
+                             for i in xrange(self._numDefense)])
+    self.send('(say HFO_SETUP offense_name %s defense_name %s num_offense %d'\
+                ' num_defense %d offense_nums %s defense_nums %s)'
+              %(self._offenseTeamName, self._defenseTeamName,
+                self._numOffense, self._numDefense,
+                offense_nums, defense_nums))
+
   def startGame(self):
     """ Starts a game of HFO. """
     self.send('(change_mode play_on)')
@@ -415,17 +427,11 @@ class Trainer(object):
       while not self.allPlayersConnected():
         self.getConnectedPlayers()
 
-      # Broadcast the HFO configuration
-      offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
-                               for i in xrange(1, self._numOffense + 1)])
-      defense_nums = ' '.join([str(self.convertToExtPlayer(self._defenseTeamName, i))
-                               for i in xrange(self._numDefense)])
-      self.send('(say HFO_SETUP offense_name %s defense_name %s num_offense %d'\
-                  ' num_defense %d offense_nums %s defense_nums %s)'
-                %(self._offenseTeamName, self._defenseTeamName,
-                  self._numOffense, self._numDefense,
-                  offense_nums, defense_nums))
+      time.sleep(0.1)
+      self.sendHFOConfig()
+
       print 'Starting game'
+      time.sleep(0.1)
       self.startGame()
       while self.allPlayersConnected() and self.checkLive(necProcesses) and not self._done:
         prevFrame = self._frame
