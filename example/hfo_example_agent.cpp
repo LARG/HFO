@@ -24,7 +24,7 @@ int main() {
   // Connect to the server and request low-level feature set. See
   // manual for more information on feature sets.
   hfo.connectToServer(features, config_dir, unum, port, server_addr,
-                           team_name, goalie);
+                      team_name, goalie);
   // Play 5 episodes
   for (int episode=0; episode<5; episode++) {
     status_t status = IN_GAME;
