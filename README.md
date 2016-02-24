@@ -25,7 +25,6 @@ From the main HFO directory:
 ./example/passing_agents.sh
 ```
 
-#### Manually Starting Games
 Start a 1v1 game played by Agent2D:
 ```
 ./bin/HFO --offense-npcs=1 --defense-npcs=1 --no-sync
@@ -68,7 +67,7 @@ for episode in xrange(5):
   status = IN_GAME
   while status == IN_GAME:
     features = hfo.getState()
-    hfo.act(HFO_Actions.DASH, 20.0, 0.0)
+    hfo.act(DASH, 20.0, 0.0)
     status = hfo.step()
   print 'Episode', episode, 'ended'
 ```
