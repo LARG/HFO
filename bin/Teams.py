@@ -57,7 +57,7 @@ class Agent2d(Team):
   def __init__(self, name, baseDir, libDir, binaryName, logDir, record,
                host='localhost', port=6000):
     binaryPath = os.path.join(baseDir, binaryName)
-    options = '-t %s -p %i --config_dir %s/config/formations-dt --log_dir %s'\
+    options = '-t %s -p %i --config_dir %s/config/formations-dt --log_dir %s '\
               '--player-config %s/config/player.conf'\
               % (name, port, baseDir, logDir, baseDir)
     if record:
