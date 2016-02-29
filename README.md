@@ -7,7 +7,6 @@ RoboCup 2D Half Field Offense
 
 ## Dependencies
  - Boost-system, filesystem
- - Flex
  - Qt4 [Required for SoccerWindow2 visualizer]: To not build the visualizer, add cmake flag `-DBUILD_SOCCERWINDOW=False`
 
 ## Install
@@ -21,6 +20,11 @@ make install
 From the main HFO directory: `pip install [--user] .`
 
 ## Demos
+From the main HFO directory:
+```
+./example/passing_agents.sh
+```
+
 Start a 1v1 game played by Agent2D:
 ```
 ./bin/HFO --offense-npcs=1 --defense-npcs=1 --no-sync
@@ -43,12 +47,13 @@ minimal examples:
 #### C++ Agent
 ```c++
 HFOEnvironment hfo;
-hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
+hfo.connectToServer(...);
 for (int episode=0; episode<5; episode++) {
   status_t status = IN_GAME;
   while (status == IN_GAME) {
     const std::vector<float>& feature_vec = hfo.getState();
-    status = hfo.act(DASH, 20.0, 0.0);
+    hfo.act(DASH, 20.0, 0.0);
+    status = hfo.step();
   }
   cout << "Episode " << episode << " ended";
 }
@@ -57,12 +62,13 @@ for (int episode=0; episode<5; episode++) {
 #### Python Agent
 ```python
 hfo = hfo.HFOEnvironment()
-hfo.connectToAgentServer(6000, HFO_Features.LOW_LEVEL_FEATURE_SET)
+hfo.connectServer(...)
 for episode in xrange(5):
-  status = HFO_Status.IN_GAME
-  while status == HFO_Status.IN_GAME:
+  status = IN_GAME
+  while status == IN_GAME:
     features = hfo.getState()
-    status = hfo.act(HFO_Actions.DASH, 20.0, 0.0)
+    hfo.act(DASH, 20.0, 0.0)
+    status = hfo.step()
   print 'Episode', episode, 'ended'
 ```
 
