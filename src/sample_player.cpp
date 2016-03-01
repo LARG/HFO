@@ -225,34 +225,6 @@ SamplePlayer::initImpl( CmdLineParser & cmd_parser )
     return true;
 }
 
-/*!  Listen from a message from the trainer that reveals the
-  configuration of the HFO domain. Use this to populate our HFO_Config
-  struct.
-*/
-bool SamplePlayer::getHFOConfig() {
-  const AudioSensor& audio_sensor = audioSensor();
-  if (audio_sensor.trainerMessageTime().cycle() > lastTrainerMessageTime) {
-    const std::string& message = audio_sensor.trainerMessage();
-    if (hfo::ParseConfig(message, hfo_config)) {
-      lastTrainerMessageTime = audio_sensor.trainerMessageTime().cycle();
-      if (config().teamName().compare(hfo_config.offense_team_name) == 0) {
-        playing_offense = true;
-      } else if (config().teamName().compare(hfo_config.defense_team_name) == 0) {
-        playing_offense = false;
-      }
-      if (playing_offense) {
-        num_teammates = std::max(0, hfo_config.num_offense - 1);
-        num_opponents = hfo_config.num_defense;
-      } else {
-        num_teammates = std::max(0, hfo_config.num_defense - 1);
-        num_opponents = hfo_config.num_offense;
-      }
-      return true;
-    }
-  }
-  return false;
-}
-
 /*-------------------------------------------------------------------*/
 /*!
   main decision
@@ -263,21 +235,28 @@ SamplePlayer::actionImpl()
 {
 #ifdef ELOG
   if (config().record()) {
-    if (feature_extractor == NULL) {
-      if (getHFOConfig()) {
-        feature_extractor = Agent::getFeatureExtractor(
-            hfo::LOW_LEVEL_FEATURE_SET, num_teammates, num_opponents, playing_offense);
-      }
-    } else {
-      if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
-        const std::string& message = audioSensor().trainerMessage();
-        hfo::status_t game_status;
-        if (hfo::ParseGameStatus(message, game_status)) {
-          elog.addText(Logger::WORLD, "GameStatus %d", game_status);
-          elog.flush();
+    if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
+      const std::string& message = audioSensor().trainerMessage();
+      if (feature_extractor == NULL) {
+        hfo::Config hfo_config;
+        if (hfo::ParseConfig(message, hfo_config)) {
+          bool playing_offense = world().ourSide() == rcsc::LEFT;
+          int num_teammates = playing_offense ?
+              hfo_config.num_offense - 1 : hfo_config.num_defense - 1;
+          int num_opponents = playing_offense ?
+              hfo_config.num_defense : hfo_config.num_offense;
+          feature_extractor = new LowLevelFeatureExtractor(
+              num_teammates, num_opponents, playing_offense);
         }
-        lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
       }
+      hfo::status_t game_status;
+      if (hfo::ParseGameStatus(message, game_status)) {
+        elog.addText(Logger::WORLD, "GameStatus %d", game_status);
+        elog.flush();
+      }
+      lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
+    }
+    if (feature_extractor != NULL) {
       feature_extractor->ExtractFeatures(this->world());
       feature_extractor->LogFeatures();
     }

@@ -99,10 +99,6 @@ public:
     FieldEvaluator::ConstPtr getFieldEvaluator() const;
 
 protected:
-  // Listens for a HFO Config message
-  bool getHFOConfig();
-
-  hfo::Config hfo_config;
   FeatureExtractor* feature_extractor;
   long lastTrainerMessageTime;
   int num_teammates, num_opponents;
