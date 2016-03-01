@@ -33,7 +33,8 @@ class HFOEnvironment {
                        int server_port=6000,
                        std::string server_addr="localhost",
                        std::string team_name="base_left",
-                       bool play_goalie=false);
+                       bool play_goalie=false,
+                       std::string record_dir="");
 
   // Get the current state of the domain. Returns a reference to feature_vec.
   const std::vector<float>& getState();

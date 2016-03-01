@@ -99,9 +99,8 @@ Agent::Agent()
       feature_extractor(NULL),
       lastTrainerMessageTime(-1),
       lastTeammateMessageTime(-1),
-      lastDecisionTime(-1),
       game_status(IN_GAME),
-      action(NOOP)
+      requested_action(NOOP)
 {
     boost::shared_ptr< AudioMemory > audio_memory( new AudioMemory );
 
@@ -178,7 +177,7 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
     const std::list<std::string>& args = cmd_parser.args();
     if (std::find(args.begin(), args.end(), "--record") != args.end()) {
       std::cerr
-          << "[Agent Client] ERROR: Action recording requested but no supported."
+          << "ERROR: Action recording requested but no supported."
           << " To enable action recording, install https://github.com/mhauskn/librcsc"
           << " and recompile with -DELOG. See CMakeLists.txt"
           << std::endl;
@@ -218,10 +217,17 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
                                            playing_offense);
       break;
     default:
-      std::cerr << "[Feature Extractor] ERROR Unrecognized Feature set index: "
+      std::cerr << "ERROR: Unrecognized Feature set index: "
                 << feature_set_indx << std::endl;
       exit(1);
   }
+}
+
+// Instead of calling PlayerAgent::action() we instead call preAction
+// which does everything up to actionImpl(). actionImpl() is then
+// called in hfo::step(), PlayerAgent::executeAction().
+void Agent::action() {
+  preAction();
 }
 
 /*!
@@ -229,60 +235,18 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
   virtual method in super class
 */
 void Agent::actionImpl() {
-  lastDecisionTime = world().time().cycle();
-  // For now let's not worry about turning the neck or setting the vision.
-  this->setViewAction(new View_Tactical());
-  this->setNeckAction(new Neck_TurnToBallOrScan());
-  // Process new trainer messages
-  if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
-    const std::string& message = audioSensor().trainerMessage();
-    if (feature_extractor == NULL) {
-      hfo::Config hfo_config;
-      if (hfo::ParseConfig(message, hfo_config)) {
-        bool playing_offense = world().ourSide() == rcsc::LEFT;
-        int num_teammates = playing_offense ?
-            hfo_config.num_offense - 1 : hfo_config.num_defense - 1;
-        int num_opponents = playing_offense ?
-            hfo_config.num_defense : hfo_config.num_offense;
-        feature_extractor = getFeatureExtractor(
-            feature_set, num_teammates, num_opponents, playing_offense);
-      }
-    }
-    hfo::ParseGameStatus(message, game_status);
-    hfo::ParsePlayerOnBall(message, player_on_ball);
-    lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
+  if (requested_action < 0) {
+    std::cerr << "ERROR: No action. Did you forget to call act()?" << std::endl;
+    exit(1);
   }
-  // Process new teammate message
-  hear_msg.clear();
-  if (audioSensor().teammateMessageTime().cycle() > lastTeammateMessageTime) {
-    const std::list<HearMessage> teammateMessages = audioSensor().teammateMessages();
-    for (std::list<HearMessage>::const_iterator msgIter = teammateMessages.begin();
-         msgIter != teammateMessages.end(); msgIter++) {
-      if ((*msgIter).unum_ != world().self().unum()) {
-        hear_msg = (*msgIter).str_;
-        break;  // For now we just take one.
-      }
-    }
-    lastTeammateMessageTime = audioSensor().teammateMessageTime().cycle();
+  if (hfo::NumParams(requested_action) > params.size()) {
+    std::cerr << "ERROR: Not enough params for requested action! Action "
+              << ActionToString(requested_action) << " requires "
+              << hfo::NumParams(requested_action)
+              << " parameters, given " << params.size() << std::endl;
+    exit(1);
   }
-#ifdef ELOG
-  if (config().record() && feature_extractor != NULL) {
-    elog.addText(Logger::WORLD, "GameStatus %d", game_status);
-    elog.flush();
-    feature_extractor->LogFeatures();
-  }
-#endif
-  // Update state features
-  if (feature_extractor != NULL) {
-    state = feature_extractor->ExtractFeatures(this->world());
-  }
-  if (!say_msg.empty()) {
-    addSayMessage(new CustomMessage(say_msg));
-    say_msg.clear();
-  }
-  // Execute the action
-  assert(hfo::NumParams(action) <= params.size());
-  switch(action) {
+  switch(requested_action) {
     case DASH:
       this->doDash(params[0], params[1]);
       break;
@@ -337,13 +301,19 @@ void Agent::actionImpl() {
     case NOOP:
       break;
     case QUIT:
-      std::cout << "[Agent Server] Got quit from agent." << std::endl;
+      std::cout << "Got quit from agent." << std::endl;
       exit(0);
     default:
-      std::cerr << "[Agent Server] ERROR Unsupported Action: "
-                << action << std::endl;
+      std::cerr << "ERROR: Unsupported Action: "
+                << requested_action << std::endl;
       exit(1);
   }
+  // Clear the action
+  requested_action = (hfo::action_t) -1;
+  params.clear();
+  // For now let's not worry about turning the neck or setting the vision.
+  this->setViewAction(new View_Tactical());
+  this->setNeckAction(new Neck_TurnToBallOrScan());
 }
 
 /*-------------------------------------------------------------------*/
@@ -353,7 +323,53 @@ void Agent::actionImpl() {
 void
 Agent::handleActionStart()
 {
+  // Process new trainer messages
+  if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
+    const std::string& message = audioSensor().trainerMessage();
+    if (feature_extractor == NULL) {
+      hfo::Config hfo_config;
+      if (hfo::ParseConfig(message, hfo_config)) {
+        bool playing_offense = world().ourSide() == rcsc::LEFT;
+        int num_teammates = playing_offense ?
+            hfo_config.num_offense - 1 : hfo_config.num_defense - 1;
+        int num_opponents = playing_offense ?
+            hfo_config.num_defense : hfo_config.num_offense;
+        feature_extractor = getFeatureExtractor(
+            feature_set, num_teammates, num_opponents, playing_offense);
+      }
+    }
+    hfo::ParseGameStatus(message, game_status);
+    hfo::ParsePlayerOnBall(message, player_on_ball);
+    lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
+  }
 
+  // Process new teammate message
+  hear_msg.clear();
+  if (audioSensor().teammateMessageTime().cycle() > lastTeammateMessageTime) {
+    const std::list<HearMessage> teammateMessages = audioSensor().teammateMessages();
+    for (std::list<HearMessage>::const_iterator msgIter = teammateMessages.begin();
+         msgIter != teammateMessages.end(); msgIter++) {
+      if ((*msgIter).unum_ != world().self().unum()) {
+        hear_msg = (*msgIter).str_;
+        break;  // For now we just take one.
+      }
+    }
+    lastTeammateMessageTime = audioSensor().teammateMessageTime().cycle();
+  }
+
+  // Update state features
+  if (feature_extractor != NULL) {
+    state = feature_extractor->ExtractFeatures(this->world());
+  }
+
+  // Optionally write to logfile
+#ifdef ELOG
+  if (config().record() && feature_extractor != NULL) {
+    elog.addText(Logger::WORLD, "GameStatus %d", game_status);
+    elog.flush();
+    feature_extractor->LogFeatures();
+  }
+#endif
 }
 
 /*-------------------------------------------------------------------*/
@@ -531,6 +547,11 @@ Agent::handlePlayerType()
 void
 Agent::communicationImpl()
 {
+  // Say the outgoing message
+  if (!say_msg.empty()) {
+    addSayMessage(new CustomMessage(say_msg));
+    say_msg.clear();
+  }
   // Disabled since it adds default communication messages which
   // can conflict with our comm messages.
   // if ( M_communication )

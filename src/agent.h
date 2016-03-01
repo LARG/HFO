@@ -27,6 +27,9 @@ protected:
   // PlayerAgent::initImpl() in this method.
   virtual bool initImpl(rcsc::CmdLineParser& cmd_parser);
 
+  // We override PlayerAgent's Action function
+  virtual void action();
+
   // main decision
   virtual void actionImpl();
 
@@ -45,12 +48,11 @@ protected:
   FeatureExtractor* feature_extractor; // Extracts the features
   long lastTrainerMessageTime;         // Last time the trainer sent a message
   long lastTeammateMessageTime;        // Last time a teammate sent a message
-  long lastDecisionTime;               // Last time we made a decision
   hfo::status_t game_status;           // Current status of the game
   hfo::Player player_on_ball;          // Player in posession of the ball
   std::vector<float> state;            // Vector of current state features
   std::string say_msg, hear_msg;       // Messages to/from teammates
-  hfo::action_t action;                // Currently requested action
+  hfo::action_t requested_action;      // Currently requested action
   std::vector<float> params;           // Parameters of current action
 
  public:
@@ -58,12 +60,10 @@ protected:
   inline hfo::status_t getGameStatus() { return game_status; }
   inline const hfo::Player& getPlayerOnBall() { return player_on_ball; }
   inline const std::string& getHearMsg() { return hear_msg; }
-  inline long cycle() { return world().time().cycle(); }
-  inline long getLastDecisionTime() { return lastDecisionTime; }
 
   inline void setFeatureSet(hfo::feature_set_t fset) { feature_set = fset; }
   inline std::vector<float>* mutable_params() { return &params; }
-  inline void setAction(hfo::action_t a) { action = a; }
+  inline void setAction(hfo::action_t a) { requested_action = a; }
   inline void setSayMsg(const std::string& message) { say_msg = message; }
 
  private:

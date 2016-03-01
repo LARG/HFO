@@ -17,6 +17,8 @@
 
 using namespace hfo;
 
+#define MAX_STEPS 100
+
 HFOEnvironment::HFOEnvironment() {
   client = new rcsc::BasicClient();
   agent = new Agent();
@@ -33,7 +35,8 @@ void HFOEnvironment::connectToServer(feature_set_t feature_set,
                                      int server_port,
                                      std::string server_addr,
                                      std::string team_name,
-                                     bool play_goalie) {
+                                     bool play_goalie,
+                                     std::string record_dir) {
   agent->setFeatureSet(feature_set);
   rcsc::PlayerConfig& config = agent->mutable_config();
   config.setConfigDir(config_dir);
@@ -42,6 +45,10 @@ void HFOEnvironment::connectToServer(feature_set_t feature_set,
   config.setHost(server_addr);
   config.setTeamName(team_name);
   config.setGoalie(play_goalie);
+  if (!record_dir.empty()) {
+    config.setLogDir(record_dir);
+    config.setRecord(true);
+  }
   if (!agent->init(client, 0, NULL)) {
     std::cerr << "Init failed" << std::endl;
     exit(1);
@@ -52,8 +59,13 @@ void HFOEnvironment::connectToServer(feature_set_t feature_set,
     exit(1);
   }
   assert(client->isServerAlive() == true);
+  // Do nothing until the agent begins getting state features
   while (agent->getState().empty()) {
-    step();
+    act(NOOP);
+    agent->executeAction();
+    do {
+      client->runStep(agent);
+    } while (agent->lastPreActionTime() < agent->currentTime());
   }
 }
 
@@ -95,14 +107,35 @@ Player HFOEnvironment::playerOnBall() {
 }
 
 status_t HFOEnvironment::step() {
+  // Agent sends action to server
+  agent->executeAction();
+  // Wait until server replies with new game state
+  long start_cycle = agent->currentTime().cycle();
+  bool cycle_advanced = false;
   bool end_of_trial = agent->getGameStatus() != IN_GAME;
-  long start_cycle = agent->cycle();
-  while ((agent->cycle() <= start_cycle)
-         || (agent->getLastDecisionTime() < agent->cycle())
-         || (end_of_trial && agent->getGameStatus() != IN_GAME)) {
+  bool still_eot = false;
+  int steps = 0;
+  do {
     client->runStep(agent);
+    if (steps++ > MAX_STEPS) {
+      break;
+    }
     if (!client->isServerAlive()) {
       return SERVER_DOWN;
+    }
+    cycle_advanced = agent->currentTime().cycle() > start_cycle;
+  } while (!cycle_advanced || agent->lastPreActionTime() < agent->currentTime());
+  // If the trial is over, wait until the next episode starts
+  if (end_of_trial) {
+    while (agent->getGameStatus() != IN_GAME) {
+      act(NOOP);
+      agent->executeAction();
+      do {
+        client->runStep(agent);
+        if (!client->isServerAlive()) {
+          return SERVER_DOWN;
+        }
+      } while (agent->lastPreActionTime() < agent->currentTime());
     }
   }
   return agent->getGameStatus();
