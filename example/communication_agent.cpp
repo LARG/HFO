@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
       // Get any incoming communication
       std::string msg = hfo.hear();
       if (!msg.empty()) {
-        cout << "Agent-" << unum << " HEARD: " << msg.c_str() << endl;
+        cout << "Agent-" << unum << " heard: " << msg.c_str() << endl;
         if (msg == "Pass") {
           agent_on_ball = unum;
         }
@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
         float teammate_y_pos = -target_y;
         hfo.act(KICK_TO, teammate_x_pos, teammate_y_pos, 2.0);
         hfo.say("Pass");
+        cout << "Agent-" << unum << " said: Pass" << endl;
         agent_on_ball = teammate_unum;
       } else {
         float dist_to_ball = feature_vec[3];
