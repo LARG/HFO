@@ -26,6 +26,7 @@ class HFOEnvironment {
    * server_addr: address of server
    * team_name: Name of team to join.
    * play_goalie: is this player the goalie
+   * record_dir: record agent's states/actions/rewards to this directory
    */
   void connectToServer(feature_set_t feature_set=HIGH_LEVEL_FEATURE_SET,
                        std::string config_dir="bin/teams/base/config/formations-dt",

@@ -16,10 +16,11 @@ extern "C" {
                        int server_port,
                        char* server_addr,
                        char* team_name,
-                       bool play_goalie) {
+                       bool play_goalie,
+                       char* record_dir) {
     return hfo->connectToServer(feature_set, config_dir, uniform_number,
                                 server_port, server_addr, team_name,
-                                play_goalie);
+                                play_goalie, record_dir);
   }
   int getStateSize(hfo::HFOEnvironment *hfo) { return hfo->getState().size(); }
   void getState(hfo::HFOEnvironment *hfo, float *state_data) {

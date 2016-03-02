@@ -52,7 +52,7 @@ hfo_lib.HFO_new.restype = c_void_p
 hfo_lib.HFO_del.argtypes = [c_void_p]
 hfo_lib.HFO_del.restype = None
 hfo_lib.connectToServer.argtypes = [c_void_p, c_int, c_char_p, c_int,
-                                    c_int, c_char_p, c_char_p, c_bool]
+                                    c_int, c_char_p, c_char_p, c_bool, c_char_p]
 hfo_lib.connectToServer.restype = None
 hfo_lib.getStateSize.argtypes = [c_void_p]
 hfo_lib.getStateSize.restype = c_int
@@ -89,10 +89,24 @@ class HFOEnvironment(object):
                       server_port=6000,
                       server_addr='localhost',
                       team_name='base_left',
-                      play_goalie=False):
-    """ Connect to the server """
+                      play_goalie=False,
+                      record_dir=''):
+    """
+      Connect to the server on the specified port. The
+      following information is provided by the ./bin/HFO
+
+      feature_set: High or low level state features
+      config_dir: Config directory. Typically HFO/bin/teams/base/config/
+      uniform_number: player's uniform number.
+      server_port: port to connect to server on
+      server_addr: address of server
+      team_name: Name of team to join.
+      play_goalie: is this player the goalie
+      record_dir: record agent's states/actions/rewards to this directory
+    """
     hfo_lib.connectToServer(self.obj, feature_set, config_dir, uniform_number,
-                            server_port, server_addr, team_name, play_goalie)
+                            server_port, server_addr, team_name, play_goalie,
+                            record_dir)
 
   def getStateSize(self):
     """ Returns the number of state features """
