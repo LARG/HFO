@@ -100,9 +100,14 @@ call:\\
 \noindent \verb+  > hfo.connectToServer(FEATURE_SET, port, etc);+\\
 
 The arguments to this function are provided by the HFO executable for
-each player upon starting the game:\\
+each player upon starting the game. For example
+\verb|./bin/HFO --offense-agents=1| prints all the information needed
+to connect the offensive player:\\
 
-\noindent \verb+ Waiting for player-controlled agent base_left-0: config_dir=/home/matthew/projects/HFO/bin/teams/base/config/formations-dt, uniform_number=11, server_port=6000, server_addr=localhost, team_name=base_left, play_goalie=False+\\
+\noindent \verb+Waiting for player-controlled agent base_left-0: +\\
+\noindent \verb+  config_dir=HFO/bin/teams/base/config/formations-dt,+\\
+\noindent \verb+  uniform_number=11, server_port=6000, server_addr=localhost,+\\
+\noindent \verb+  team_name=base_left, play_goalie=False+\\
 
 By default, the server starts on port 6000, but may be changed as follows:\\
 
@@ -261,22 +266,6 @@ are encoded a floating point values and normalized to the range of
 [-1,1]. Invalid features are given a value of -2. The features are as
 follows:
 
-\begin{figure}[htp]
-  \centering
-  \includegraphics[width=.7\textwidth]{figures/playfieldCoords}
-  \caption{\textbf{Normalized Coordinates in the HFO play field}:
-    These coordinates are used for reporting the agent's position in
-    the high-level feature set as well specifying targets for the
-    mid-level actions (Section \ref{sec:mid_level_actions}). The
-    red-rectangle shows the boundaries of the reported positions,
-    which exceed the play field boundaries by 10\% in each
-    direction. Positions exceeding this rectangle are bounded (via
-    min/max) to the edges of the rectangle. All distance features are
-    normalized against the max HFO distance shown in orange.}
-  \label{fig:playfieldCoords}
-\end{figure}
-
-\newpage
 \subsubsection{High Level State Feature List}
 Let $T$ denote the number of teammates in the HFO game. Then there are
 a total of $9 + 5T$ high-level features with an additional $T+1$
@@ -319,6 +308,21 @@ features if at least one opponent is present.
 
 \begin{figure}[htp]
   \centering
+  \includegraphics[width=.7\textwidth]{figures/playfieldCoords}
+  \caption{\textbf{Normalized Coordinates in the HFO play field}:
+    These coordinates are used for reporting the agent's position in
+    the high-level feature set as well specifying targets for the
+    mid-level actions (Section \ref{sec:mid_level_actions}). The
+    red-rectangle shows the boundaries of the reported positions,
+    which exceed the play field boundaries by 10\% in each
+    direction. Positions exceeding this rectangle are bounded (via
+    min/max) to the edges of the rectangle. All distance features are
+    normalized against the max HFO distance shown in orange.}
+  \label{fig:playfieldCoords}
+\end{figure}
+
+\begin{figure}[htp]
+  \centering
   \includegraphics[width=.5\textwidth]{figures/openAngle}
   \caption{Open angle from ball to the goal $\theta_g$ avoiding the
     blue goalie and the open angle from the ball to the yellow
@@ -327,7 +331,6 @@ features if at least one opponent is present.
   \label{fig:openAngle}
 \end{figure}
 
-\newpage
 \subsection {Low Level Feature Set}
 The state features used by HFO are designed with the mindset of
 providing an overcomplete, basic, egocentric viewpoint. The features
@@ -425,7 +428,7 @@ are used to encode each player feature.
 \subsubsection{Other Features}
 Some features, such as the agent's stamina, do not fall into any of
 the above categories. These features are referred to as \textit{other
-  features}.
+  features} and are normalized in the range $[-1, 1]$.
 
 \subsubsection{Low Level State Feature List}
 Let $T$ denote the number of teammates and $O$ denote the number of
