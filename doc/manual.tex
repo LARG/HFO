@@ -40,7 +40,7 @@ Installation with CMake:
 
 HFO installation has been tested on Ubuntu Linux and OSX. Successful
 installation depends on
-\verb+CMake, Boost-system, Boost-filesystem, Flex+. By default, the
+\verb+CMake, Boost-system, Boost-filesystem+. By default, the
 soccerwindow2 visualizer is also built and requires
 \verb+Qt4+. Experimentally speaking, HFO is fully-functional without
 the visualizer. To disable this component, use the following cmake
@@ -75,10 +75,8 @@ interface, uninstall it as follows: \verb+pip uninstall hfo+.
     ovals. Calling the HFO executable starts the trainer, visualizer,
     and all the offensive and defensive npcs (Agent2d) as well as the
     offensive and defensive agent servers. Your code then uses the HFO
-    interface to connect your agent to an agent server. Once all
-    servers have connected agents, the game begins. The trainer
-    oversees the game and is responsible for resetting the players
-    between episodes.}
+    interface to connect your agent to the server. Once all agents are
+    connected, the game begins. The trainer oversees the game.}
   \label{fig:hfo}
 \end{figure}
 
@@ -94,19 +92,19 @@ agents. These options are specified through the following flags:\\
 \noindent
 \verb+ > ./bin/HFO --offense-agents=1 --defense-agents=1 --offense-npcs=2 --defense-npcs=2+\\
 
-This would create a 3v3 game with one player-controlled agent on
-each team. In order for the game to start, you must connect your
-player-controlled agents to the waiting agent servers. This is done
-through the call:\\
+This would create a 3v3 game with one player-controlled agent on each
+team. In order for the game to start, you must connect your
+player-controlled agents to the server. This is done through the
+call:\\
 
-\noindent \verb+  > hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);+\\
-or in Python:\\
-\noindent \verb+  > hfo_env.connectToAgentServer(6000, HFO_Features.LOW_LEVEL_FEATURE_SET)+\\
+\noindent \verb+  > hfo.connectToServer(FEATURE_SET, port, etc);+\\
 
-By default, the server for the first agent is allocated to port
-6000. Subsequent ports are allocated sequentially backwards (e.g. to
-connect the second agent, port 5999 would be used). The default port
-may be changed as follows:\\
+The arguments to this function are provided by the HFO executable for
+each player upon starting the game:\\
+
+\noindent \verb+ Waiting for player-controlled agent base_left-0: config_dir=/home/matthew/projects/HFO/bin/teams/base/config/formations-dt, uniform_number=11, server_port=6000, server_addr=localhost, team_name=base_left, play_goalie=False+\\
+
+By default, the server starts on port 6000, but may be changed as follows:\\
 
 \noindent \verb+  > ./bin/HFO --port 12345+
 
@@ -129,9 +127,9 @@ logs, as discussed in the next section.
 \section{Logging}
 
 By default, the soccer server generates game logs and stores them in
-the \verb+log+ directory. The main game log is
-\verb+log/incomplete.rcg+. This log may be replayed using the
-soccerwindow2 visualizer. \\
+the \verb+log+ directory. The main game logs are rcg files:
+\verb+log/*.rcg+. These log may be replayed using the soccerwindow2
+visualizer. \\
 
 \noindent To replay a log: \\
 \verb+  > ./bin/soccerwindow2 -l log/incomplete.rcg+
@@ -171,11 +169,15 @@ This will produce logs for all the offensive players
 (\verb+log/left-[1-11].log+) and defensive players
 (\verb+log/right-[1-11].log+). The first offensive player is left-11,
 so in the case of single-agent offense, left-11.log will contain the
-active player's record. The log, \verb+incomplete.rcg+ may be used to
-verify the player numbers on field.
+active player's record. Note that for player controlled agents, it is
+necessary to specify a \verb+record_dir+ in the \verb+connectToServer+
+function:\\
+\\
+\noindent \verb+std::string record_dir = "log/";+\\
+\noindent \verb+hfo.connectToServer(features, config_dir, unum, port, server_addr,+\\
+\noindent \verb+                    team_name, goalie, record_dir);+\\
 
 \section{Randomness}
-
 A seed may be specified as follows:\\
 
 \noindent \verb+  > ./bin/HFO --seed 123+\\
@@ -187,18 +189,66 @@ policies, it is not sufficient to precisely replicate full games. It
 player's behavior, observations, and physics all proceed
 stochastically.
 
-\section{State Spaces}
+\section{Player On Ball}
+By default, episodes begin with the ball being randomly positioned in
+the offensive half of the playfield. Typically the first task for the
+offense is to send a player to collect the ball. It is possible to
+instead request that a certain offensive player is given the ball at
+the start of each episode. This is accomplished as follows:\\
 
-The HFO domains provides a choice between a low-level feature set and
-a higher-level feature set. Selecting between the different feature
-sets is accomplished when connecting to the agent server. Also see
-\verb|examples/hfo_example_agent.cpp| and
-\verb|examples/hfo_example_agent.py| for examples:
+\noindent \verb+  > ./bin/HFO --offense-on-ball 1+\\
+
+The above command will always give the ball to the first offensive
+player (e.g. uniform number 11). If an offense-on-ball number is
+specified that is larger than the number of offensive players, the
+ball will be given to a random offensive player at the start of each
+episode.
+
+\section{Teams}
+By default, offensive and defensive NPCs use the base Agent2D
+policy. It is possible to use policies from different teams as
+follows:\\
+
+\noindent \verb+  > ./bin/HFO --offense-team helios+\\
+\noindent \verb+  > ./bin/HFO --defense-team base+\\
+
+This would take offense NPCs from Helios' 2013 Eindhoven release and
+defensive NPCs from the default Agent2D-base. Currently the only
+supported teams are Helios and Base.
+
+\section{Communication}
+HFO allows agents to receive and broadcast messages. This is
+accomplished by the \verb hear \ and \verb say \ functions. The
+maximum allowed message size is controlled by HFO's
+\verb|--message-size| flag. See
+\verb|examples/communication_agent.cpp| and
+\verb|examples/communication_agent.py| for examples.
+
+\section{Controlling Trials}
+HFO trials typically end with a goal, the defense capturing the ball,
+the ball going out of bounds, or running out of time. The trials flag
+specifies a maximum number of trials
+\verb+ > ./bin/HFO --trials 500+. Instead, a maximum number of frames
+may be specified: \verb+ > ./bin/HFO --frames 1000+ will stop the
+server after 10,000 steps have passed. Each trial is run for a maximum
+of \verb --frames-per-trial \ steps, but may stop early if no agent
+approaches the ball within \verb --untouched-time \ steps.
+
+\section{State Spaces}
+The HFO domains provides a choice between a low and a high-level
+feature set. Selecting between the different feature sets is
+accomplished when connecting the agent to the server:
 
 \begin{verbatim}
-  > hfo.connectToAgentServer(6000, LOW_LEVEL_FEATURE_SET);
-  > hfo.connectToAgentServer(6000, HIGH_LEVEL_FEATURE_SET);
+  > hfo.connectToServer(LOW_LEVEL_FEATURE_SET, ...);
+  > hfo.connectToServer(HIGH_LEVEL_FEATURE_SET, ...);
 \end{verbatim}
+
+See \verb|examples/hfo_example_agent.cpp| and
+\verb|examples/hfo_example_agent.py| for examples. As the choice of
+feature set influences the challenge of learning, it is the
+responsibility of the user to faithfully report which state space was
+used. The following sections explain the feature sets.
 
 \subsection{High Level Feature Set}
 A set of high-level features is provided following the example given
@@ -226,18 +276,23 @@ follows:
   \label{fig:playfieldCoords}
 \end{figure}
 
+\newpage
 \subsubsection{High Level State Feature List}
-\begin{enumerate}
+Let $T$ denote the number of teammates in the HFO game. Then there are
+a total of $9 + 5T$ high-level features with an additional $T+1$
+features if at least one opponent is present.
+
+\begin{enumerate}[noitemsep]
 \setcounter{enumi}{-1}
-\item{\textbf{X position} - The agent’s normalized x-position on the
-  field. See Figure \ref{fig:playfieldCoords}.}
-\item{\textbf{Y position} - The agent’s normalized y-position on the
-  field. See Figure \ref{fig:playfieldCoords}.}
+\item{\textbf{X position} - The agent’s x-position on the field. See
+  Figure \ref{fig:playfieldCoords}.}
+\item{\textbf{Y position} - The agent’s y-position on the field. See
+  Figure \ref{fig:playfieldCoords}.}
 \item{\textbf{Orientation} - The direction that the agent is facing.}
-\item{\textbf{Ball Distance} - Normalized distance to the ball.}
+\item{\textbf{Ball Proximity} - Agent's proximity to the ball.}
 \item{\textbf{Ball Angle} - Angle to the ball.}
 \item{\textbf{Able to Kick} - Boolean indicating if the agent can kick the ball.}
-\item{\textbf{Goal Center Distance} - Normalized distance from the agent to the center of the goal.}
+\item{\textbf{Goal Center Proximity} - Agent's proximity to the center of the goal.}
 \item{\textbf{Goal Center Angle} - Angle from the agent to the center of the goal.}
 \item{\textbf{Goal Opening Angle} - The size of the largest open angle
   of the agent to the goal, shown as $\theta_g$ in Figure
@@ -245,11 +300,11 @@ follows:
 \item [$T$] {\textbf{Teammate i's Goal Opening Angle} - For each
   teammate i: i’s goal opening angle. Invalid if agent is not playing
   offense.}
-\item [$1$] {\textbf{Distance to Opponent} - If an opponent is
-  present, normalized distance to the closest opponent. This feature
-  is absent if there are no opponents.}
-\item [$T$] {\textbf{Distance from Teammate i to Opponent} - For each
-  teammate i: the normalized distance from the teammate to the closest
+\item [$1$] {\textbf{Proximity to Opponent} - If an opponent is
+  present, proximity to the closest opponent. This feature is absent
+  if there are no opponents.}
+\item [$T$] {\textbf{Proximity from Teammate i to Opponent} - For each
+  teammate i: the proximity from the teammate to the closest
   opponent. This feature is absent if there are no opponents. If
   teammates are present but not detected, this feature is considered
   invalid and given the value of -2.}
@@ -257,18 +312,14 @@ follows:
   angle available to pass to teammate i. Shown as $\theta_p$ in Figure
   \ref{fig:openAngle}. If teammates are present but not detected, this
   feature is considered invalid and given the value of -2.}
-\item [$3T$] {\textbf{Distance, Angle, and Uniform Number of
-    Teammates} - For each teammate i: the normalized distance, angle,
-  and uniform number of that teammate.}
+\item [$3T$] {\textbf{Proximity, Angle, and Uniform Number of
+    Teammates} - For each teammate i: the proximity, angle, and
+  uniform number of that teammate.}
 \end{enumerate}
-
-There are a total of $9 + 5*\textrm{num\_teammates}$ features with an
-additional $1 + \textrm{num\_teammates}$ features if at least one
-opponent is present.
 
 \begin{figure}[htp]
   \centering
-  \includegraphics[width=.75\textwidth]{figures/openAngle}
+  \includegraphics[width=.5\textwidth]{figures/openAngle}
   \caption{Open angle from ball to the goal $\theta_g$ avoiding the
     blue goalie and the open angle from the ball to the yellow
     teammate $\theta_p$. Figure reproduced with permission from Samuel
@@ -276,24 +327,23 @@ opponent is present.
   \label{fig:openAngle}
 \end{figure}
 
+\newpage
 \subsection {Low Level Feature Set}
 The state features used by HFO are designed with the mindset of
-providing an over-complete, basic, egocentric viewpoint. The features
+providing an overcomplete, basic, egocentric viewpoint. The features
 are basic in the sense that they provide distances and angles to
 relevant points of interest, but do not include higher level
 perceptions such as the largest angle between a goal post and
 goalkeeper.
 
 All features are encoded as floating point values normalized to the
-range of [-1,1]. Different types of features are discussed next.
+range of [-1,1]. Several different types of features exist:
 
 \subsubsection{Boolean Features}
-
 Boolean features assume either the minimum feature value of -1 or the
 maximum feature value of 1.
 
 \subsubsection{Valid Features}
-
 Since feature information is attained from the Agent's world-model, it
 is possible that, the world model's information may be stale or
 incorrect. \textit{Valid features} are boolean features indicating
@@ -308,7 +358,6 @@ detects that the agent's velocity is invalid, the feature that encodes
 the magnitude of self velocity will be set to zero.
 
 \subsubsection{Angular Features}
-
 \textit{Angular features} (e.g. the angle to the ball), are encoded as
 two floating point numbers -- the $sin(\theta)$ and $cos(\theta)$
 where $\theta$ is the original angle in radians. Figure
@@ -348,25 +397,24 @@ $cos^{-1}(\alpha_2)$ and multiplying by the sign of $\alpha_1$.
   \label{fig:ang_example}
 \end{figure*}
 
-\subsubsection{Distance Features}
-
-\textit{Distance features} encode the distance to objects of
-interest. Unless otherwise indicated, they are normalized against the
-maximum possible distance in the HFO playfield (defined as $\sqrt{l^2
-  + w^2}$ where $l,w$ are the length and width of the HFO
-playfield). A distance of zero will be encoded with the minimum
-feature value of -1 while a maximum distance will be encoded with 1.
+\subsubsection{Proximity Features}
+\textit{Proximity features} encode the proximity of the agent to an
+object of interest. Unless otherwise indicated, they are normalized
+against the maximum possible distance in the HFO playfield (defined as
+$\sqrt{l^2 + w^2}$ where $l,w$ are the length and width of the HFO
+playfield). A maximum proximity of 1 indicates the agent is co-located
+with the object of interest, while a minimum proximity of -1 indicates
+that the agent is across the field from the object of interest.
 
 \subsubsection{Landmark Features}
-
-Landmark features encode the relative angle and distance to a landmark
-of interest. Each landmark feature consists of three floating point
-values, two to encode the angle to the landmark and one to encode the
-distance. Note that if the agent's self position is invalid, then the
-landmark feature values are zeroed.
+Landmark features encode the relative angle and proximity of the agent
+to a landmark of interest. Each landmark feature consists of three
+floating point values, two to encode the agent's relative angle to the
+landmark and one to encode the landmark's proximity. Note that if the
+agent's self position is invalid, then the landmark feature values are
+zeroed.
 
 \subsubsection{Player Features}
-
 Player features are used to encode the relationship of the agent to
 another player or opponent. Each player feature is encoded as 1) a
 landmark feature of that player's location 2) the global angle of that
@@ -375,44 +423,32 @@ global angle of the player's velocity. Eight floating point numbers
 are used to encode each player feature.
 
 \subsubsection{Other Features}
-
 Some features, such as the agent's stamina, do not fall into any of
 the above categories. These features are referred to as \textit{other
   features}.
 
 \subsubsection{Low Level State Feature List}
+Let $T$ denote the number of teammates and $O$ denote the number of
+opponents in the HFO game. Then there are a total of $58 + 8T + 8O$
+low-level features:
 
-Basic Features are always present and independent of the number of
-teammates or opponents. The 32 basic features are encoded using 58
-floating point values (\textit{angular features} require two floats,
-\textit{landmark features} require 3). Additionally a variable number
-of \textit{player features} are then added. This number depends on the
-number of teammates and opponents in the HFO game, but 8 floating
-point values are required for each player feature. Thus, the total
-number of features is $58 + 8*\textrm{num\_teammates} +
-8*\textrm{num\_opponents}$.
-
-\begin{enumerate}
+\begin{enumerate}[noitemsep]
 \setcounter{enumi}{-1}
   \item{\textbf{Self\_Pos\_Valid} [Valid] Indicates if self position is valid.}
   \item{\textbf{Self\_Vel\_Valid} [Valid] Indicates if the agent's velocity is valid.}
   \itemrange{1}{\textbf{Self\_Vel\_Ang} [Angle] Angle of agent's velocity.}
-  \item{\textbf{Self\_Vel\_Mag} [Other] Magnitude of agent's
-    velocity. Normalized against the maximum observed self speed,
-    0.46.}
+  \item{\textbf{Self\_Vel\_Mag} [Other] Magnitude of the agent's velocity.}
   \itemrange{1}{\textbf{Self\_Ang} [Angle] Agent's Global Body Angle.}
-  \item{\textbf{Stamina} [Other] Agent's Stamina: The amount of remaining stamina the
-    agent has. Normalized against the maximum observed agent stamina
-    of 8000.}
+  \item{\textbf{Stamina} [Other] Agent's Stamina: Low stamina slows movement.}
   \item{\textbf{Frozen} [Boolean] Indicates if the agent is Frozen. Frozen status can
-    happen when being tackled by another player.}
-  \item{\textbf{Colliding\_with\_ball} [Boolean] Indicates if the agent
+    happen when tackling or being tackled by another player.}
+  \item{\textbf{Colliding\_with\_ball} [Boolean] Indicates the agent
     is colliding with the ball.}
-  \item{\textbf{Colliding\_with\_player} [Boolean] Indicates if the agent
+  \item{\textbf{Colliding\_with\_player} [Boolean] Indicates the agent
     is colliding with another player.}
-  \item{\textbf{Colliding\_with\_post} [Boolean] Indicates if the agent
+  \item{\textbf{Colliding\_with\_post} [Boolean] Indicates the agent
     is colliding with a goal post.}
-  \item{\textbf{Kickable} [Boolean] Indicates if the agent is able to
+  \item{\textbf{Kickable} [Boolean] Indicates the agent is able to
     kick the ball.}
   \itemrange{2}{\textbf{Goal Center} [Landmark] Center point between the goal posts.}
   \itemrange{2}{\textbf{Goal Post Top} [Landmark] Top goal post.}
@@ -421,43 +457,44 @@ number of features is $58 + 8*\textrm{num\_teammates} +
   \itemrange{2}{\textbf{Penalty Box Top} [Landmark] Top corner of the penalty box.}
   \itemrange{2}{\textbf{Penalty Box Bot} [Landmark] Bottom corner of the penalty box.}
   \itemrange{2}{\textbf{Center Field} [Landmark] The left middle point of the
-    HFO play area. True center of the full-field.}
+    HFO play area.}
   \itemrange{2}{\textbf{Corner Top Left} [Landmark] Top left corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Top Right} [Landmark] Top right corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bot right corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bot left corner HFO Playfield.}
-  \item{\textbf{OOB Left Dist} [Distance] Distance to the nearest
+  \item{\textbf{OOB Left Dist} [Proximity] Proximity to the nearest
     point of the left side of the HFO playable area. E.g. distance
     remaining before the agent goes out of bounds in left field.}
-  \item{\textbf{OOB Right Dist} [Distance] Distance remaining before
-    the agent goes out of bounds in right field.}
-  \item{\textbf{OOB Top Dist} [Distance] Distance remaining before
-    the agent goes out of bounds in top field.}
-  \item{\textbf{OOB Bot Dist} [Distance] Distance remaining before
-    the agent goes out of bounds in bottom field.}
-  \item{\textbf{Ball Pos Valid} [Valid] Indicates if the ball position estimate is valid.}
-  \itemrange{1}{\textbf{Ball Angle} [Angle] Angle to the ball from the agent's perspective.}
-  \item{\textbf{Ball Dist} [Distance] Distance to the ball.}
-  \item{\textbf{Ball Vel Valid} [Valid] Indicates if the ball velocity estimate is valid.}
-  \item{\textbf{Ball Vel Mag} [Other] Global magnitude of the ball velocity. Normalized against the observed maximum ball velocity, 3.0.}
+  \item{\textbf{OOB Right Dist} [Proximity] Proximity to the right
+    field line.}
+  \item{\textbf{OOB Top Dist} [Proximity] Proximity to the top field line.}
+  \item{\textbf{OOB Bot Dist} [Proximity] Proximity to the bottom field line.}
+  \item{\textbf{Ball Pos Valid} [Valid] Indicates the ball position estimate is valid.}
+  \itemrange{1}{\textbf{Ball Angle} [Angle] Agent's angle to the ball.}
+  \item{\textbf{Ball Dist} [Proximity] Proximity to the ball.}
+  \item{\textbf{Ball Vel Valid} [Valid] Indicates the ball velocity estimate is valid.}
+  \item{\textbf{Ball Vel Mag} [Other] Magnitude of the ball's velocity.}
   \itemrange{1}{\textbf{Ball Vel Ang} [Angle] Global angle of ball velocity.}
   \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features) for each teammate active in HFO, sorted by proximity to the agent.}
   \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features) for each opponent present, sorted by proximity to the player.}
 \end{enumerate}
 
 \section{Action Space}
-The HFO domain provides support for both low-level primitive actions
-and high-level strategic actions. Basic, parameterized actions are
-provided for locomotion and kicking. Additionally high-level strategic
-actions are available for moving, shooting, passing and
-dribbling. Control of the agent's head and gaze is not provided and
-follows Agent2D's default strategy. Both low and high level actions
-are available through the same interface. It is the responsibility of
-the user to faithfully report which action spaces were used.
+The HFO domain provides support for both low-level primitive actions,
+mid-level, and high-level strategic actions. Low-level, parameterized
+actions are provided for locomotion and kicking. Mid-level actions are
+still parameterized by capture high level activities such as
+dribbling. Finally, high-level discrete, strategic actions are
+available for moving, shooting, passing and dribbling. Control of the
+agent's head and gaze is not provided and follows Agent2D's default
+strategy. Low, medium, and high level actions are available through
+the same interface. As the choice of action spaces greatly influences
+the challenge of learning, it is the responsibility of the user to
+faithfully report which action spaces were used.
 
 \subsection{Low Level Actions}
 \label{sec:low_level_actions}
-\begin{itemize}
+\begin{itemize}[noitemsep]
 \item{\textbf{Dash}(power, degrees): Moves the agent with power [-100,
     100] where negative values move backwards. The relative direction
   of movement is given in degrees and varies between [-180,180] with 0
@@ -475,7 +512,7 @@ the user to faithfully report which action spaces were used.
 
 \subsection{Mid Level Actions}
 \label{sec:mid_level_actions}
-\begin{itemize}
+\begin{itemize}[noitemsep]
 \item{\textbf{Kick$\_$To}(target$_x$, target$_y$, speed): Kicks the
   ball to the specified target point with the desired speed. Valid
   values for target$_{x,y} \in [-1,1]$ and speed $\in [0,3]$.}
@@ -493,7 +530,7 @@ the user to faithfully report which action spaces were used.
 
 \subsection{High Level Actions}
 \label{sec:high_level_actions}
-\begin{itemize}
+\begin{itemize}[noitemsep]
 \item{\textbf{Move}(): Re-positions the agent according to the
   strategy given by Agent2D. The \textit{move} command works only when
   agent does not have the ball. If the agent has the ball, another
@@ -510,7 +547,7 @@ the user to faithfully report which action spaces were used.
 \end{itemize}
 
 \subsection{Special Actions}
-\begin{itemize}
+\begin{itemize}[noitemsep]
 \item{\textbf{NO-OP}: Indicates that the agent should take no action.}
 \item{\textbf{Quit}: Indicates to the agent server that you wish to
   terminate the HFO environment.}
@@ -522,7 +559,7 @@ New agents may be developed in C++ or Python. In Python, as long as
 the hfo interface has been installed, the agent needs only to
 \verb+from hfo import *+. In C++ it is necessary to
 \verb+#include <HFO.hpp>+ and also to link against the shared object
-library \verb+lib/libhfo.so+ when compiling:\\
+library \verb+lib/libhfo.so+ when compiling:
 
 \begin{verbatim}
   > g++ example/your_new_agent.cpp -I src -L lib -Wl,-rpath=lib -lhfo
