@@ -184,7 +184,7 @@ TackleGenerator::TackleGenerator()
 TackleGenerator &
 TackleGenerator::instance()
 {
-    static TackleGenerator s_instance;
+    static thread_local TackleGenerator s_instance;
     return s_instance;
 }
 
@@ -206,7 +206,7 @@ TackleGenerator::clear()
 void
 TackleGenerator::generate( const WorldModel & wm )
 {
-    static GameTime s_update_time( 0, 0 );
+    static thread_local GameTime s_update_time( 0, 0 );
 
     if ( s_update_time == wm.time() )
     {

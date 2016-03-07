@@ -98,7 +98,7 @@ ShortDribbleGenerator::ShortDribbleGenerator()
 ShortDribbleGenerator &
 ShortDribbleGenerator::instance()
 {
-    static ShortDribbleGenerator s_instance;
+    static thread_local ShortDribbleGenerator s_instance;
     return s_instance;
 }
 
@@ -526,7 +526,7 @@ ShortDribbleGenerator::simulateKickTurnsDashes( const WorldModel & wm,
     static const int min_dash = 2;
     //static const int min_dash = 1;
 
-    static std::vector< Vector2D > self_cache;
+    static thread_local std::vector< Vector2D > self_cache;
 
     //
     // create self position cache

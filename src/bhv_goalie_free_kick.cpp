@@ -53,9 +53,9 @@
 bool
 Bhv_GoalieFreeKick::execute( rcsc::PlayerAgent * agent )
 {
-    static bool s_first_move = false;
-    static bool s_second_move = false;
-    static int s_second_wait_count = 0;
+    static thread_local bool s_first_move = false;
+    static thread_local bool s_second_move = false;
+    static thread_local int s_second_wait_count = 0;
 
     rcsc::dlog.addText( rcsc::Logger::TEAM,
                         __FILE__": Bhf_GoalieFreeKick" );

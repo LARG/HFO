@@ -56,8 +56,8 @@ ActGen_SimpleDribble::generate( std::vector< ActionStatePair > * result,
                                 const WorldModel & current_wm,
                                 const std::vector< ActionStatePair > & path ) const
 {
-    static GameTime s_last_call_time( 0, 0 );
-    static int s_action_count = 0;
+    static thread_local GameTime s_last_call_time( 0, 0 );
+    static thread_local int s_action_count = 0;
 
     if ( current_wm.time() != s_last_call_time )
     {

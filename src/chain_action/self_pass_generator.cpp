@@ -96,7 +96,7 @@ SelfPassGenerator::SelfPassGenerator()
 SelfPassGenerator &
 SelfPassGenerator::instance()
 {
-    static SelfPassGenerator s_instance;
+    static thread_local SelfPassGenerator s_instance;
     return s_instance;
 }
 
@@ -166,7 +166,7 @@ SelfPassGenerator::createCourses( const WorldModel & wm )
     static const int ANGLE_DIVS = 60;
     static const double ANGLE_STEP = 360.0 / ANGLE_DIVS;
 
-    static std::vector< Vector2D > self_cache( 24 );
+    static thread_local std::vector< Vector2D > self_cache( 24 );
 
     const ServerParam & SP = ServerParam::i();
 

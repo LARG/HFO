@@ -91,7 +91,7 @@ CrossGenerator::CrossGenerator()
 CrossGenerator &
 CrossGenerator::instance()
 {
-    static CrossGenerator s_instance;
+    static thread_local CrossGenerator s_instance;
     return s_instance;
 }
 
@@ -117,7 +117,7 @@ CrossGenerator::clear()
 void
 CrossGenerator::generate( const WorldModel & wm )
 {
-    static GameTime s_update_time( -1, 0 );
+    static thread_local GameTime s_update_time( -1, 0 );
     if ( s_update_time == wm.time() )
     {
         return;

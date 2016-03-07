@@ -72,7 +72,7 @@ FieldAnalyzer::FieldAnalyzer()
 FieldAnalyzer &
 FieldAnalyzer::instance()
 {
-    static FieldAnalyzer s_instance;
+    static thread_local FieldAnalyzer s_instance;
     return s_instance;
 }
 
@@ -1204,7 +1204,7 @@ FieldAnalyzer::get_blocker( const WorldModel & wm,
 void
 FieldAnalyzer::update( const WorldModel & wm )
 {
-    static GameTime s_update_time( 0, 0 );
+    static thread_local GameTime s_update_time( 0, 0 );
 
     if ( s_update_time == wm.time() )
     {

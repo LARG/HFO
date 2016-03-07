@@ -113,8 +113,8 @@ ActGen_DirectPass::generate( std::vector< ActionStatePair > * result,
                              const std::vector< ActionStatePair > & path ) const
 {
     static const int VALID_PLAYER_THRESHOLD = 10;
-    static GameTime s_last_call_time( 0, 0 );
-    static int s_action_count = 0;
+    static thread_local GameTime s_last_call_time( 0, 0 );
+    static thread_local int s_action_count = 0;
 
     if ( current_wm.time() != s_last_call_time )
     {

@@ -248,7 +248,7 @@ SampleCoach::handlePlayerType()
 void
 SampleCoach::doSubstitute()
 {
-    static bool S_first_substituted = false;
+    static thread_local bool S_first_substituted = false;
 
     if ( ! S_first_substituted
          && world().time().cycle() == 0
@@ -646,7 +646,7 @@ SampleCoach::sayPlayerTypes()
       (say (freeform "(player_type ...)"))
     */
 
-    static GameTime s_last_send_time( 0, 0 );
+    static thread_local GameTime s_last_send_time( 0, 0 );
 
     if ( ! config().useFreeform() )
     {

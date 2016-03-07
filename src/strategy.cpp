@@ -140,7 +140,7 @@ Strategy::Strategy()
 Strategy &
 Strategy::instance()
 {
-    static Strategy s_instance;
+    static thread_local Strategy s_instance;
     return s_instance;
 }
 
@@ -183,7 +183,7 @@ Strategy::init( CmdLineParser & cmd_parser )
 bool
 Strategy::read( const std::string & formation_dir )
 {
-    static bool s_initialized = false;
+    static thread_local bool s_initialized = false;
 
     if ( s_initialized )
     {
@@ -434,7 +434,7 @@ Strategy::createFormation( const std::string & type_name ) const
 void
 Strategy::update( const WorldModel & wm )
 {
-    static GameTime s_update_time( -1, 0 );
+    static thread_local GameTime s_update_time( -1, 0 );
 
     if ( s_update_time == wm.time() )
     {
@@ -625,7 +625,7 @@ Strategy::updateSituation( const WorldModel & wm )
 void
 Strategy::updatePosition( const WorldModel & wm )
 {
-    static GameTime s_update_time( 0, 0 );
+    static thread_local GameTime s_update_time( 0, 0 );
     if ( s_update_time == wm.time() )
     {
         return;
@@ -1129,7 +1129,7 @@ Strategy::get_ball_area( const Vector2D & ball_pos )
 double
 Strategy::get_normal_dash_power( const WorldModel & wm )
 {
-    static bool s_recover_mode = false;
+    static thread_local bool s_recover_mode = false;
 
     if ( wm.self().staminaModel().capacityIsEmpty() )
     {

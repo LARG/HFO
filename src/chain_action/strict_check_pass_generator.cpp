@@ -153,7 +153,7 @@ StrictCheckPassGenerator::StrictCheckPassGenerator()
 StrictCheckPassGenerator &
 StrictCheckPassGenerator::instance()
 {
-    static StrictCheckPassGenerator s_instance;
+    static thread_local StrictCheckPassGenerator s_instance;
     return s_instance;
 }
 

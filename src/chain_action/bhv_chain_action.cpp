@@ -484,8 +484,8 @@ Bhv_ChainAction::doTurnToForward( PlayerAgent * agent )
 Vector2D
 Bhv_ChainAction::getKeepBallVel( const WorldModel & wm )
 {
-    static GameTime s_update_time( 0, 0 );
-    static Vector2D s_best_ball_vel( 0.0, 0.0 );
+    static thread_local GameTime s_update_time( 0, 0 );
+    static thread_local Vector2D s_best_ball_vel( 0.0, 0.0 );
 
     if ( s_update_time == wm.time() )
     {

@@ -1534,7 +1534,7 @@ SampleCommunication::sayDefenseLine( PlayerAgent * agent )
 bool
 SampleCommunication::sayPlayers( PlayerAgent * agent )
 {
-    static GameTime s_last_time( -1, 0 );
+    static thread_local GameTime s_last_time( -1, 0 );
 
     const int len = agent->effector().getSayMessageLength();
     if ( len + OnePlayerMessage::slength() > ServerParam::i().playerSayMsgSize() )

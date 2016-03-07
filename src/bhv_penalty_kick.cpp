@@ -622,7 +622,7 @@ bool
 Bhv_PenaltyKick::doDribble( PlayerAgent * agent )
 {
     static const int CONTINUAL_COUNT = 20;
-    static int S_target_continual_count = CONTINUAL_COUNT;
+    static thread_local int S_target_continual_count = CONTINUAL_COUNT;
 
     const ServerParam & SP = ServerParam::i();
     const WorldModel & wm = agent->world();

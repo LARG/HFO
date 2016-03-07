@@ -76,7 +76,7 @@ ShootGenerator::ShootGenerator()
 ShootGenerator &
 ShootGenerator::instance()
 {
-    static ShootGenerator s_instance;
+    static thread_local ShootGenerator s_instance;
     return s_instance;
 }
 
@@ -98,7 +98,7 @@ ShootGenerator::clear()
 void
 ShootGenerator::generate( const WorldModel & wm, bool consider_shot_distance )
 {
-    static GameTime s_update_time( 0, 0 );
+    static thread_local GameTime s_update_time( 0, 0 );
 
     if ( s_update_time == wm.time() )
     {

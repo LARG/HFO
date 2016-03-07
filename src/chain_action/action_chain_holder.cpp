@@ -57,7 +57,7 @@ ActionChainHolder::ActionChainHolder()
 ActionChainHolder &
 ActionChainHolder::instance()
 {
-    static ActionChainHolder s_instance;
+    static thread_local ActionChainHolder s_instance;
     return s_instance;
 }
 
@@ -119,9 +119,9 @@ ActionChainHolder::actionGenerator() const
 void
 ActionChainHolder::update( const WorldModel & wm )
 {
-    static GameTime s_update_time( 0, 0 );
-    static FieldEvaluator::ConstPtr s_update_evaluator;
-    static ActionGenerator::ConstPtr s_update_generator;
+    static thread_local GameTime s_update_time( 0, 0 );
+    static thread_local FieldEvaluator::ConstPtr s_update_evaluator;
+    static thread_local ActionGenerator::ConstPtr s_update_generator;
 
     if ( s_update_time == wm.time()
          && s_update_evaluator == M_evaluator

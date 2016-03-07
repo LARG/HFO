@@ -73,7 +73,7 @@ ClearGenerator::ClearGenerator()
 ClearGenerator &
 ClearGenerator::instance()
 {
-    static ClearGenerator s_instance;
+    static thread_local ClearGenerator s_instance;
     return s_instance;
 }
 

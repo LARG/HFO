@@ -5,7 +5,7 @@ include(ExternalProject)
 option(BUILD_SOCCERWINDOW "Build Soccerwindow Visualizer" ON)
 option(INSTALL_ADDITIONAL_TEAMS "Install additional team binaries" ON)
 
-add_definitions(-DELOG)
+add_definitions(-DELOG -std=c++11)
 
 ExternalProject_Add(rcssserver
   GIT_REPOSITORY "https://github.com/mhauskn/rcssserver.git"
