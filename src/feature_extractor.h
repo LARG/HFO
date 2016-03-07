@@ -110,21 +110,21 @@ protected:
   void checkFeatures();
 
 protected:
-  const static float RAD_T_DEG = 180.0 / M_PI;
-  const static float ALLOWED_PITCH_FRAC = 0.33;
+  constexpr static float RAD_T_DEG = 180.0 / M_PI;
+  constexpr static float ALLOWED_PITCH_FRAC = 0.33;
 
   int featIndx;
   std::vector<float> feature_vec; // Contains the current features
-  const static float FEAT_MIN = -1;
-  const static float FEAT_MAX = 1;
-  const static float FEAT_INVALID = -2;
+  constexpr static float FEAT_MIN = -1;
+  constexpr static float FEAT_MAX = 1;
+  constexpr static float FEAT_INVALID = -2;
 
   int numFeatures; // Total number of features
   // Observed values of some parameters.
-  const static float observedSelfSpeedMax   = 0.46;
-  const static float observedPlayerSpeedMax = 0.75;
-  const static float observedStaminaMax     = 8000.;
-  const static float observedBallSpeedMax   = 5.0;
+  constexpr static float observedSelfSpeedMax   = 0.46;
+  constexpr static float observedPlayerSpeedMax = 0.75;
+  constexpr static float observedStaminaMax     = 8000.;
+  constexpr static float observedBallSpeedMax   = 5.0;
   float maxHFORadius; // Maximum possible distance in HFO playable region
   // Useful measures defined by the Server Parameters
   float pitchLength, pitchWidth, pitchHalfLength, pitchHalfWidth,

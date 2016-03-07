@@ -68,7 +68,7 @@ const int ANGLE_DIVS = 40;
 
  */
 struct DeflectingEvaluator {
-    static const double not_shoot_ball_eval = 10000;
+    constexpr static const double not_shoot_ball_eval = 10000;
 
     double operator()( const WorldModel & wm,
                        TackleGenerator::TackleResult & result ) const
