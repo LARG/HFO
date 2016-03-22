@@ -60,6 +60,7 @@ protected:
   inline hfo::status_t getGameStatus() { return game_status; }
   inline const hfo::Player& getPlayerOnBall() { return player_on_ball; }
   inline const std::string& getHearMsg() { return hear_msg; }
+  int getUnum(); // Returns the uniform number of the player
 
   inline void setFeatureSet(hfo::feature_set_t fset) { feature_set = fset; }
   inline std::vector<float>* mutable_params() { return &params; }

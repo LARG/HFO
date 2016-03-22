@@ -72,11 +72,10 @@ class Trainer(object):
                               'teams', 'base')
     config_dir = os.path.join(binary_dir, 'config/formations-dt')
     print("Waiting for player-controlled agent %s-%d: config_dir=%s, "\
-          "uniform_number=%d, server_port=%d, server_addr=%s, team_name=%s, "\
-          "play_goalie=%r"
+          "server_port=%d, server_addr=%s, team_name=%s, play_goalie=%r"
           % (self._offenseTeamName if play_offense else self._defenseTeamName,
-             agent_num, config_dir, agent_ext_num, self._serverPort, "localhost",
-             team_name, agent_ext_num==1))
+             agent_num, config_dir, self._serverPort, "localhost", team_name,
+             agent_ext_num==1))
     if wait_until_join:
       self.waitOnPlayer(agent_ext_num, play_offense)
     return None

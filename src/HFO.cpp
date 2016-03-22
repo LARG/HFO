@@ -31,7 +31,6 @@ HFOEnvironment::~HFOEnvironment() {
 
 void HFOEnvironment::connectToServer(feature_set_t feature_set,
                                      std::string config_dir,
-                                     int uniform_number,
                                      int server_port,
                                      std::string server_addr,
                                      std::string team_name,
@@ -40,7 +39,6 @@ void HFOEnvironment::connectToServer(feature_set_t feature_set,
   agent->setFeatureSet(feature_set);
   rcsc::PlayerConfig& config = agent->mutable_config();
   config.setConfigDir(config_dir);
-  config.setPlayerNumber(uniform_number);
   config.setPort(server_port);
   config.setHost(server_addr);
   config.setTeamName(team_name);
@@ -100,6 +98,10 @@ void HFOEnvironment::say(const std::string& message) {
 
 std::string HFOEnvironment::hear() {
   return agent->getHearMsg();
+}
+
+int HFOEnvironment::getUnum() {
+  return agent->getUnum();
 }
 
 Player HFOEnvironment::playerOnBall() {

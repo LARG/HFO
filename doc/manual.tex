@@ -106,7 +106,7 @@ to connect the offensive player:\\
 
 \noindent \verb+Waiting for player-controlled agent base_left-0: +\\
 \noindent \verb+  config_dir=HFO/bin/teams/base/config/formations-dt,+\\
-\noindent \verb+  uniform_number=11, server_port=6000, server_addr=localhost,+\\
+\noindent \verb+  server_port=6000, server_addr=localhost,+\\
 \noindent \verb+  team_name=base_left, play_goalie=False+\\
 
 By default, the server starts on port 6000, but may be changed as follows:\\
@@ -179,7 +179,7 @@ necessary to specify a \verb+record_dir+ in the \verb+connectToServer+
 function:\\
 \\
 \noindent \verb+std::string record_dir = "log/";+\\
-\noindent \verb+hfo.connectToServer(features, config_dir, unum, port, server_addr,+\\
+\noindent \verb+hfo.connectToServer(features, config_dir, port, server_addr,+\\
 \noindent \verb+                    team_name, goalie, record_dir);+\\
 
 \section{Randomness}

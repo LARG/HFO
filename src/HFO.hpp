@@ -21,7 +21,6 @@ class HFOEnvironment {
    *
    * feature_set: High or low level state features
    * config_dir: Config directory. Typically HFO/bin/teams/base/config/
-   * uniform_number: player's uniform number.
    * server_port: port to connect to server on
    * server_addr: address of server
    * team_name: Name of team to join.
@@ -30,7 +29,6 @@ class HFOEnvironment {
    */
   void connectToServer(feature_set_t feature_set=HIGH_LEVEL_FEATURE_SET,
                        std::string config_dir="bin/teams/base/config/formations-dt",
-                       int uniform_number=11,
                        int server_port=6000,
                        std::string server_addr="localhost",
                        std::string team_name="base_left",
@@ -47,6 +45,9 @@ class HFOEnvironment {
   // Send/receive communication from other agents
   virtual void say(const std::string& message);
   virtual std::string hear();
+
+  // Returns the uniform number of the player
+  virtual int getUnum();
 
   // Get the current player holding the ball
   virtual Player playerOnBall();

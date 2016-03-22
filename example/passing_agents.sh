@@ -2,9 +2,9 @@
 
 ./bin/HFO --offense-agents=2 --no-sync &
 sleep 5
-./example/communication_agent 7 6000 &
+./example/communication_agent 6000 &
 sleep 5
-./example/communication_agent 11 6000 &
+./example/communication_agent 6000 &
 
 # The magic line
 #   $$ holds the PID for this script

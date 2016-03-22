@@ -12,13 +12,12 @@ extern "C" {
   void connectToServer(hfo::HFOEnvironment *hfo,
                        hfo::feature_set_t feature_set,
                        char* config_dir,
-                       int uniform_number,
                        int server_port,
                        char* server_addr,
                        char* team_name,
                        bool play_goalie,
                        char* record_dir) {
-    return hfo->connectToServer(feature_set, config_dir, uniform_number,
+    return hfo->connectToServer(feature_set, config_dir,
                                 server_port, server_addr, team_name,
                                 play_goalie, record_dir);
   }

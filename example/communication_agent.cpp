@@ -14,7 +14,6 @@ using namespace hfo;
 // Server Connection Options. See printouts from bin/HFO.
 feature_set_t features = HIGH_LEVEL_FEATURE_SET;
 string config_dir = "bin/teams/base/config/formations-dt";
-int unum = 11;
 int port = 6000;
 string server_addr = "localhost";
 string team_name = "base_left";
@@ -22,16 +21,16 @@ bool goalie = false;
 
 #define PI 3.14159265
 int main(int argc, char** argv) {
-  if (argc > 2) {
-    unum = atoi(argv[1]);
-    port = atoi(argv[2]);
+  if (argc > 1) {
+    port = atoi(argv[1]);
   }
   // Create the HFO environment
   HFOEnvironment hfo;
   // Connect to the server and request feature set. See manual for
   // more information on feature sets.
-  hfo.connectToServer(features, config_dir, unum, port, server_addr,
-                           team_name, goalie);
+  hfo.connectToServer(features, config_dir, port, server_addr,
+                      team_name, goalie);
+  int unum = hfo.getUnum();
   for (int episode=0; episode<10; episode++) {
     int agent_on_ball = 7;
     status_t status = IN_GAME;

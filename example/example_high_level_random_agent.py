@@ -13,7 +13,7 @@ def main():
   # Connect to the server with the specified
   # feature set. See feature sets in hfo.py/hfo.hpp.
   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET,
-                      'bin/teams/base/config/formations-dt', 11, 6000,
+                      'bin/teams/base/config/formations-dt', 6000,
                       'localhost', 'base_left', False)
   for episode in xrange(10):
     status = IN_GAME

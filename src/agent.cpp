@@ -154,6 +154,10 @@ Agent::~Agent() {
   }
 }
 
+int Agent::getUnum() {
+  return world().self().unum();
+}
+
 bool Agent::initImpl(CmdLineParser & cmd_parser) {
     bool result = PlayerAgent::initImpl(cmd_parser);
 
