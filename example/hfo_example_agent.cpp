@@ -15,7 +15,7 @@ string config_dir = "bin/teams/base/config/formations-dt";
 int port = 6000;
 string server_addr = "localhost";
 string team_name = "base_left";
-bool goalie = true;
+bool goalie = false;
 
 int main() {
   // Create the HFO environment
