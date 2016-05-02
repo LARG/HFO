@@ -52,18 +52,21 @@ def main(args):
                   'server::hfo_max_untouched_time=%i ' \
                   'server::hfo_min_ball_pos_x=%f ' \
                   'server::hfo_max_ball_pos_x=%f ' \
-                  'server::say_msg_size=%i' \
+                  'server::say_msg_size=%i ' \
+                  'server::record_messages=%i' \
                   %(server_port, coach_port, olcoach_port,
                     args.logging, args.logging, args.logging,
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
                     args.offenseOnBall, args.seed, args.maxUntouchedTime,
-                    args.min_ball_x, args.max_ball_x, args.messageSize)
-                  # server::record_messages=on -- useful for debug
+                    args.min_ball_x, args.max_ball_x, args.messageSize,
+                    args.verbose)
+
   try:
     # Launch the Server
-    server = launch(serverCommand + serverOptions, name='server', supressOutput=True)
+    server = launch(serverCommand + serverOptions, name='server',
+                    supressOutput=not args.verbose)
     time.sleep(0.2)
     assert server.poll() is None,\
       '[start.py] Failed to launch Server with command: \"%s\"' \
@@ -152,6 +155,8 @@ def parseArgs():
                  help='Ball initialization min x position: [0,1]. Default: 0')
   p.add_argument('--ball-x-max', dest='max_ball_x', type=float, default=0.2,
                  help='Ball initialization max x position: [0,1]. Default: .2')
+  p.add_argument('--verbose', dest='verbose', action='store_true',
+                 default=False, help='Print verbose output.')
   args = p.parse_args()
   if args.offenseAgents not in xrange(0, 11):
     p.error('argument --offense-agents: invalid choice: '\
