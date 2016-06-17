@@ -56,15 +56,16 @@ void HFOEnvironment::connectToServer(feature_set_t feature_set,
     std::cerr << "Unable to start agent" << std::endl;
     exit(1);
   }
-  assert(client->isServerAlive() == true);
   // Do nothing until the agent begins getting state features
+  act(NOOP);
   while (agent->getState().empty()) {
-    act(NOOP);
-    agent->executeAction();
-    do {
-      client->runStep(agent);
-    } while (agent->lastPreActionTime() < agent->currentTime());
+    if (!client->isServerAlive()) {
+      std::cerr << "Server Down!" << std::endl;
+      exit(1);
+    }
+    client->runStep(agent);
   }
+  current_cycle = agent->currentTime().cycle();
 }
 
 const std::vector<float>& HFOEnvironment::getState() {
@@ -109,36 +110,14 @@ Player HFOEnvironment::playerOnBall() {
 }
 
 status_t HFOEnvironment::step() {
-  // Agent sends action to server
-  agent->executeAction();
-  // Wait until server replies with new game state
-  long start_cycle = agent->currentTime().cycle();
-  bool cycle_advanced = false;
-  bool end_of_trial = agent->getGameStatus() != IN_GAME;
-  bool still_eot = false;
-  int steps = 0;
-  do {
-    client->runStep(agent);
-    if (steps++ > MAX_STEPS) {
-      break;
-    }
+  assert(agent->currentTime().cycle() == current_cycle);
+  while (agent->statusUpdateTime() <= current_cycle) {
     if (!client->isServerAlive()) {
       return SERVER_DOWN;
     }
-    cycle_advanced = agent->currentTime().cycle() > start_cycle;
-  } while (!cycle_advanced || agent->lastPreActionTime() < agent->currentTime());
-  // If the trial is over, wait until the next episode starts
-  if (end_of_trial) {
-    while (agent->getGameStatus() != IN_GAME) {
-      act(NOOP);
-      agent->executeAction();
-      do {
-        client->runStep(agent);
-        if (!client->isServerAlive()) {
-          return SERVER_DOWN;
-        }
-      } while (agent->lastPreActionTime() < agent->currentTime());
-    }
+    client->runStep(agent);
   }
+  assert(agent->currentTime().cycle() == (current_cycle + 1));
+  current_cycle = agent->currentTime().cycle();
   return agent->getGameStatus();
 }

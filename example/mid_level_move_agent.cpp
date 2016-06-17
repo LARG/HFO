@@ -27,8 +27,9 @@ int main(int argc, char** argv) {
                            team_name, goalie);
   float target_x = .82;
   float target_y = .9;
-  for (int episode = 0; episode < 10; episode++) {
-    status_t status = IN_GAME;
+  status_t status = IN_GAME;
+  for (int episode = 0; status != SERVER_DOWN; episode++) {
+    status = IN_GAME;
     if (episode % 2 != 0) {
       target_x *= -1;
     } else {
@@ -45,7 +46,7 @@ int main(int argc, char** argv) {
     }
     // Check what the outcome of the episode was
     cout << "Episode " << episode << " ended with status: "
-         << StatusToString(status) << std::endl;;
+         << StatusToString(status) << endl;;
   }
   hfo.act(QUIT);
 };

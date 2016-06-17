@@ -17,11 +17,8 @@ string server_addr = "localhost";
 string team_name = "base_left";
 bool goalie = false;
 
-// Returns a random high-level action
-action_t get_random_high_lv_action() {
-  action_t action_indx = (action_t) ((rand() % 5) + MOVE);
-  return action_indx;
-}
+// We omit PASS & CATCH actions here
+action_t HIGH_LEVEL_ACTIONS[3] = { MOVE, SHOOT, DRIBBLE };
 
 int main(int argc, char** argv) {
   // Create the HFO environment
@@ -29,20 +26,21 @@ int main(int argc, char** argv) {
   // Connect to the server and request high-level feature set. See
   // manual for more information on feature sets.
   hfo.connectToServer(features, config_dir, port, server_addr,
-                           team_name, goalie);
-  for (int episode=0; episode<10; episode++) {
-    status_t status = IN_GAME;
+                      team_name, goalie);
+  status_t status = IN_GAME;
+  for (int episode = 0; status != SERVER_DOWN; episode++) {
+    status = IN_GAME;
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
       // Perform the action
-      hfo.act(get_random_high_lv_action());
+      hfo.act(HIGH_LEVEL_ACTIONS[rand() % 3]);
       // Advance the environment and get the game status
       status = hfo.step();
     }
     // Check what the outcome of the episode was
     cout << "Episode " << episode << " ended with status: "
-         << StatusToString(status) << std::endl;
+         << StatusToString(status) << endl;
   }
   hfo.act(QUIT);
 };

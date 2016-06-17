@@ -59,6 +59,7 @@ class HFOEnvironment {
  private:
   rcsc::BasicClient* client;
   Agent* agent;
+  long current_cycle;
 };
 
 } // namespace hfo

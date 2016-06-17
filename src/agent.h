@@ -22,13 +22,12 @@ public:
                                                int num_opponents,
                                                bool playing_offense);
 
+  inline long statusUpdateTime() { return lastStatusUpdateTime; }
+
 protected:
   // You can override this method. But you must call
   // PlayerAgent::initImpl() in this method.
   virtual bool initImpl(rcsc::CmdLineParser& cmd_parser);
-
-  // We override PlayerAgent's Action function
-  virtual void action();
 
   // main decision
   virtual void actionImpl();
@@ -48,6 +47,7 @@ protected:
   FeatureExtractor* feature_extractor; // Extracts the features
   long lastTrainerMessageTime;         // Last time the trainer sent a message
   long lastTeammateMessageTime;        // Last time a teammate sent a message
+  long lastStatusUpdateTime;           // Last time we got a status update
   hfo::status_t game_status;           // Current status of the game
   hfo::Player player_on_ball;          // Player in posession of the ball
   std::vector<float> state;            // Vector of current state features

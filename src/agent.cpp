@@ -99,6 +99,7 @@ Agent::Agent()
       feature_extractor(NULL),
       lastTrainerMessageTime(-1),
       lastTeammateMessageTime(-1),
+      lastStatusUpdateTime(-1),
       game_status(IN_GAME),
       requested_action(NOOP)
 {
@@ -227,13 +228,6 @@ FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
   }
 }
 
-// Instead of calling PlayerAgent::action() we instead call preAction
-// which does everything up to actionImpl(). actionImpl() is then
-// called in hfo::step(), PlayerAgent::executeAction().
-void Agent::action() {
-  preAction();
-}
-
 /*!
   main decision
   virtual method in super class
@@ -312,9 +306,6 @@ void Agent::actionImpl() {
                 << requested_action << std::endl;
       exit(1);
   }
-  // Clear the action
-  requested_action = (hfo::action_t) -1;
-  params.clear();
   // For now let's not worry about turning the neck or setting the vision.
   this->setViewAction(new View_Tactical());
   this->setNeckAction(new Neck_TurnToBallOrScan());
@@ -342,7 +333,9 @@ Agent::handleActionStart()
             feature_set, num_teammates, num_opponents, playing_offense);
       }
     }
-    hfo::ParseGameStatus(message, game_status);
+    if (hfo::ParseGameStatus(message, game_status)) {
+      lastStatusUpdateTime = audioSensor().trainerMessageTime().cycle();
+    }
     hfo::ParsePlayerOnBall(message, player_on_ball);
     lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
   }

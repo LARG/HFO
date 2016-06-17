@@ -28,8 +28,9 @@ int main(int argc, char** argv) {
   // manual for more information on feature sets.
   hfo.connectToServer(features, config_dir, port, server_addr,
                            team_name, goalie);
-  for (int episode=0; episode<10; episode++) {
-    status_t status = IN_GAME;
+  status_t status = IN_GAME;
+  for (int episode = 0; status != SERVER_DOWN; episode++) {
+    status = IN_GAME;
     int step = 0;
     while (status == IN_GAME) {
       // Get the vector of state features for the current state
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
     }
     // Check what the outcome of the episode was
     cout << "Episode " << episode << " ended with status: "
-         << StatusToString(status) << std::endl;;
+         << StatusToString(status) << endl;;
   }
   hfo.act(QUIT);
 };
