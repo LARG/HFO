@@ -4,7 +4,7 @@
 # Before running this program, first Start HFO server:
 # $> ./bin/HFO --offense-agents 1
 
-import random
+import random, itertools
 from hfo import *
 
 def main():
@@ -15,17 +15,24 @@ def main():
   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET,
                       'bin/teams/base/config/formations-dt', 6000,
                       'localhost', 'base_left', False)
-  for episode in xrange(10):
+  for episode in itertools.count():
     status = IN_GAME
     while status == IN_GAME:
+      # Get the vector of state features for the current state
       state = hfo.getState()
+      # Perform the action
       if state[5] == 1: # State[5] is 1 when the player can kick the ball
         hfo.act(random.choice([SHOOT, DRIBBLE]))
       else:
         hfo.act(MOVE)
+      # Advance the environment and get the game status
       status = hfo.step()
-    # print 'Episode', episode, 'ended with', hfo.statusToString(status)
+    # Check the outcome of the episode
     print('Episode %d ended with %s'%(episode, hfo.statusToString(status)))
+    # Quit if the server goes down
+    if status == SERVER_DOWN:
+      hfo.act(QUIT)
+      break
 
 if __name__ == '__main__':
   main()

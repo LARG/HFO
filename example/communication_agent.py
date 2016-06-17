@@ -4,29 +4,39 @@
 # Before running this program, first Start HFO server:
 # $> ./bin/HFO --offense-agents 1
 
-import sys
+import sys, itertools
 from hfo import *
 
-if __name__ == '__main__':
+def main():
   # Create the HFO Environment
-  hfo = hfo.HFOEnvironment()
+  hfo = HFOEnvironment()
   # Connect to the server with the specified
   # feature set. See feature sets in hfo.py/hfo.hpp.
   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET,
                       'bin/teams/base/config/formations-dt', 6000,
                       'localhost', 'base_left', False)
-  for episode in xrange(10):
+  for episode in itertools.count():
     status = IN_GAME
     while status == IN_GAME:
       # Grab the state features from the environment
       features = hfo.getState()
       # Get any incoming communication
       msg = hfo.hear()
-      # Do something with incoming communication
-      print 'Heard: ', msg
-      # Take an action and get the current game status
-      hfo.act(DASH, 20.0, 0)
-      # Do something with outgoing communication
-      hfo.say('Message')
+      # Print the incoming communication
+      if msg:
+        print('Heard: %s'% msg)
+      # Take an action
+      hfo.act(DASH, 20.0, 0.)
+      # Create outgoing communication
+      hfo.say('Hello!')
+      # Advance the environment and get the game status
       status = hfo.step()
-    print 'Episode', episode, 'ended with', hfo.statusToString(status)
+    # Check the outcome of the episode
+    print('Episode %d ended with %s'%(episode, hfo.statusToString(status)))
+    # Quit if the server goes down
+    if status == SERVER_DOWN:
+      hfo.act(QUIT)
+      break
+
+if __name__ == '__main__':
+  main()
