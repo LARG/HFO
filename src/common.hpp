@@ -263,6 +263,8 @@ inline bool ParseGameStatus(const std::string& message, status_t& status) {
     status = OUT_OF_TIME;
   } else if (message.find("IN_GAME") != std::string::npos){
     status = IN_GAME;
+  } else if (message.find("HFO_FINISHED") != std::string::npos){
+    status = SERVER_DOWN;
   } else {
     return false;
   }

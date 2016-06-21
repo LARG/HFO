@@ -146,7 +146,7 @@ bool FeatureExtractor::valid(const rcsc::PlayerObject& player) {
       pos.x < -ALLOWED_PITCH_FRAC * rcsc::ServerParam::i().pitchHalfLength()) {
     return false;
   }
-  return player.unum() > 0 && pos.isValid();
+  return pos.isValid();
 }
 
 float FeatureExtractor::angleToPoint(const rcsc::Vector2D &self,

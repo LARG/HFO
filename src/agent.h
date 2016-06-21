@@ -24,6 +24,13 @@ public:
 
   inline long statusUpdateTime() { return lastStatusUpdateTime; }
 
+  // Process incoming trainer messages. Used to update the game status.
+  void ProcessTrainerMessages();
+  // Process incoming teammate messages.
+  void ProcessTeammateMessages();
+  // Update the state features from the world model.
+  void UpdateFeatures();
+
 protected:
   // You can override this method. But you must call
   // PlayerAgent::initImpl() in this method.

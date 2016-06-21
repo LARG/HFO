@@ -311,14 +311,9 @@ void Agent::actionImpl() {
   this->setNeckAction(new Neck_TurnToBallOrScan());
 }
 
-/*-------------------------------------------------------------------*/
-/*!
-
- */
 void
-Agent::handleActionStart()
+Agent::ProcessTrainerMessages()
 {
-  // Process new trainer messages
   if (audioSensor().trainerMessageTime().cycle() > lastTrainerMessageTime) {
     const std::string& message = audioSensor().trainerMessage();
     if (feature_extractor == NULL) {
@@ -339,8 +334,11 @@ Agent::handleActionStart()
     hfo::ParsePlayerOnBall(message, player_on_ball);
     lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
   }
+}
 
-  // Process new teammate message
+void
+Agent::ProcessTeammateMessages()
+{
   hear_msg.clear();
   if (audioSensor().teammateMessageTime().cycle() > lastTeammateMessageTime) {
     const std::list<HearMessage> teammateMessages = audioSensor().teammateMessages();
@@ -353,11 +351,22 @@ Agent::handleActionStart()
     }
     lastTeammateMessageTime = audioSensor().teammateMessageTime().cycle();
   }
+}
 
-  // Update state features
+void
+Agent::UpdateFeatures()
+{
   if (feature_extractor != NULL) {
     state = feature_extractor->ExtractFeatures(this->world());
   }
+}
+
+void
+Agent::handleActionStart()
+{
+  ProcessTrainerMessages();
+  ProcessTeammateMessages();
+  UpdateFeatures();
 
   // Optionally write to logfile
 #ifdef ELOG

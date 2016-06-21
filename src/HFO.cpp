@@ -60,11 +60,21 @@ void HFOEnvironment::connectToServer(feature_set_t feature_set,
   act(NOOP);
   while (agent->getState().empty()) {
     if (!client->isServerAlive()) {
-      std::cerr << "Server Down!" << std::endl;
+      std::cerr << "[ConnectToServer] Server Down!" << std::endl;
       exit(1);
     }
-    client->runStep(agent);
+    ready_for_action = client->runStep(agent);
+    if (ready_for_action) {
+      agent->action();
+    }
   }
+  // Step until it is time to act
+  do {
+    ready_for_action = client->runStep(agent);
+  } while (!ready_for_action);
+  agent->ProcessTrainerMessages();
+  agent->ProcessTeammateMessages();
+  agent->UpdateFeatures();
   current_cycle = agent->currentTime().cycle();
 }
 
@@ -111,12 +121,24 @@ Player HFOEnvironment::playerOnBall() {
 
 status_t HFOEnvironment::step() {
   assert(agent->currentTime().cycle() == current_cycle);
-  while (agent->statusUpdateTime() <= current_cycle) {
-    if (!client->isServerAlive()) {
+  assert(ready_for_action);
+
+  // Execute the action
+  agent->action();
+
+  // Advance the environment by one step
+  do {
+    ready_for_action = client->runStep(agent);
+    if (!client->isServerAlive() || agent->getGameStatus() == SERVER_DOWN) {
       return SERVER_DOWN;
     }
-    client->runStep(agent);
-  }
+    agent->ProcessTrainerMessages();
+  } while (agent->statusUpdateTime() <= current_cycle || !ready_for_action);
+
+  // Update the state features
+  agent->ProcessTeammateMessages();
+  agent->UpdateFeatures();
+
   assert(agent->currentTime().cycle() == (current_cycle + 1));
   current_cycle = agent->currentTime().cycle();
   return agent->getGameStatus();

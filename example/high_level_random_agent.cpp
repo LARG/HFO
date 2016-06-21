@@ -17,8 +17,8 @@ string server_addr = "localhost";
 string team_name = "base_left";
 bool goalie = false;
 
-// We omit PASS & CATCH actions here
-action_t HIGH_LEVEL_ACTIONS[3] = { MOVE, SHOOT, DRIBBLE };
+// We omit PASS & CATCH & MOVE actions here
+action_t HIGH_LEVEL_ACTIONS[2] = { SHOOT, DRIBBLE };
 
 int main(int argc, char** argv) {
   // Create the HFO environment
@@ -34,7 +34,11 @@ int main(int argc, char** argv) {
       // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
       // Perform the action
-      hfo.act(HIGH_LEVEL_ACTIONS[rand() % 3]);
+      if (feature_vec[5] == 1) { // Feature 5 is 1 when the player can kick the ball
+        hfo.act(HIGH_LEVEL_ACTIONS[rand() % 2]);
+      } else {
+        hfo.act(MOVE);
+      }
       // Advance the environment and get the game status
       status = hfo.step();
     }
