@@ -140,5 +140,16 @@ status_t HFOEnvironment::step() {
 
   assert(agent->currentTime().cycle() == (current_cycle + 1));
   current_cycle = agent->currentTime().cycle();
-  return agent->getGameStatus();
+
+  status_t status = agent->getGameStatus();
+
+  // If the episode is over, take three NOOPs to refresh state features
+  if (status != IN_GAME && status != SERVER_DOWN) {
+    for (int i = 0; i < 3; ++i) {
+      act(NOOP);
+      step();
+    }
+  }
+
+  return status;
 }
