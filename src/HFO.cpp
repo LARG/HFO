@@ -124,7 +124,7 @@ status_t HFOEnvironment::step() {
   assert(ready_for_action);
 
   // Execute the action
-  agent->action();
+  agent->executeAction();
 
   // Advance the environment by one step
   do {
@@ -136,8 +136,7 @@ status_t HFOEnvironment::step() {
   } while (agent->statusUpdateTime() <= current_cycle || !ready_for_action);
 
   // Update the state features
-  agent->ProcessTeammateMessages();
-  agent->UpdateFeatures();
+  agent->preAction();
 
   assert(agent->currentTime().cycle() == (current_cycle + 1));
   current_cycle = agent->currentTime().cycle();
