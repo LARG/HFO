@@ -229,6 +229,12 @@ maximum allowed message size is controlled by HFO's
 \verb|examples/communication_agent.cpp| and
 \verb|examples/communication_agent.py| for examples.
 
+\section{Fullstate}
+By default, perceptions and actions in HFO are noisy. The
+\verb+ --fullstate+ flag in HFO removes noise from the agent's
+perception of the world. Many tasks become significantly easier as a
+result. Noise in actions remains. This flag is disabled by default.
+
 \section{Controlling Trials}
 HFO trials typically end with a goal, the defense capturing the ball,
 the ball going out of bounds, or running out of time. The trials flag
@@ -547,6 +553,8 @@ faithfully report which action spaces were used.
   detected.}
 \item{\textbf{Dribble}(): Advances the ball towards the goal using a
   combination of short kicks and moves.}
+\item{\textbf{Catch}(): This goalie-specific action may be used to
+  catch the ball.}
 \end{itemize}
 
 \subsection{Special Actions}
