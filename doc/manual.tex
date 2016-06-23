@@ -273,9 +273,9 @@ are encoded a floating point values and normalized to the range of
 follows:
 
 \subsubsection{High Level State Feature List}
-Let $T$ denote the number of teammates in the HFO game. Then there are
-a total of $9 + 5T$ high-level features with an additional $T+1$
-features if at least one opponent is present.
+Let $T$ denote the number of teammates in the HFO game and $O$ the
+number of opponents. There are a total of $10 + 6T + 3O$ high-level
+features.
 
 \begin{enumerate}[noitemsep]
 \setcounter{enumi}{-1}
@@ -292,17 +292,16 @@ features if at least one opponent is present.
 \item{\textbf{Goal Opening Angle} - The size of the largest open angle
   of the agent to the goal, shown as $\theta_g$ in Figure
   \ref{fig:openAngle}. Invalid if agent is not playing offense.}
-\item [$T$] {\textbf{Teammate i's Goal Opening Angle} - For each
-  teammate i: i’s goal opening angle. Invalid if agent is not playing
-  offense.}
-\item [$1$] {\textbf{Proximity to Opponent} - If an opponent is
-  present, proximity to the closest opponent. This feature is absent
-  if there are no opponents.}
+\item{\textbf{Proximity to Opponent} - If an opponent is present,
+  proximity to the closest opponent. Invalid if there are no
+  opponents.}
+\item [$T$] {\textbf{Teammate's Goal Opening Angle} - For each
+  teammate $i$: $i$’s goal opening angle. Invalid if agent is not
+  playing offense.}
 \item [$T$] {\textbf{Proximity from Teammate i to Opponent} - For each
   teammate i: the proximity from the teammate to the closest
-  opponent. This feature is absent if there are no opponents. If
-  teammates are present but not detected, this feature is considered
-  invalid and given the value of -2.}
+  opponent. This feature is invalid if there are no opponents or if
+  teammates are present but not detected.}
 \item [$T$] {\textbf{Pass Opening Angle} - For each teammate i: the open
   angle available to pass to teammate i. Shown as $\theta_p$ in Figure
   \ref{fig:openAngle}. If teammates are present but not detected, this
@@ -310,6 +309,9 @@ features if at least one opponent is present.
 \item [$3T$] {\textbf{Proximity, Angle, and Uniform Number of
     Teammates} - For each teammate i: the proximity, angle, and
   uniform number of that teammate.}
+\item [$3O$] {\textbf{Proximity, Angle, and Uniform Number of
+    Opponents} - For each opponent: the proximity, angle, and
+  uniform number of that opponent.}
 \end{enumerate}
 
 \begin{figure}[htp]

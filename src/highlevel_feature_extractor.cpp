@@ -14,11 +14,8 @@ HighLevelFeatureExtractor::HighLevelFeatureExtractor(int num_teammates,
 {
   assert(numTeammates >= 0);
   assert(numOpponents >= 0);
-  numFeatures = num_basic_features + features_per_teammate * numTeammates;
-  if (numOpponents > 0) {
-    // One extra basic feature and one feature per teammate
-    numFeatures += 1 + numTeammates;
-  }
+  numFeatures = num_basic_features + features_per_teammate * numTeammates
+      + features_per_opponent * numOpponents;
   feature_vec.resize(numFeatures);
 }
 
@@ -32,6 +29,7 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   const Vector2D& self_pos = self.pos();
   const float self_ang = self.body().radian();
   const PlayerCont& teammates = wm.teammates();
+  const PlayerCont& opponents = wm.opponents();
   float maxR = sqrtf(SP.pitchHalfLength() * SP.pitchHalfLength()
                      + SP.pitchHalfWidth() * SP.pitchHalfWidth());
   // features about self pos
@@ -44,49 +42,52 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   } else {
     addNormFeature(self_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
   }
-  // addFeature(self_pos.x);
 
   // Feature[1]: Y-Position
   addNormFeature(self_pos.y, -SP.pitchHalfWidth() - tolerance_y,
                  SP.pitchHalfWidth() + tolerance_y);
-  // addFeature(self_pos.y);
 
   // Feature[2]: Self Angle
-  addNormFeature(self_ang, -M_PI, M_PI); // addFeature(self_ang);
+  addNormFeature(self_ang, -M_PI, M_PI);
 
   float r;
   float th;
-  // features about the ball
+  // Features about the ball
   Vector2D ball_pos = wm.ball().pos();
   angleDistToPoint(self_pos, ball_pos, th, r);
   // Feature[3]: Dist to ball
-  addNormFeature(r, 0, maxR); // addFeature(r);
+  addNormFeature(r, 0, maxR);
   // Feature[4]: Ang to ball
-  addNormFeature(th, -M_PI, M_PI); // addFeature(th);
+  addNormFeature(th, -M_PI, M_PI);
   // Feature[5]: Able to kick
-  addNormFeature(self.isKickable(), false, true); // addFeature(self.isKickable());
+  addNormFeature(self.isKickable(), false, true);
 
-  // features about distance to goal center
+  // Features about distance to goal center
   Vector2D goalCenter(SP.pitchHalfLength(), 0);
   if (!playingOffense) {
     goalCenter.assign(-SP.pitchHalfLength(), 0);
   }
   angleDistToPoint(self_pos, goalCenter, th, r);
   // Feature[6]: Goal Center Distance
-  addNormFeature(r, 0, maxR); // addFeature(r);
+  addNormFeature(r, 0, maxR);
   // Feature[7]: Angle to goal center
-  addNormFeature(th, -M_PI, M_PI); // addFeature(th);
+  addNormFeature(th, -M_PI, M_PI);
   // Feature[8]: largest open goal angle
   addNormFeature(calcLargestGoalAngle(wm, self_pos), 0, M_PI);
-  // addFeature(calcLargestGoalAngle(wm, self_pos));
+  // Feature[9]: Dist to our closest opp
+  if (numOpponents > 0) {
+    calcClosestOpp(wm, self_pos, th, r);
+    addNormFeature(r, 0, maxR);
+  } else {
+    addFeature(FEAT_INVALID);
+  }
 
-  // Features [9+T - 9 + 2T]: teammate's open angle to goal
+  // Features[9 - 9+T]: teammate's open angle to goal
   int detected_teammates = 0;
   for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject& teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
       addNormFeature(calcLargestGoalAngle(wm, teammate.pos()), 0, M_PI);
-      // addFeature(calcLargestGoalAngle(wm, teammate.pos()));
       detected_teammates++;
     }
   }
@@ -95,23 +96,23 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
     addFeature(FEAT_INVALID);
   }
 
-  // dist to our closest opp
+  // Features[9+T - 9+2T]: teammates' dists to closest opps
   if (numOpponents > 0) {
-    calcClosestOpp(wm, self_pos, th, r);
-    addNormFeature(r, 0, maxR); // addFeature(r);
-
-    // teammates dists to closest opps
     detected_teammates = 0;
     for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
       const PlayerObject& teammate = *it;
       if (valid(teammate) && detected_teammates < numTeammates) {
         calcClosestOpp(wm, teammate.pos(), th, r);
-        addNormFeature(r, 0, maxR); // addFeature(r);
+        addNormFeature(r, 0, maxR);
         detected_teammates++;
       }
     }
     // Add zero features for any missing teammates
     for (int i=detected_teammates; i<numTeammates; ++i) {
+      addFeature(FEAT_INVALID);
+    }
+  } else { // If no opponents, add invalid features
+    for (int i=0; i<numTeammates; ++i) {
       addFeature(FEAT_INVALID);
     }
   }
@@ -122,7 +123,6 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
     const PlayerObject& teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
       addNormFeature(calcLargestTeammateAngle(wm, self_pos, teammate.pos()),0,M_PI);
-      // addFeature(calcLargestTeammateAngle(wm, self_pos, teammate.pos()));
       detected_teammates++;
     }
   }
@@ -131,14 +131,14 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
     addFeature(FEAT_INVALID);
   }
 
-  // Features [9+3T - end]: dist, angle, unum of teammates
+  // Features [9+3T - 9+6T]: dist, angle, unum of teammates
   detected_teammates = 0;
   for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject& teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
       angleDistToPoint(self_pos, teammate.pos(), th, r);
-      addNormFeature(r,0,maxR); // addFeature(r);
-      addNormFeature(th,-M_PI,M_PI); // addFeature(th);
+      addNormFeature(r,0,maxR);
+      addNormFeature(th,-M_PI,M_PI);
       addFeature(teammate.unum());
       detected_teammates++;
     }
@@ -150,8 +150,26 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
     addFeature(FEAT_INVALID);
   }
 
+  // Features [9+6T - 9+6T+3O]: dist, angle, unum of opponents
+  int detected_opponents = 0;
+  for (PlayerCont::const_iterator it = opponents.begin(); it != opponents.end(); ++it) {
+    const PlayerObject& opponent = *it;
+    if (valid(opponent) && detected_opponents < numOpponents) {
+      angleDistToPoint(self_pos, opponent.pos(), th, r);
+      addNormFeature(r,0,maxR);
+      addNormFeature(th,-M_PI,M_PI);
+      addFeature(opponent.unum());
+      detected_opponents++;
+    }
+  }
+  // Add zero features for any missing opponents
+  for (int i=detected_opponents; i<numOpponents; ++i) {
+    addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
+  }
+
   assert(featIndx == numFeatures);
   // checkFeatures();
-  //std::cout << "features: " << features.rows(0,ind-1).t();
   return feature_vec;
 }
