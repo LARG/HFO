@@ -120,9 +120,6 @@ Player HFOEnvironment::playerOnBall() {
 }
 
 status_t HFOEnvironment::step() {
-  assert(agent->currentTime().cycle() == current_cycle);
-  assert(ready_for_action);
-
   // Execute the action
   agent->executeAction();
 
@@ -137,16 +134,13 @@ status_t HFOEnvironment::step() {
 
   // Update the state features
   agent->preAction();
-  assert(agent->currentTime().cycle() == (current_cycle + 1));
   current_cycle = agent->currentTime().cycle();
   status_t status = agent->getGameStatus();
   // If the episode is over, take three NOOPs to refresh state features
   if (status != IN_GAME && status != SERVER_DOWN) {
     for (int i = 0; i < 3; ++i) {
       act(NOOP);
-      if (step() == SERVER_DOWN) {
-        return SERVER_DOWN;
-      }
+      step();
     }
   }
   return status;
