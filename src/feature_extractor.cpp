@@ -140,10 +140,8 @@ void FeatureExtractor::checkFeatures() {
 }
 
 bool FeatureExtractor::valid(const rcsc::PlayerObject& player) {
-  // Check if the player is too far left
   const rcsc::Vector2D& pos = player.pos();
-  if (!player.posValid() ||
-      pos.x < -ALLOWED_PITCH_FRAC * rcsc::ServerParam::i().pitchHalfLength()) {
+  if (!player.posValid()) {
     return false;
   }
   return pos.isValid();
