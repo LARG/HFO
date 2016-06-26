@@ -193,9 +193,15 @@ Bhv_BasicTackle::executeOld( PlayerAgent * agent )
 bool
 Bhv_BasicTackle::executeV12( PlayerAgent * agent )
 {
+#ifdef __APPLE__
+    static GameTime s_last_execute_time( 0, 0 );
+    static bool s_result = false;
+    static AngleDeg s_best_angle = 0.0;
+#else
     static thread_local GameTime s_last_execute_time( 0, 0 );
     static thread_local bool s_result = false;
     static thread_local AngleDeg s_best_angle = 0.0;
+#endif
 
     const WorldModel & wm = agent->world();
 

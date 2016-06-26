@@ -1534,7 +1534,11 @@ SampleCommunication::sayDefenseLine( PlayerAgent * agent )
 bool
 SampleCommunication::sayPlayers( PlayerAgent * agent )
 {
+#ifdef __APPLE__
+    static GameTime s_last_time( -1, 0 );
+#else
     static thread_local GameTime s_last_time( -1, 0 );
+#endif
 
     const int len = agent->effector().getSayMessageLength();
     if ( len + OnePlayerMessage::slength() > ServerParam::i().playerSayMsgSize() )

@@ -661,8 +661,13 @@ Bhv_PassKickFindReceiver::doKeepBall( rcsc::PlayerAgent * agent,
 rcsc::Vector2D
 Bhv_PassKickFindReceiver::getKeepBallVel( const rcsc::WorldModel & wm )
 {
+#ifdef __APPLE__
+    static GameTime s_update_time( 0, 0 );
+    static Vector2D s_best_ball_vel( 0.0, 0.0 );
+#else
     static thread_local GameTime s_update_time( 0, 0 );
     static thread_local Vector2D s_best_ball_vel( 0.0, 0.0 );
+#endif
 
     if ( s_update_time == wm.time() )
     {

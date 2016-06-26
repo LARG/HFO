@@ -98,7 +98,11 @@ ShortDribbleGenerator::ShortDribbleGenerator()
 ShortDribbleGenerator &
 ShortDribbleGenerator::instance()
 {
+#ifdef __APPLE__
+    static ShortDribbleGenerator s_instance;
+#else
     static thread_local ShortDribbleGenerator s_instance;
+#endif
     return s_instance;
 }
 
@@ -526,7 +530,11 @@ ShortDribbleGenerator::simulateKickTurnsDashes( const WorldModel & wm,
     static const int min_dash = 2;
     //static const int min_dash = 1;
 
+#ifdef __APPLE__
+    static std::vector< Vector2D > self_cache;
+#else
     static thread_local std::vector< Vector2D > self_cache;
+#endif
 
     //
     // create self position cache

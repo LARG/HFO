@@ -76,7 +76,11 @@ ShootGenerator::ShootGenerator()
 ShootGenerator &
 ShootGenerator::instance()
 {
+#ifdef __APPLE__
+    static ShootGenerator s_instance;
+#else
     static thread_local ShootGenerator s_instance;
+#endif
     return s_instance;
 }
 
@@ -98,7 +102,11 @@ ShootGenerator::clear()
 void
 ShootGenerator::generate( const WorldModel & wm, bool consider_shot_distance )
 {
+#ifdef __APPLE__
+    static GameTime s_update_time( 0, 0 );
+#else
     static thread_local GameTime s_update_time( 0, 0 );
+#endif
 
     if ( s_update_time == wm.time() )
     {

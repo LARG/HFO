@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./bin/HFO --offense-agents=2 --no-sync &
+./bin/HFO --offense-agents=2 --no-sync --fullstate &
 sleep 5
 ./example/communication_agent 6000 &
 sleep 5

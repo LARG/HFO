@@ -57,7 +57,11 @@ ActionChainHolder::ActionChainHolder()
 ActionChainHolder &
 ActionChainHolder::instance()
 {
+#ifdef __APPLE__
+    static ActionChainHolder s_instance;
+#else
     static thread_local ActionChainHolder s_instance;
+#endif
     return s_instance;
 }
 
@@ -119,9 +123,15 @@ ActionChainHolder::actionGenerator() const
 void
 ActionChainHolder::update( const WorldModel & wm )
 {
+#ifdef __APPLE__
+    static GameTime s_update_time( 0, 0 );
+    static FieldEvaluator::ConstPtr s_update_evaluator;
+    static ActionGenerator::ConstPtr s_update_generator;
+#else
     static thread_local GameTime s_update_time( 0, 0 );
     static thread_local FieldEvaluator::ConstPtr s_update_evaluator;
     static thread_local ActionGenerator::ConstPtr s_update_generator;
+#endif
 
     if ( s_update_time == wm.time()
          && s_update_evaluator == M_evaluator

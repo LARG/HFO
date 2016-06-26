@@ -153,7 +153,11 @@ StrictCheckPassGenerator::StrictCheckPassGenerator()
 StrictCheckPassGenerator &
 StrictCheckPassGenerator::instance()
 {
+#ifdef __APPLE__
+    static StrictCheckPassGenerator s_instance;
+#else
     static thread_local StrictCheckPassGenerator s_instance;
+#endif
     return s_instance;
 }
 

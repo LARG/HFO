@@ -51,7 +51,11 @@ using namespace rcsc;
 bool
 Bhv_PrepareSetPlayKick::execute( PlayerAgent * agent )
 {
+#ifdef __APPLE__
+    static int s_rest_wait_cycle = -1;
+#else
     static thread_local int s_rest_wait_cycle = -1;
+#endif
 
     // not reach the ball side
     if ( Bhv_GoToStaticBall( M_ball_place_angle ).execute( agent ) )

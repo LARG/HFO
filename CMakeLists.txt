@@ -7,6 +7,9 @@ option(INSTALL_ADDITIONAL_TEAMS "Install additional team binaries" ON)
 
 add_definitions(-DELOG -std=c++11)
 
+find_package(BOOST 1.45.0 COMPONENTS scoped_ptr)
+include_directories(${Boost_INCLUDE_DIRS})
+
 ExternalProject_Add(rcssserver
   GIT_REPOSITORY "https://github.com/mhauskn/rcssserver.git"
   GIT_TAG "master"

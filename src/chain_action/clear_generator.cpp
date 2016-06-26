@@ -73,7 +73,11 @@ ClearGenerator::ClearGenerator()
 ClearGenerator &
 ClearGenerator::instance()
 {
+#ifdef __APPLE__
+    static ClearGenerator s_instance;
+#else
     static thread_local ClearGenerator s_instance;
+#endif
     return s_instance;
 }
 

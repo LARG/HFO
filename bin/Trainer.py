@@ -305,7 +305,9 @@ class Trainer(object):
   def disconnectPlayer(self, player, player_num, on_offense):
     """Wait on a launched player to disconnect from the server. """
     team_name = self._offenseTeamName if on_offense else self._defenseTeamName
-    self.send('(disconnect_player %s %d)'%(team_name, player_num))
+    while (team_name, str(player_num)) in self._connectedPlayers:
+      self.send('(disconnect_player %s %d)'%(team_name, player_num))
+      self.getConnectedPlayers()
     player.kill()
 
   def getConnectedPlayers(self):

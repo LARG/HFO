@@ -96,7 +96,11 @@ SelfPassGenerator::SelfPassGenerator()
 SelfPassGenerator &
 SelfPassGenerator::instance()
 {
+#ifdef __APPLE__
+    static SelfPassGenerator s_instance;
+#else
     static thread_local SelfPassGenerator s_instance;
+#endif
     return s_instance;
 }
 
@@ -166,7 +170,11 @@ SelfPassGenerator::createCourses( const WorldModel & wm )
     static const int ANGLE_DIVS = 60;
     static const double ANGLE_STEP = 360.0 / ANGLE_DIVS;
 
+#ifdef __APPLE__
+    static std::vector< Vector2D > self_cache( 24 );
+#else
     static thread_local std::vector< Vector2D > self_cache( 24 );
+#endif
 
     const ServerParam & SP = ServerParam::i();
 
