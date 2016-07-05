@@ -9,6 +9,10 @@ addons:
       - libboost-dev
       - libboost-system-dev
       - libboost-filesystem-dev
+install:
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+       brew install qt
+    fi
 os:
   - linux
   - osx
