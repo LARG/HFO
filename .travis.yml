@@ -7,6 +7,8 @@ addons:
       - boost-latest
     packages:
       - libboost-dev
+      - libboost-system-dev
+      - libboost-filesystem-dev
 os:
   - linux
   - osx
@@ -14,4 +16,5 @@ compiler:
   - clang
   - gcc
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Release && make -j4
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release && make -j4 && make install

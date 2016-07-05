@@ -1,13 +1,16 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.12)
 project(hfo)
 include(ExternalProject)
 
 option(BUILD_SOCCERWINDOW "Build Soccerwindow Visualizer" ON)
 option(INSTALL_ADDITIONAL_TEAMS "Install additional team binaries" ON)
 
-add_definitions(-DELOG -std=c++11)
+add_definitions(-DELOG)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(FLEX REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 ExternalProject_Add(rcssserver
