@@ -1,0 +1,17 @@
+sudo: required
+language: cpp
+dist: trusty
+addons:
+  apt:
+    sources:
+      - boost-latest
+    packages:
+      - libboost-dev
+os:
+  - linux
+  - osx
+compiler:
+  - clang
+  - gcc
+script:
+  - cmake -DCMAKE_BUILD_TYPE=Release && make -j4
