@@ -22,7 +22,6 @@ ExternalProject_Add(rcssserver
 ExternalProject_Get_Property(rcssserver SOURCE_DIR)
 include_directories(${SOURCE_DIR}/rcssbase ${SOURCE_DIR}/src)
 ExternalProject_Get_Property(rcssserver BINARY_DIR)
-link_directories(${BINARY_DIR}/lib)
 set(RCSSSERVER_BINARY_DIR ${BINARY_DIR}/bin)
 
 ExternalProject_Add(librcsc
@@ -39,6 +38,7 @@ link_directories(${BINARY_DIR}/lib)
 set(LIBRCSC_LINK_DIR ${BINARY_DIR}/lib)
 
 if(BUILD_SOCCERWINDOW)
+  find_package(Qt4 REQUIRED COMPONENTS QTCORE QTGUI QTNETWORK)
   ExternalProject_Add(soccerwindow2
     DEPENDS librcsc
     GIT_REPOSITORY "https://github.com/mhauskn/soccerwindow2.git"
