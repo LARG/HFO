@@ -6,7 +6,7 @@ option(BUILD_SOCCERWINDOW "Build Soccerwindow Visualizer" ON)
 option(INSTALL_ADDITIONAL_TEAMS "Install additional team binaries" ON)
 
 add_definitions(-DELOG)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -98,17 +98,16 @@ set(PLAYER_CPP bhv_basic_move.cpp bhv_basic_offensive_kick.cpp
   role_side_back.cpp role_side_forward.cpp role_side_half.cpp
   role_keepaway_keeper.cpp role_keepaway_taker.cpp
   sample_communication.cpp keepaway_communication.cpp
-  sample_field_evaluator.cpp sample_player.cpp strategy.cpp agent.cpp)
+  sample_field_evaluator.cpp sample_player.cpp strategy.cpp)
 
 foreach(src ${PLAYER_CPP})
   list(APPEND PLAYER_SOURCES ${SOURCE_DIR}/${src})
 endforeach(src ${PLAYER_CPP})
 file(GLOB CHAIN_ACTION_SOURCES ${SOURCE_DIR}/chain_action/*.cpp)
 
-list(APPEND LINK_LIBS rcsc_agent rcsc_geom rcsc_param rcsc_ann
-  rcsc_net rcsc_gz rcsc_time rcsc_rcg)
+list(APPEND RCSC_LINK_LIBS rcsc_agent rcsc_geom rcsc_param rcsc_ann rcsc_net rcsc_gz rcsc_time rcsc_rcg z)
 
-add_library(player_chain_action SHARED ${PLAYER_SOURCES} ${CHAIN_ACTION_SOURCES})
+add_library(player_chain_action STATIC ${PLAYER_SOURCES} ${CHAIN_ACTION_SOURCES})
 add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/sample_coach.cpp)
 add_executable(sample_player ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCE_DIR}/agent.cpp) 
 add_executable(sample_trainer ${SOURCE_DIR}/main_trainer.cpp ${SOURCE_DIR}/sample_trainer.cpp)
@@ -119,7 +118,7 @@ set_target_properties(sample_player PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_
 set_target_properties(sample_trainer PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
 set_target_properties(agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
 
-add_library(hfo-lib SHARED ${SOURCE_DIR}/HFO.hpp ${SOURCE_DIR}/HFO.cpp)
+add_library(hfo-lib SHARED ${SOURCE_DIR}/HFO.hpp ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/agent.cpp)
 set_target_properties(hfo-lib PROPERTIES OUTPUT_NAME hfo)
 set_target_properties(hfo-lib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
@@ -131,17 +130,17 @@ add_dependencies(player_chain_action librcsc)
 add_dependencies(sample_coach librcsc)
 add_dependencies(sample_player librcsc)
 add_dependencies(sample_trainer librcsc)
-add_dependencies(agent librcsc)
+add_dependencies(agent librcsc player_chain_action)
 add_dependencies(hfo-lib player_chain_action)
 add_dependencies(hfo-c-lib player_chain_action)
 
-target_link_libraries(player_chain_action ${LINK_LIBS})
-target_link_libraries(sample_coach ${LINK_LIBS})
-target_link_libraries(sample_player ${LINK_LIBS} player_chain_action)
-target_link_libraries(sample_trainer ${LINK_LIBS})
-target_link_libraries(agent ${LINK_LIBS} player_chain_action)
-target_link_libraries(hfo-lib ${LINK_LIBS} player_chain_action)
-target_link_libraries(hfo-c-lib ${LINK_LIBS} player_chain_action)
+target_link_libraries(player_chain_action ${RCSC_LINK_LIBS})
+target_link_libraries(sample_coach ${RCSC_LINK_LIBS})
+target_link_libraries(sample_player ${RCSC_LINK_LIBS} player_chain_action)
+target_link_libraries(sample_trainer ${RCSC_LINK_LIBS})
+target_link_libraries(agent player_chain_action ${RCSC_LINK_LIBS})
+target_link_libraries(hfo-lib ${RCSC_LINK_LIBS} player_chain_action)
+target_link_libraries(hfo-c-lib ${RCSC_LINK_LIBS} player_chain_action)
 
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 add_executable(hfo_example_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/hfo_example_agent.cpp)
