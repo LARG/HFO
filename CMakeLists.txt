@@ -122,7 +122,7 @@ add_library(hfo-lib SHARED ${SOURCE_DIR}/HFO.hpp ${SOURCE_DIR}/HFO.cpp ${SOURCE_
 set_target_properties(hfo-lib PROPERTIES OUTPUT_NAME hfo)
 set_target_properties(hfo-lib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-add_library(hfo-c-lib SHARED ${CMAKE_CURRENT_SOURCE_DIR}/hfo/hfo_c_wrapper.cpp ${SOURCE_DIR}/HFO.cpp)
+add_library(hfo-c-lib SHARED ${CMAKE_CURRENT_SOURCE_DIR}/hfo/hfo_c_wrapper.cpp ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/agent.cpp)
 set_target_properties(hfo-c-lib PROPERTIES OUTPUT_NAME hfo_c)
 set_target_properties(hfo-c-lib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/hfo)
 
