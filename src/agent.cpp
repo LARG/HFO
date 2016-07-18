@@ -300,7 +300,8 @@ void Agent::actionImpl() {
       break;
     case QUIT:
       std::cout << "Got quit from agent." << std::endl;
-      exit(0);
+      handleExit();
+      return;
     default:
       std::cerr << "ERROR: Unsupported Action: "
                 << requested_action << std::endl;
