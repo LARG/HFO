@@ -23,6 +23,14 @@
 \maketitle
 \tableofcontents
 
+\section{Contributors}
+Many thanks to the following contributors for making HFO a better
+environment:
+
+Prannoy Mupparaju (IIT Bombay), Sandeep Subramanian (IIT Bombay),
+A. Siddharth (IIT Bombay), and Shivaram Kalyanakrishnan (IIT Bombay),
+Sanmit Narvekar (UTCS), Samuel Barrett (UTCS).
+
 \section{Overview}
 
 This document describes the installation, usage, state, and action spaces of the HFO domain.
@@ -40,8 +48,13 @@ Installation with CMake:
 
 HFO installation has been tested on Ubuntu Linux and OSX. Successful
 installation depends on
-\verb+CMake, Boost-system, Boost-filesystem+. By default, the
-soccerwindow2 visualizer is also built and requires
+\verb+CMake, Boost-system, Boost-filesystem, flex+.
+
+These depedencies can be installed on Ubuntu using the following
+command:\\
+\verb+sudo apt-get install cmake libboost-filesystem libboost-system flex+
+
+By default, the soccerwindow2 visualizer is also built and requires
 \verb+Qt4+. Experimentally speaking, HFO is fully-functional without
 the visualizer. To disable this component, use the following cmake
 command:\\
