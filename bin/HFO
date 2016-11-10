@@ -123,6 +123,8 @@ def parseArgs():
                  help='Number of offensive uncontrolled players. Default: 0.')
   p.add_argument('--defense-npcs', dest='defenseNPCs', type=int, default=0,
                  help='Number of defensive uncontrolled players. Default: 0.')
+  p.add_argument('--agent-play-goalie', dest='agentPlayGoalie', action='store_true',
+                 default=False, help='Defense-agent plays goalie, rather than defender.')
   p.add_argument('--offense-team', dest='offenseTeam', type=str, default='base',
                  help='Offense team binary. Options: '+str(installed_teams)+'. Default: base.') 
   p.add_argument('--defense-team', dest='defenseTeam', type=str, default='base',
@@ -182,6 +184,8 @@ def parseArgs():
     p.error('Unrecognized offense team: ' + str(args.offenseTeam))
   if args.defenseTeam not in installed_teams:
     p.error('Unrecognized defense team: ' + str(args.defenseTeam))
+  if args.agentPlayGoalie and args.defenseAgents <= 0:
+    p.error('You must add a --defense-agent before it can play goalie.')
   return args
 
 if __name__ == '__main__':

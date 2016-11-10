@@ -36,6 +36,7 @@ class Trainer(object):
     self._numAgents = args.offenseAgents + args.defenseAgents
     self._offenseAgents = args.offenseAgents
     self._defenseAgents = args.defenseAgents
+    self._agentPlayGoalie = args.agentPlayGoalie
     self._agentReady = set([]) # Unums of ready agents
     self._agentTeams = [] # Names of the teams the agents are playing for
     self._agentNumInt = [] # List of agents internal team numbers
@@ -383,8 +384,10 @@ class Trainer(object):
       (offenseTeam, defenseTeam) = self.getTeams(offense_team_name, defense_team_name)
       offense_unums = self._offenseOrder[1: self._numOffense + 1]
       sorted_offense_agent_unums = sorted(self._offenseOrder[1:self._offenseAgents+1])
-      defense_unums = self._defenseOrder[: self._numDefense]
-      sorted_defense_agent_unums = sorted(self._defenseOrder[:self._defenseAgents])
+      defense_unums = sorted(self._defenseOrder[: self._numDefense])
+      sorted_defense_agent_unums = \
+        defense_unums[:self._defenseAgents] if self._agentPlayGoalie \
+        else defense_unums[-self._defenseAgents:]
 
       # Launch offense
       agent_num = 0
