@@ -1,10 +1,11 @@
 #include "SarsaAgent.h"
 
-SarsaAgent::SarsaAgent(int numFeatures, int numActions, double learningRate, double epsilon, FunctionApproximator *FA, char *loadWeightsFile, char *saveWeightsFile):PolicyAgent(numFeatures, numActions, learningRate, epsilon, FA, loadWeightsFile, saveWeightsFile){
-
+//add lambda as parameter to sarsaagent
+SarsaAgent::SarsaAgent(int numFeatures, int numActions, double learningRate, double epsilon, double lambda, FunctionApproximator *FA, char *loadWeightsFile, char *saveWeightsFile):PolicyAgent(numFeatures, numActions, learningRate, epsilon, FA, loadWeightsFile, saveWeightsFile){
+  this->lambda = lambda;
   episodeNumber = 0;
   lastAction = -1;
-
+  //have memory for lambda
 }
 
 void SarsaAgent::update(double state[], int action, double reward, double discountFactor){
@@ -34,7 +35,7 @@ void SarsaAgent::update(double state[], int action, double reward, double discou
 
     FA->updateWeights(delta, learningRate);
     //Assume gamma, lambda are 0.
-    FA->decayTraces(0);
+    FA->decayTraces(discountFactor*lambda);//replace 0 with gamma*lambda
 
     for(int i = 0; i < getNumFeatures(); i++){
       lastState[i] = state[i];
@@ -59,8 +60,8 @@ void SarsaAgent::endEpisode(){
     double delta = lastReward - oldQ;
 
     FA->updateWeights(delta, learningRate);
-    //Assume lambda is 0.
-    FA->decayTraces(0);
+    //Assume lambda is 0. this comment looks wrong.
+    FA->decayTraces(0);//remains 0
   }
 
   if(toSaveWeights && (episodeNumber + 1) % 5 == 0){

@@ -56,7 +56,7 @@ void purgeFeatures(double *state, const std::vector<float>& state_vec,
     // Ignore Angle and Uniform Number of Teammates
     int temp =  i-tmpIndex;
     if(temp > 0 && (temp % 3 == 2 || temp % 3 == 0)) continue;
-
+    if (i > 9+6*numTMates) continue;
     state[stateIndex] = state_vec[i];
     stateIndex++;
   }
@@ -107,9 +107,9 @@ void offenseAgent(int port, int numTMates, int numEpi, double learnR,
                   "_" + std::to_string(numTMates + 1) +
                   "_" + std::to_string(suffix);
   wtFile = &s[0u];
-
+  double lambda = 0;
   CMAC *fa = new CMAC(numF, numA, range, min, res);
-  SarsaAgent *sa = new SarsaAgent(numF, numA, learnR, eps, fa, wtFile, wtFile);
+  SarsaAgent *sa = new SarsaAgent(numF, numA, learnR, eps, lambda, fa, wtFile, wtFile);
 
   hfo::HFOEnvironment hfo;
   hfo::status_t status;
