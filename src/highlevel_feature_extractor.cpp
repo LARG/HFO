@@ -56,7 +56,11 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   Vector2D ball_pos = wm.ball().pos();
   angleDistToPoint(self_pos, ball_pos, th, r);
   // Feature[3] and [4]: (x,y) postition of the ball
-  addNormFeature(ball_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+  if (playingOffense) {
+    addNormFeature(ball_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+  } else {
+    addNormFeature(ball_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+  }
   addNormFeature(ball_pos.y, -SP.pitchHalfWidth() - tolerance_y, SP.pitchHalfWidth() + tolerance_y);
   // Feature[5]: Able to kick
   addNormFeature(self.isKickable(), false, true);
@@ -135,7 +139,11 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject& teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
-      addNormFeature(teammate.pos().x, -tolerance_x - SP.pitchHalfLength(), tolerance_x );
+      if (playingOffense) {
+        addNormFeature(teammate.pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+      } else {
+        addNormFeature(teammate.pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+      }
       addNormFeature(teammate.pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
       addFeature(teammate.unum());
       detected_teammates++;
@@ -153,7 +161,11 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   for (PlayerCont::const_iterator it = opponents.begin(); it != opponents.end(); ++it) {
     const PlayerObject& opponent = *it;
     if (valid(opponent) && detected_opponents < numOpponents) {
-      addNormFeature(opponent.pos().x, -tolerance_x - SP.pitchHalfLength(), tolerance_x );
+      if (playingOffense) {
+        addNormFeature(opponent.pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+      } else {
+        addNormFeature(opponent.pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+      }
       addNormFeature(opponent.pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
       addFeature(opponent.unum());
       detected_opponents++;

@@ -313,7 +313,7 @@ void Agent::actionImpl() {
       break;
     case DEFEND_GOAL:
       this->doDefendGoal();
-    break;
+      break;
     case GO_TO_BALL:
       this->doGoToBall();
       break;
@@ -833,46 +833,7 @@ bool Agent::doMarkPlayer(int unum) {
   return true;
 }
 
-/*!
- * This Action marks the player which is "nearindex" nearest to the ball.
-*/
-bool Agent::doMarkPlayerNearIndex(int nearIndex) {
-  const WorldModel & wm = this->world();
-  Vector2D kicker_pos = Vector2D :: INVALIDATED;
-  Vector2D player_pos =  Vector2D :: INVALIDATED;
-  const PlayerPtrCont::const_iterator o_end = wm.opponentsFromSelf().end();
-  int count = 0;
-  for ( PlayerPtrCont::const_iterator it = wm.opponentsFromSelf().begin(); it != o_end; ++it ) {
-      if ( (*it)->distFromBall() < 5 ) {
-          kicker_pos = (*it)->pos();
-      }
-  }
-
-  if (nearIndex >=0 && nearIndex <= wm.opponentsFromBall().size()) {
-    player_pos = wm.opponentsFromBall().at(nearIndex-1)->pos();
-  }
-
-  if (!player_pos.isValid()) {
-      //"nearIndex Player Not Found
-      return false;
-  }
-  if (!kicker_pos.isValid()) {
-      //Kicker not found
-      return false;
-  }
-  if (kicker_pos.equals(player_pos)) {
-    //nearIndex Player to be marked is kicker
-    return false;
-  }
-  double x = player_pos.x + (kicker_pos.x - player_pos.x)*0.1;
-  double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
-  Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
-}
-
-
 /*-------------------------------------------------------------------*/
-
 /*!
  *
  * This action cuts off the angle between the shooter and the goal the players always move to a dynamic line in between the kicker and the goal.
@@ -994,38 +955,6 @@ bool Agent::doGoToBall() {
   return true;
 }
 
-/*-------------------------------------------------------------------*/
-
-/*!
- Used for 1v1 .
- High level action MOVE is taken whenever the agent does not have the ball.
- Medium level action DRIBBLE_TO is taken whenever the agent has to turn by a large amount to get the correct angle to shoot at the goal.
- High level action SHOOT is used to shoot it to the goal
-
- This is an example action and is not used.
-*/
-bool Agent::doNewAction1() {
-  const WorldModel & wm = this->world();
-  if(! wm.self().isKickable() ) {
-      this->doMove();
-      return true;
-  } else {
-      Vector2D goal_pos( -ServerParam::i().pitchHalfLength(), 0.0 );
-      Vector2D self_pos = wm.self().pos();
-      Vector2D dir (self_pos.x - goal_pos.x, self_pos.y - goal_pos.y);
-      AngleDeg angle = wm.self().vel().th();
-      double angle_threshold = 10;
-      double angle_diff = (dir.th() - angle).degree();
-      if ( std::fabs(angle_diff) > angle_threshold && goal_pos.dist(self_pos) > 20) {
-          double x = self_pos.x + 0.1*(goal_pos.x - self_pos.x );
-          double y = self_pos.y + 0.1*(goal_pos.y - self_pos.y );
-          Body_Dribble(Vector2D(x,y), 1.0, ServerParam::i().maxDashPower(), 2).execute(this);
-      } else {
-              this->doSmartKick();
-      }
-      return true;
-  }
-}
 /*-------------------------------------------------------------------*/
 
 /*!

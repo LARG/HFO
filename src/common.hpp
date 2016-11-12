@@ -114,9 +114,9 @@ inline int NumParams(const action_t action) {
    case MARK_PLAYER:
      return 1;
    case DEFEND_GOAL:
-	   return 0;
+     return 0;
    case GO_TO_BALL:
-	   return 0;
+     return 0;
  }
  std::cerr << "Unrecognized Action: " << action << std::endl;
  return -1;
@@ -162,9 +162,9 @@ inline std::string ActionToString(action_t action) {
     case MARK_PLAYER:
       return "Mark_Player";
     case DEFEND_GOAL:
-          return "Defend_Goal";
+      return "Defend_Goal";
     case GO_TO_BALL:
-          return "Go_To_Ball";
+      return "Go_To_Ball";
     default:
       return "Unknown";
   }
