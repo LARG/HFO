@@ -74,6 +74,7 @@
 #include <rcsc/param/param_map.h>
 #include <rcsc/param/cmd_line_parser.h>
 
+#include <algorithm>    // std::sort
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -81,10 +82,12 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <vector>
 #include <poll.h>
 
 using namespace rcsc;
@@ -302,6 +305,18 @@ void Agent::actionImpl() {
       std::cout << "Got quit from agent." << std::endl;
       handleExit();
       return;
+    case REDUCE_ANGLE_TO_GOAL:
+      this->doReduceAngleToGoal();
+      break;
+    case MARK_PLAYER:
+      this->doMarkPlayer(int(params[0]));
+      break;
+    case DEFEND_GOAL:
+      this->doDefendGoal();
+      break;
+    case GO_TO_BALL:
+      this->doGoToBall();
+      break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
                 << requested_action << std::endl;
@@ -777,6 +792,171 @@ Agent::doMove()
 }
 
 /*-------------------------------------------------------------------*/
+/*!
+ * This Action marks the player with the specified uniform number.
+*/
+bool Agent::doMarkPlayer(int unum) {
+  const WorldModel & wm = this->world();
+  Vector2D kicker_pos = Vector2D :: INVALIDATED;
+  Vector2D player_pos =  Vector2D :: INVALIDATED;
+  int kicker_unum = -1;
+  const PlayerPtrCont::const_iterator o_end = wm.opponentsFromSelf().end();
+  int count = 0;
+  for ( PlayerPtrCont::const_iterator it = wm.opponentsFromSelf().begin(); it != o_end; ++it ) {
+      if ( (*it)->distFromBall() < 5 ) {
+          kicker_pos = (*it)->pos();
+          kicker_unum = (*it)->unum();
+      }
+  }
+
+  for ( PlayerPtrCont::const_iterator it = wm.opponentsFromSelf().begin(); it !=  o_end; ++it ) {
+	  if ( (*it)-> unum() == unum ) {
+           player_pos = (*it)->pos();
+      }
+  }
+
+  if (!player_pos.isValid()) {
+      //Player to be marked not found
+      return false;
+  }
+  if (!kicker_pos.isValid()) {
+      //Kicker not found
+      return false;
+  }
+  if (unum == kicker_unum || kicker_pos.equals(player_pos)) {
+    //Player to be marked is kicker
+    return false;
+  }
+  double x = player_pos.x + (kicker_pos.x - player_pos.x)*0.1;
+  double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
+  Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this);
+  return true;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+ *
+ * This action cuts off the angle between the shooter and the goal the players always move to a dynamic line in between the kicker and the goal.
+ */
+
+/* Comparator for sorting teammated based on y positions.*/
+bool compare_y_pos (PlayerObject* i, PlayerObject* j) {
+  return i->pos().y < j->pos().y;
+}
+
+bool Agent::doReduceAngleToGoal() {
+  const WorldModel & wm = this->world();
+  Vector2D goal_pos1( -ServerParam::i().pitchHalfLength(), ServerParam::i().goalHalfWidth() );
+  Vector2D goal_pos2( -ServerParam::i().pitchHalfLength(), -ServerParam::i().goalHalfWidth() );
+
+  const PlayerPtrCont::const_iterator o_end = wm.opponentsFromSelf().end();
+
+  Vector2D ball_pos = wm.ball().pos();
+  double nearRatio = 0.9;
+  const PlayerPtrCont::const_iterator o_t_end = wm.teammatesFromSelf().end();
+
+  std::vector<PlayerObject*> teammatesBetweenBallAndGoal;
+  Vector2D self_pos = wm.self().pos();
+  Line2D goal_line_1 (goal_pos1, ball_pos);
+  Line2D goal_line_2 (goal_pos2, ball_pos);
+  Vector2D max_angle_end_pt1 = goal_pos2;
+  Vector2D max_angle_end_pt2 = goal_pos1;
+
+  //filter out points not lie in the cone
+  for (PlayerPtrCont::const_iterator it1 = wm.teammatesFromSelf().begin(); it1 != o_t_end; ++it1 ) {
+      Vector2D teammate_pos = (*it1)->pos();
+      double y1 = goal_line_1.getY(teammate_pos.x);
+      double y2 = goal_line_2.getY(teammate_pos.x);
+      //check x coordinate
+      if (teammate_pos.x >= ball_pos.x ) {
+          continue;
+      }
+      // check y coordinate
+
+      if (teammate_pos.y <= ((y1>y2)?y2:y1) || teammate_pos.y >= ((y1>=y2)?y1:y2)) {
+          continue;
+      }
+
+      //push into vector if it passes both tests
+      teammatesBetweenBallAndGoal.push_back(*it1);
+  }
+
+  sort(teammatesBetweenBallAndGoal.begin(), teammatesBetweenBallAndGoal.end(), compare_y_pos);
+  double max_angle = 0;
+
+  /* find max angle and choose endpoints*/
+  for (int i = 0; i < teammatesBetweenBallAndGoal.size() + 1; i++) {
+      Vector2D first_pos = Vector2D::INVALIDATED;
+      if (i == 0) {
+          first_pos = goal_pos2;
+      } else {
+          first_pos = teammatesBetweenBallAndGoal[i-1] -> pos();
+      }
+      Vector2D second_pos = Vector2D::INVALIDATED;
+      if ( i== teammatesBetweenBallAndGoal.size()) {
+          second_pos = goal_pos1;
+      } else {
+          second_pos = teammatesBetweenBallAndGoal[i] -> pos();
+      }
+
+      double angle1 = atan2(ball_pos.y - first_pos.y, ball_pos.x - first_pos.x);
+      double angle2 = atan2(ball_pos.y - second_pos.y, ball_pos.x - second_pos.x);
+      AngleDeg open_angle;
+      double open_angle_value = fabs(open_angle.normalize_angle(open_angle.rad2deg(angle1-angle2)));
+      if ( open_angle_value > max_angle) {
+          max_angle = open_angle_value;
+          max_angle_end_pt1 = first_pos;
+          max_angle_end_pt2 = second_pos;
+      }
+  }
+
+  /*Calculate and go to target point */
+  Vector2D targetLineEnd1 = max_angle_end_pt1*(1-nearRatio) + ball_pos*nearRatio;
+  Vector2D targetLineEnd2 = max_angle_end_pt2*(1-nearRatio) + ball_pos*nearRatio;
+  double dist_to_end1 = targetLineEnd1.dist2(ball_pos);
+  double dist_to_end2 = targetLineEnd2.dist2(ball_pos);
+  double ratio = dist_to_end2/(dist_to_end1+dist_to_end2);
+  Vector2D target = targetLineEnd1 * ratio + targetLineEnd2 * (1-ratio);
+  Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
+  return true;
+}
+
+/*-------------------------------------------------------------------*/
+
+/*!
+ *
+ * This action cuts off the angle between the shooter and the goal the players always moves on a fixed line.
+ */
+
+bool Agent::doDefendGoal() {
+  const WorldModel & wm = this->world();
+  Vector2D goal_pos1( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), ServerParam::i().goalHalfWidth() );
+  Vector2D goal_pos2( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), -ServerParam::i().goalHalfWidth() );
+  Vector2D ball_pos = wm.ball().pos();
+  double dist_to_post1 = goal_pos1.dist2(ball_pos);
+  double dist_to_post2 = goal_pos2.dist2(ball_pos);
+  double ratio = dist_to_post2/(dist_to_post1+dist_to_post2);
+  Vector2D target = goal_pos1 * ratio + goal_pos2 * (1-ratio);
+  Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
+  return true;
+}
+
+/*-------------------------------------------------------------------*/
+
+/*!
+ *
+ * This action makes the agent head directly head towards the ball.
+ */
+
+
+bool Agent::doGoToBall() {
+  const WorldModel & wm = this->world();
+  Body_GoToPoint(wm.ball().pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
+  return true;
+}
+
+/*-------------------------------------------------------------------*/
+
 /*!
 
 */

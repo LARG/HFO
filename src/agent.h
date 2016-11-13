@@ -84,6 +84,13 @@ protected:
   bool doMove();
   bool doForceKick();
   bool doHeardPassReceive();
+  bool doMarkPlayer(int unum);
+  bool doMarkPlayerNearIndex(int near_index);
+  bool doReduceAngleToGoal();
+  bool doDefendGoal();
+  bool doGoToBall();
+  bool doNewAction1();
+
 
   Communication::Ptr M_communication;
   FieldEvaluator::ConstPtr M_field_evaluator;

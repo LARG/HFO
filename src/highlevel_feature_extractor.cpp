@@ -55,10 +55,13 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   // Features about the ball
   Vector2D ball_pos = wm.ball().pos();
   angleDistToPoint(self_pos, ball_pos, th, r);
-  // Feature[3]: Dist to ball
-  addNormFeature(r, 0, maxR);
-  // Feature[4]: Ang to ball
-  addNormFeature(th, -M_PI, M_PI);
+  // Feature[3] and [4]: (x,y) postition of the ball
+  if (playingOffense) {
+    addNormFeature(ball_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+  } else {
+    addNormFeature(ball_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+  }
+  addNormFeature(ball_pos.y, -SP.pitchHalfWidth() - tolerance_y, SP.pitchHalfWidth() + tolerance_y);
   // Feature[5]: Able to kick
   addNormFeature(self.isKickable(), false, true);
 
@@ -131,14 +134,17 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
     addFeature(FEAT_INVALID);
   }
 
-  // Features [9+3T - 9+6T]: dist, angle, unum of teammates
+  // Features [9+3T - 9+6T]: x, y, unum of teammates
   detected_teammates = 0;
   for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject& teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
-      angleDistToPoint(self_pos, teammate.pos(), th, r);
-      addNormFeature(r,0,maxR);
-      addNormFeature(th,-M_PI,M_PI);
+      if (playingOffense) {
+        addNormFeature(teammate.pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+      } else {
+        addNormFeature(teammate.pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+      }
+      addNormFeature(teammate.pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
       addFeature(teammate.unum());
       detected_teammates++;
     }
@@ -150,14 +156,17 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
     addFeature(FEAT_INVALID);
   }
 
-  // Features [9+6T - 9+6T+3O]: dist, angle, unum of opponents
+  // Features [9+6T - 9+6T+3O]: x, y, unum of opponents
   int detected_opponents = 0;
   for (PlayerCont::const_iterator it = opponents.begin(); it != opponents.end(); ++it) {
     const PlayerObject& opponent = *it;
     if (valid(opponent) && detected_opponents < numOpponents) {
-      angleDistToPoint(self_pos, opponent.pos(), th, r);
-      addNormFeature(r,0,maxR);
-      addNormFeature(th,-M_PI,M_PI);
+      if (playingOffense) {
+        addNormFeature(opponent.pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+      } else {
+        addNormFeature(opponent.pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+      }
+      addNormFeature(opponent.pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
       addFeature(opponent.unum());
       detected_opponents++;
     }

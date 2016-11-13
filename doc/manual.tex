@@ -289,8 +289,8 @@ features.
 \item{\textbf{Y position} - The agent’s y-position on the field. See
   Figure \ref{fig:playfieldCoords}.}
 \item{\textbf{Orientation} - The global direction that the agent is facing.}
-\item{\textbf{Ball Proximity} - Agent's proximity to the ball.}
-\item{\textbf{Ball Angle} - The global angle to the ball. A relative angle to the ball can be determined by subtracting the agent's orientation (feature 2).}
+\item{\textbf{Ball X} - The ball's x-position on the field.}
+\item{\textbf{Ball Y} - The ball's y-position on the field.}
 \item{\textbf{Able to Kick} - Boolean indicating if the agent can kick the ball.}
 \item{\textbf{Goal Center Proximity} - Agent's proximity to the center of the goal.}
 \item{\textbf{Goal Center Angle} - Angle from the agent to the center of the goal.}
@@ -311,11 +311,11 @@ features.
   angle available to pass to teammate i. Shown as $\theta_p$ in Figure
   \ref{fig:openAngle}. If teammates are present but not detected, this
   feature is considered invalid and given the value of -2.}
-\item [$3T$] {\textbf{Proximity, Angle, and Uniform Number of
-    Teammates} - For each teammate i: the proximity, angle, and
+\item [$3T$] {\textbf{X, Y, and Uniform Number of
+    Teammates} - For each teammate: the x-position, y-position and
   uniform number of that teammate.}
-\item [$3O$] {\textbf{Proximity, Angle, and Uniform Number of
-    Opponents} - For each opponent: the proximity, angle, and
+\item [$3O$] {\textbf{X, Y, and Uniform Number of
+    Opponents} - For each opponent: the x-position, y-position and
   uniform number of that opponent.}
 \end{enumerate}
 
@@ -562,6 +562,15 @@ faithfully report which action spaces were used.
   combination of short kicks and moves.}
 \item{\textbf{Catch}(): This goalie-specific action may be used to
   catch the ball.}
+\item {\textbf{Reduce\_Angle\_To\_Goal} (): Moves the agent to a point on the field, such that the kicker has the least open angle to the goal. }
+
+
+\item {\textbf{Defend\_Goal} () : Moves the agent to a point on a fixed line on the field, such that the kicker has the least open angle to the goal.}
+
+\item {\textbf{Go\_To\_Ball} (): Makes the agent go towards the ball.}
+
+\item {\textbf{Mark\_Player} (uniform\_number): Moves the agent so as to mark the player with the specified uniform number.}
+
 \end{itemize}
 
 \subsection{Special Actions}

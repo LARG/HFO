@@ -12,10 +12,11 @@ class SarsaAgent:public PolicyAgent{
   double lastState[MAX_STATE_VARS];
   int lastAction;
   double lastReward;
+  double lambda;
 
  public:
 
-  SarsaAgent(int numFeatures, int numActions, double learningRate, double epsilon, FunctionApproximator *FA, char *loadWeightsFile, char *saveWeightsFile);
+  SarsaAgent(int numFeatures, int numActions, double learningRate, double epsilon, double lambda, FunctionApproximator *FA, char *loadWeightsFile, char *saveWeightsFile);
 
   int  argmaxQ(double state[]);
   double computeQ(double state[], int action);
