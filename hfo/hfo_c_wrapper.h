@@ -47,6 +47,7 @@ extern "C" {
     StatusToString(status); // TODO: OSX requires two calls...?!
     return StatusToString(status).c_str();
   }
+  int getUnum(hfo::HFOEnvironment *hfo) {return hfo->getUnum();}
 }
 
 #endif
