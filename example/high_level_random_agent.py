@@ -28,7 +28,7 @@ def main():
       # Advance the environment and get the game status
       status = hfo.step()
     # Check the outcome of the episode
-    print('Episode %d ended with %s'%(episode, hfo.statusToString(status)))
+    print(('Episode %d ended with %s'%(episode, hfo.statusToString(status))))
     # Quit if the server goes down
     if status == SERVER_DOWN:
       hfo.act(QUIT)

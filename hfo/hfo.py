@@ -7,7 +7,7 @@ hfo_lib = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__),
                                         'libhfo_c.so'))
 
 ''' Possible feature sets '''
-LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = range(2)
+LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(2))
 
 ''' An enum of the possible HFO actions
   [Low-Level] Dash(power, relative_direction)
@@ -26,7 +26,7 @@ LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = range(2)
   NOOP(): Do Nothing
   QUIT(): Quit the game '''
 DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
-    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL = range(19)
+    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL = list(range(19))
 
 ''' Possible game status
   [IN_GAME] Game is currently active
@@ -36,10 +36,10 @@ DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
   [OUT_OF_TIME] Trial has ended due to time limit
   [SERVER_DOWN] Server is not alive
 '''
-IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME, SERVER_DOWN = range(6)
+IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME, SERVER_DOWN = list(range(6))
 
 ''' Possible sides '''
-RIGHT, NEUTRAL, LEFT = range(-1,2)
+RIGHT, NEUTRAL, LEFT = list(range(-1,2))
 
 class Player(Structure): pass
 Player._fields_ = [
@@ -104,9 +104,7 @@ class HFOEnvironment(object):
       play_goalie: is this player the goalie
       record_dir: record agent's states/actions/rewards to this directory
     """
-    hfo_lib.connectToServer(self.obj, feature_set, config_dir, server_port,
-                            server_addr, team_name, play_goalie, record_dir)
-
+    hfo_lib.connectToServer(self.obj, feature_set, config_dir.encode('utf-8'), server_port,server_addr.encode('utf-8'), team_name.encode('utf-8'), play_goalie, record_dir.encode('utf-8'))
   def getStateSize(self):
     """ Returns the number of state features """
     return hfo_lib.getStateSize(self.obj)
@@ -130,11 +128,11 @@ class HFOEnvironment(object):
 
   def say(self, message):
     """ Transmit a message """
-    hfo_lib.say(self.obj, message)
+    hfo_lib.say(self.obj, message.encode('utf-8'))
 
   def hear(self):
     """ Returns the message heard from another player """
-    return hfo_lib.hear(self.obj)
+    return hfo_lib.hear(self.obj).decode('utf-8')
 
   def playerOnBall(self):
     """ Returns a player object who last touched the ball """
@@ -146,11 +144,11 @@ class HFOEnvironment(object):
 
   def actionToString(self, action):
     """ Returns a string representation of an action """
-    return hfo_lib.actionToString(action)
+    return hfo_lib.actionToString(action.decode('utf-8'))
 
   def statusToString(self, status):
     """ Returns a string representation of a game status """
-    return hfo_lib.statusToString(status)
+    return hfo_lib.statusToString(status.decode('utf-8'))
 
   def getUnum(self):
     """ Return the uniform number of the agent """
