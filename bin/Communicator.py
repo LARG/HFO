@@ -9,7 +9,7 @@ Modified: 2010-11-07
 '''
 
 import socket, sys, time
-import cPickle as pickle
+import pickle as pickle
 
 defaultPort = 5557
 
@@ -43,7 +43,7 @@ class Communicator(object):
 
   def sendMsg(self,msg):
     #print 'sending',msg
-    self._sock.sendto(msg + '\0',self._addr)
+    self._sock.sendto((msg+'\0').encode('utf-8'),self._addr)
 
   def recvMsg(self,event=None,retryCount=None):
     msg = self._storedMsg
@@ -53,7 +53,7 @@ class Communicator(object):
       newMsg = ''
       try:
         newMsg,self._addr = self._sock.recvfrom(8192)
-        msg += newMsg
+        msg += newMsg.decode('utf-8')
       except socket.error:
         #time.sleep(0.1)
         pass
@@ -62,7 +62,7 @@ class Communicator(object):
           raise TimeoutError
         else:
           retryCount -= 1
-          print '[Trainer] waiting for message, retry =', retryCount
+          print('[Trainer] waiting for message, retry =', retryCount)
           time.sleep(0.3)
           #raise ValueError('Error while receiving message')
     (msg,sep,rest) = msg.partition('\0')
@@ -88,5 +88,5 @@ class ClientCommunicator(Communicator):
       self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
       self._sock.settimeout(5)
     except:
-      print >>sys.stderr,'Error creating socket'
+      sys.stderr.write('Error creating socket')
       raise

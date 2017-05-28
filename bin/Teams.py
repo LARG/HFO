@@ -71,7 +71,7 @@ class Agent2d(Team):
     launchOpts = None
     if player_num == 1:
       launchOpts = '-g'
-    print 'Launch npc %s-%d' % (self._name, player_num)
+    print('Launch npc %s-%d' % (self._name, player_num))
     return self.start_npc_proc(launchOpts)
 
 
@@ -99,5 +99,5 @@ class Helios(Team):
     launchOpts = None
     if player_num == 1:
       launchOpts = '-g'
-    print 'Launch npc %s-%d' % (self._name, player_num)
+    print('Launch npc %s-%d' % (self._name, player_num))
     return self.start_npc_proc(launchOpts)

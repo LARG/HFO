@@ -24,7 +24,7 @@ def main():
       msg = hfo.hear()
       # Print the incoming communication
       if msg:
-        print('Heard: %s'% msg)
+        print(('Heard: %s'% msg))
       # Take an action
       hfo.act(DASH, 20.0, 0.)
       # Create outgoing communication
@@ -32,7 +32,7 @@ def main():
       # Advance the environment and get the game status
       status = hfo.step()
     # Check the outcome of the episode
-    print('Episode %d ended with %s'%(episode, hfo.statusToString(status)))
+    print(('Episode %d ended with %s'%(episode, hfo.statusToString(status))))
     # Quit if the server goes down
     if status == SERVER_DOWN:
       hfo.act(QUIT)

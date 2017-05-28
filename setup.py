@@ -3,7 +3,7 @@ import os.path, sys
 
 hfo_c_lib = 'hfo/libhfo_c.so'
 if not os.path.isfile(hfo_c_lib):
-  print('ERROR: Unable to find required library: %s.'%(hfo_c_lib))
+  print(('ERROR: Unable to find required library: %s.'%(hfo_c_lib)))
   sys.exit()
 
 module1 = Extension('hfo.hfo_c_wrapper',

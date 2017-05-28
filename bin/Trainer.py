@@ -72,11 +72,11 @@ class Trainer(object):
     binary_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                               'teams', 'base')
     config_dir = os.path.join(binary_dir, 'config/formations-dt')
-    print("Waiting for player-controlled agent %s-%d: config_dir=%s, "\
+    print(("Waiting for player-controlled agent %s-%d: config_dir=%s, "\
           "server_port=%d, server_addr=%s, team_name=%s, play_goalie=%r"
           % (self._offenseTeamName if play_offense else self._defenseTeamName,
              agent_num, config_dir, self._serverPort, "localhost", team_name,
-             agent_ext_num==1))
+             agent_ext_num==1)))
     if wait_until_join:
       self.waitOnPlayer(agent_ext_num, play_offense)
     return None
@@ -85,7 +85,7 @@ class Trainer(object):
     """ Given a team name, returns the team object. """
     teams_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'teams')
     if requested_team_name == 'helios':
-      print 'Creating team Helios'
+      print('Creating team Helios')
       team_name = 'HELIOS_' + ('left' if play_offense else 'right')
       team_dir = os.path.join(teams_dir, 'helios', 'helios-13Eindhoven')
       lib_dir = os.path.join(teams_dir, 'helios', 'local', 'lib')
@@ -93,7 +93,7 @@ class Trainer(object):
                           binaryName='helios_player', host='localhost',
                           port=self._serverPort)
     elif requested_team_name == 'base':
-      print 'Creating team Agent2d (base)'
+      print('Creating team Agent2d (base)')
       team_name = 'base_' + ('left' if play_offense else 'right')
       team_dir = os.path.join(teams_dir, 'base')
       lib_dir = None
@@ -102,7 +102,7 @@ class Trainer(object):
                            record=self._record, host='localhost',
                            port=self._serverPort)
     else:
-      print 'Unknown team requested: ' + requested_team_name
+      print('Unknown team requested: ' + requested_team_name)
       sys.exit(1)
 
   def getTeams(self, offense_team_name, defense_team_name):
@@ -179,8 +179,8 @@ class Trainer(object):
       self._done = True
     if endOfTrial:
       self._numTrials += 1
-      print 'EndOfTrial: %d / %d %d %s'%\
-        (self._numGoals, self._numTrials, self._frame, event)
+      print('EndOfTrial: %d / %d %d %s'%\
+        (self._numGoals, self._numTrials, self._frame, event))
       self._numFrames += self._frame - self._lastTrialStart
       self._lastTrialStart = self._frame
       self.getConnectedPlayers()
@@ -199,16 +199,16 @@ class Trainer(object):
     msg = msg[1:length+1]
     if msg == 'START':
       if self._isPlaying:
-        print 'Already playing, ignoring message'
+        print('Already playing, ignoring message')
       else:
         self.startGame()
     elif msg == 'DONE':
       raise DoneError
     elif msg == 'ready':
-      print 'Agent Connected:', team, player
+      print('Agent Connected:', team, player)
       self._agentReady.add((team, player))
     else:
-      print 'Unhandled message from agent: %s' % msg
+      print('Unhandled message from agent: %s' % msg)
 
   def initMsgHandlers(self):
     """ Create handlers for different messages. """
@@ -235,9 +235,9 @@ class Trainer(object):
     """ Check that the next message is same as expected message. """
     msg = self.recv(retryCount)
     if msg != expectedMsg:
-      print >>sys.stderr,'Error with message'
-      print >>sys.stderr,'  expected: %s' % expectedMsg
-      print >>sys.stderr,'  received: %s' % msg
+      sys.stderr.write('Error with message')
+      sys.stderr.write('  expected: ' + expectedMsg)
+      sys.stderr.write('  received: ' + msg)
       # print >>sys.stderr,len(expectedMsg),len(msg)
       raise ValueError
 
@@ -263,7 +263,7 @@ class Trainer(object):
       self._msgHandlers.append([args,handler])
     else:
       if ('quiet' not in kwargs) or (not kwargs['quiet']):
-        print 'Updating handler for %s' % (' '.join(args))
+        print('Updating handler for %s' % (' '.join(args)))
       self._msgHandlers[i] = [args,handler]
 
   def unregisterMsgHandler(self, *args):
@@ -285,7 +285,7 @@ class Trainer(object):
     """ Handle a message using the registered handlers. """
     i,prefixLength,handler = self._findHandlerInd(msg)
     if i < 0:
-      print 'Unhandled message:',msg[0:2]
+      print('Unhandled message:',msg[0:2])
     else:
       handler(msg[prefixLength:])
 
@@ -319,7 +319,7 @@ class Trainer(object):
     def f(body):
       self._gotLook = True
       del self._connectedPlayers[:]
-      for i in xrange(4, len(body)):
+      for i in range(4, len(body)):
         _,team,num = body[i][0][:3]
         if (team, num) not in self._connectedPlayers:
           self._connectedPlayers.append((team,num))
@@ -342,9 +342,9 @@ class Trainer(object):
   def sendHFOConfig(self):
     """ Broadcast the HFO configuration """
     offense_nums = ' '.join([str(self.convertToExtPlayer(self._offenseTeamName, i))
-                             for i in xrange(1, self._numOffense + 1)])
+                             for i in range(1, self._numOffense + 1)])
     defense_nums = ' '.join([str(self.convertToExtPlayer(self._defenseTeamName, i))
-                             for i in xrange(self._numDefense)])
+                             for i in range(self._numDefense)])
     self.send('(say HFO_SETUP offense_name %s defense_name %s num_offense %d'\
                 ' num_defense %d offense_nums %s defense_nums %s)'
               %(self._offenseTeamName, self._defenseTeamName,
@@ -357,15 +357,15 @@ class Trainer(object):
     self._isPlaying = True
 
   def printStats(self):
-    print 'TotalFrames = %i, AvgFramesPerTrial = %.1f, AvgFramesPerGoal = %.1f'\
+    print('TotalFrames = %i, AvgFramesPerTrial = %.1f, AvgFramesPerGoal = %.1f'\
       %(self._numFrames,
         self._numFrames / float(self._numTrials) if self._numTrials > 0 else float('nan'),
-        self._numGoalFrames / float(self._numGoals) if self._numGoals > 0 else float('nan'))
-    print 'Trials             : %i' % self._numTrials
-    print 'Goals              : %i' % self._numGoals
-    print 'Defense Captured   : %i' % self._numBallsCaptured
-    print 'Balls Out of Bounds: %i' % self._numBallsOOB
-    print 'Out of Time        : %i' % self._numOutOfTime
+        self._numGoalFrames / float(self._numGoals) if self._numGoals > 0 else float('nan')))
+    print('Trials             : %i' % self._numTrials)
+    print('Goals              : %i' % self._numGoals)
+    print('Defense Captured   : %i' % self._numBallsCaptured)
+    print('Balls Out of Bounds: %i' % self._numBallsOOB)
+    print('Out of Time        : %i' % self._numOutOfTime)
 
   def checkLive(self, necProcesses):
     """Returns true if each of the necessary processes is still alive and
@@ -374,7 +374,7 @@ class Trainer(object):
     """
     for p,name in necProcesses:
       if p is not None and p.poll() is not None:
-        print 'Something necessary closed (%s), exiting' % name
+        print('Something necessary closed (%s), exiting' % name)
         return False
     return True
 
@@ -391,7 +391,7 @@ class Trainer(object):
 
       # Launch offense
       agent_num = 0
-      for player_num in xrange(1, 12):
+      for player_num in range(1, 12):
         if agent_num < self._offenseAgents and player_num == sorted_offense_agent_unums[agent_num]:
           port = self._agentServerPort + agent_num
           agent = self.launch_agent(agent_num, sorted_offense_agent_unums[agent_num],
@@ -410,7 +410,7 @@ class Trainer(object):
 
       # Launch defense
       agent_num = 0
-      for player_num in xrange(1, 12):
+      for player_num in range(1, 12):
         if agent_num < self._defenseAgents and player_num == sorted_defense_agent_unums[agent_num]:
           port = self._agentServerPort + agent_num + self._offenseAgents
           agent = self.launch_agent(agent_num, sorted_defense_agent_unums[agent_num],
@@ -427,23 +427,23 @@ class Trainer(object):
           else:
             self.disconnectPlayer(player, player_num, on_offense=False)
 
-      print 'Checking all players connected'
+      print('Checking all players connected')
       while not self.allPlayersConnected():
         self.getConnectedPlayers()
 
       time.sleep(0.1)
       self.sendHFOConfig()
 
-      print 'Starting game'
+      print('Starting game')
       time.sleep(0.1)
       self.startGame()
       while self.allPlayersConnected() and self.checkLive(necProcesses) and not self._done:
         prevFrame = self._frame
         self.listenAndProcess()
     except TimeoutError:
-      print 'Haven\'t heard from the server for too long, Exiting'
+      print('Haven\'t heard from the server for too long, Exiting')
     except (KeyboardInterrupt, DoneError):
-      print 'Finished'
+      print('Finished')
     finally:
       try:
         self._comm.sendMsg('(bye)')
