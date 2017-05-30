@@ -84,9 +84,9 @@ def main(args):
     # Run
     trainer.run(necProcesses, args.offenseTeam, args.defenseTeam)
   except KeyboardInterrupt:
-    print '[start.py] Exiting for CTRL-C'
+    print('[start.py] Exiting for CTRL-C')
   finally:
-    print '[start.py] Cleaning up server and other processes'
+    print('[start.py] Cleaning up server and other processes')
     for p in reversed(processes):
       try:
         p.terminate()
@@ -160,23 +160,23 @@ def parseArgs():
   p.add_argument('--verbose', dest='verbose', action='store_true',
                  default=False, help='Print verbose output.')
   args = p.parse_args()
-  if args.offenseAgents not in xrange(0, 11):
+  if args.offenseAgents not in list(range(0, 11)):
     p.error('argument --offense-agents: invalid choice: '\
             + str(args.offenseAgents) + ' (choose from [0-10])')
-  if args.offenseNPCs not in xrange(0, 11):
+  if args.offenseNPCs not in list(range(0, 11)):
     p.error('argument --offense-npcs: invalid choice: '\
             + str(args.offenseNPCs) + ' (choose from [0-10])')
-  if args.defenseAgents not in xrange(0, 12):
+  if args.defenseAgents not in list(range(0, 12)):
     p.error('argument --defense-agents: invalid choice: '\
             + str(args.defenseAgents) + ' (choose from [0-11])')
-  if args.defenseNPCs not in xrange(0, 12):
+  if args.defenseNPCs not in list(range(0, 12)):
     p.error('argument --offense-npcs: invalid choice: '\
             + str(args.defenseNPCs) + ' (choose from [0-11])')
-  if args.offenseAgents + args.offenseNPCs not in xrange(1, 11):
+  if args.offenseAgents + args.offenseNPCs not in list(range(1, 11)):
     p.error('Offense players (offense-agents + offense-npcs): '\
             'invalid choice: ' + str(args.offenseAgents + args.offenseNPCs) +\
             ' (choose from [1,10])')
-  if args.defenseAgents + args.defenseNPCs not in xrange(0, 12):
+  if args.defenseAgents + args.defenseNPCs not in list(range(0, 12)):
     p.error('Defense players (defense-agents + defense-npcs): '\
             'invalid choice: ' + str(args.defenseAgents + args.defenseNPCs) +\
             ' (choose from [0,11])')
