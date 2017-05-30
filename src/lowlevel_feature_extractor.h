@@ -16,9 +16,9 @@ public:
 
 protected:
   // Number of features for non-player objects.
-  const static int num_basic_features = 58;
+  const static int num_basic_features = 62;       
   // Number of features for each player or opponent in game.
-  const static int features_per_player = 8;
+  const static int features_per_player = 9;
 };
 
 #endif // LOWLEVEL_FEATURE_EXTRACTOR_H
