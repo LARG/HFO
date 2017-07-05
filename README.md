@@ -11,6 +11,10 @@ RoboCup 2D Half Field Offense
  - Boost-system, filesystem
  - Qt4 [Required for SoccerWindow2 visualizer]: To not build the visualizer, add cmake flag `-DBUILD_SOCCERWINDOW=False`
 
+## Python Dependencies
+ - Python 2.7 or 3.2+ (tested with 2.7 and 3.5)
+ - numpy
+
 ## Install
 ```
 mkdir build && cd build
@@ -65,7 +69,7 @@ for (int episode=0; episode<5; episode++) {
 ```python
 hfo = hfo.HFOEnvironment()
 hfo.connectServer(...)
-for episode in xrange(5):
+for episode in xrange(5): # replace with range(5) for Python 3.X
   status = IN_GAME
   while status == IN_GAME:
     features = hfo.getState()
