@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # encoding: utf-8
+from __future__ import print_function
 
 import subprocess, os, time, numpy, sys
 
 # Global list of all/essential running processes
 processes, necProcesses = [], []
-# Command to run the rcssserver. Edit as needed.
+
+# Command to run the rcssserver. Edit as needed; the below assumes running in the same directory as HFO
 SERVER_BIN = 'rcssserver'
-# Command to run the monitor. Edit as needed.
+# Command to run the monitor. Edit as needed; ditto to the above re directories.
 MONITOR_BIN = 'soccerwindow2'
 
-def launch(cmd, name = 'Unknown', necessary = True, supressOutput = True):
+def launch(cmd, name = 'Unknown', necessary = True, suppressOutput = True):
   """Launch a process.
 
   Appends to list of processes and (optionally) necProcesses if
@@ -19,10 +21,14 @@ def launch(cmd, name = 'Unknown', necessary = True, supressOutput = True):
   Returns: The launched process.
   """
   kwargs = {}
-  if supressOutput:
+  if suppressOutput:
     kwargs = {'stdout': open('/dev/null', 'w'),
               'stderr': open('/dev/null', 'w')}
-  p = subprocess.Popen(cmd.split(' '), shell = False, **kwargs)
+  try:
+    p = subprocess.Popen(cmd.split(' '), shell = False, **kwargs)
+  except (IOError, OSError):
+    print("ERROR: Unsuccessful launch of process {!r}".format(cmd), file=sys.stderr)
+    raise
   processes.append(p)
   if necessary:
     necProcesses.append([p,name])
@@ -66,7 +72,7 @@ def main(args):
   try:
     # Launch the Server
     server = launch(serverCommand + serverOptions, name='server',
-                    supressOutput=not args.verbose)
+                    suppressOutput=not args.verbose)
     time.sleep(0.2)
     assert server.poll() is None,\
       '[start.py] Failed to launch Server with command: \"%s\"' \
