@@ -29,7 +29,7 @@ def main():
     # Quit if the server goes down
     if status == SERVER_DOWN:
       hfo.act(QUIT)
-      break
+      exit()
 
 if __name__ == '__main__':
   main()
