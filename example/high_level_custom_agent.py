@@ -56,7 +56,7 @@ def get_action(state,hfo_env,num_teammates):
     hfo_env.act(DRIBBLE)
     return
   # If nothing can be done pass
-  hfo_env.act(PASS)
+  hfo_env.act(PASS) # doesn't this require a target teammate?
     
 
 def main():
