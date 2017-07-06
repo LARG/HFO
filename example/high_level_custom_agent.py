@@ -86,7 +86,7 @@ def main():
       #print(status)
       if status == SERVER_DOWN:
         hfo_env.act(QUIT)
-        break 
+        exit()
   
 
 if __name__ == '__main__':
