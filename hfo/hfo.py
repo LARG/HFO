@@ -7,7 +7,8 @@ hfo_lib = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__),
                                         'libhfo_c.so'))
 
 ''' Possible feature sets '''
-LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(2))
+NUM_FEATURE_SETS = 2
+LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(NUM_FEATURE_SETS))
 
 ''' An enum of the possible HFO actions
   [Low-Level] Dash(power, relative_direction)
@@ -25,8 +26,9 @@ LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(2))
   [High-Level] Catch(): Catch the ball (Goalie Only)
   NOOP(): Do Nothing
   QUIT(): Quit the game '''
+NUM_HFO_ACTIONS = 19
 DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
-    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL = list(range(19))
+    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL = list(range(NUM_HFO_ACTIONS))
 
 ''' Possible game status
   [IN_GAME] Game is currently active
@@ -36,7 +38,8 @@ DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
   [OUT_OF_TIME] Trial has ended due to time limit
   [SERVER_DOWN] Server is not alive
 '''
-IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME, SERVER_DOWN = list(range(6))
+NUM_GAME_STATUS_STATES = 6
+IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME, SERVER_DOWN = list(range(NUM_GAME_STATUS_STATES))
 
 ''' Possible sides '''
 RIGHT, NEUTRAL, LEFT = list(range(-1,2))
