@@ -37,7 +37,8 @@ enum action_t
   REDUCE_ANGLE_TO_GOAL, // [High-Level] Reduce_Angle_To_Goal : Reduces the shooting angle
   MARK_PLAYER, 			// [High-Level] Mark_Player(opponent_unum [0,11]) : Moves to the position in between the kicker and a given player
   DEFEND_GOAL,
-  GO_TO_BALL
+  GO_TO_BALL,
+  PREPROCESS  // [High-Level] Handle lost position of self/ball; variant called in DRIBBLE
 };
 
 // Status of a HFO game
@@ -117,6 +118,8 @@ inline int NumParams(const action_t action) {
      return 0;
    case GO_TO_BALL:
      return 0;
+   case PREPROCESS:
+     return 0;
  }
  std::cerr << "Unrecognized Action: " << action << std::endl;
  return -1;
@@ -165,6 +168,8 @@ inline std::string ActionToString(action_t action) {
       return "Defend_Goal";
     case GO_TO_BALL:
       return "Go_To_Ball";
+    case PREPROCESS:
+      return "PreProcessAsAction";
     default:
       return "Unknown";
   }

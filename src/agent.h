@@ -76,6 +76,7 @@ protected:
 
  private:
   bool doPreprocess();
+  bool doPreprocessAsAction();
   bool doSmartKick();
   bool doShoot();
   bool doPass();
