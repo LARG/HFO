@@ -317,8 +317,8 @@ void Agent::actionImpl() {
     case GO_TO_BALL:
       this->doGoToBall();
       break;
-    case PREPROCESS:
-      this->doPreprocessAsAction();
+    case REORIENT:
+      this->doReorient();
       break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
@@ -704,10 +704,10 @@ Agent::doPreprocess()
 /*-------------------------------------------------------------------*/
 /*!
   Alternative high-level action to always doing "Move"; usable by either side, although
-  probably more useful for offense.
+  probably more useful for offense. Variant of doPreprocess (above), which is called by doDribble.
 */
 bool
-Agent::doPreprocessAsAction()
+Agent::doReorient()
 {
     // check tackle expires
     // check self position accuracy
@@ -764,6 +764,12 @@ Agent::doPreprocessAsAction()
     }
 
     //
+    // set default change view
+    //
+
+    this->setViewAction( new View_Tactical() );
+
+    //
     // ball localization error
     //
     const int count_thr = ( wm.self().goalie()
@@ -775,16 +781,11 @@ Agent::doPreprocessAsAction()
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
-        this->setViewAction( new View_Tactical() );
         Bhv_NeckBodyToBall().execute( this );
         return true;
     }
 
-    //
-    // set default change view
-    //
 
-    this->setViewAction( new View_Tactical() );
 
     //
     // check queued action
@@ -805,7 +806,7 @@ Agent::doPreprocessAsAction()
     }
 
     const BallObject& ball = wm.ball();
-    if (! ( ball.rposValid() && ball.rvelValid() )) {
+    if (! ( ball.rposValid() && ball.velValid() )) {
       dlog.addText( Logger::TEAM,
 		    __FILE__": search ball" );
       Bhv_NeckBodyToBall().execute( this );
