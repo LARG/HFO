@@ -116,14 +116,12 @@ class HFOEnvironment(object):
     hfo_lib.getState(self.obj, as_ctypes(state_data))
     return state_data
 
-  def act(self, *args):
+  def act(self, action_type, *args):
     """ Performs an action in the environment """
-    assert len(args) > 0, 'Not enough arguments provided to act'
-    action_type = args[0]
     n_params = hfo_lib.numParams(action_type)
-    assert n_params == len(args) - 1, 'Incorrect number of params to act: '\
-      'Required %d, provided %d'%(n_params, len(args)-1)
-    params = np.asarray(args[1:], dtype=np.float32)
+    assert n_params == len(args), 'Incorrect number of params to act: '\
+      'Required %d, provided %d'%(n_params, len(args))
+    params = np.asarray(args, dtype=np.float32)
     hfo_lib.act(self.obj, action_type, params.ctypes.data_as(POINTER(c_float)))
 
   def say(self, message):
@@ -144,11 +142,11 @@ class HFOEnvironment(object):
 
   def actionToString(self, action):
     """ Returns a string representation of an action """
-    return hfo_lib.actionToString(action.decode('utf-8'))
+    return hfo_lib.actionToString(action).decode('utf-8')
 
   def statusToString(self, status):
     """ Returns a string representation of a game status """
-    return hfo_lib.statusToString(status)
+    return hfo_lib.statusToString(status).decode('utf-8')
 
   def getUnum(self):
     """ Return the uniform number of the agent """
