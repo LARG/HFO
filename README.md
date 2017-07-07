@@ -69,7 +69,7 @@ for (int episode=0; episode<5; episode++) {
 ```python
 hfo = hfo.HFOEnvironment()
 hfo.connectServer(...)
-for episode in xrange(5): # replace with range(5) for Python 3.X
+for episode in range(5): # replace with xrange(5) for Python 2.X
   status = IN_GAME
   while status == IN_GAME:
     features = hfo.getState()
