@@ -193,13 +193,13 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
     PlayerObject* teammate = *it;
     if (teammate->pos().x > 0 && teammate->unum() > 0 &&
         detected_teammates < numTeammates) {
-      addFeature(teammate->unum());
+      addFeature(teammate->unum()/100.0);
       detected_teammates++;
     }
   }
-  // Add zero features for any missing teammates
+  // Add -2 features for any missing teammates
   for (int i=detected_teammates; i<numTeammates; ++i) {
-    addFeature(0);
+    addFeature(FEAT_MIN);
   }
 
   detected_opponents = 0;
@@ -208,13 +208,13 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
     PlayerObject* opponent = *it;
     if (opponent->pos().x > 0 && opponent->unum() > 0 &&
         detected_opponents < numOpponents) {
-      addFeature(opponent->unum());
+      addFeature(opponent->unum()/100.0);
       detected_opponents++;
     }
   }
-  // Add zero features for any missing opponents
+  // Add -2 features for any missing opponents
   for (int i=detected_opponents; i<numOpponents; ++i) {
-    addFeature(0);
+    addFeature(FEAT_MIN);
   }
 
   assert(featIndx == numFeatures);
