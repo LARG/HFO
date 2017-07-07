@@ -52,11 +52,14 @@ def get_action(state,hfo_env,num_teammates):
                       curr_goal_angle = goal_op_angle):
       hfo_env.act(PASS, teammate_uniform_number)
       return
+  # not sure if below check is needed - doDribble in agent.cpp includes
+  # (via doPreprocess) doForceKick, which may cover this situation depending
+  # on what existKickableOpponent returns.
   if can_dribble(dist_to_op = state[9]):
     hfo_env.act(DRIBBLE)
     return
-  # If nothing can be done pass
-  hfo_env.act(PASS) # doesn't this require a target teammate?
+  # If nothing can be done, do not do anything
+  hfo_env.act(NOOP)
     
 
 def main():
