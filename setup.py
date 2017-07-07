@@ -26,8 +26,16 @@ setup(name = 'hfo',
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
+        'Operating System :: OS Independent', # except for shell scripts
+        'Programming Language :: C++',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.2', # not tested
+        'Programming Language :: Python :: 3.3', # not tested
+        'Programming Language :: Python :: 3.4', # not tested
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6', # not tested
       ],
+      requires=['numpy'],
       # packages=find_packages(),
       packages=['hfo'],
       package_dir={'hfo': 'hfo'},
