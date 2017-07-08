@@ -14,13 +14,15 @@ install:
        brew install cartr/qt4/qt 
        ;
     fi
-  - sudo pip install nose numpy
+  - sudo -H pip install nose numpy
 os:
   - linux
   - osx
 compiler:
   - clang
   - gcc
+env:
+  - PYTHONPATH="."
 script:
   - mkdir build && cd build
   - cmake -DCMAKE_BUILD_TYPE=RelwithDebInfo .. && make -j4 && make install
