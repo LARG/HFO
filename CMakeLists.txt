@@ -16,7 +16,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 ExternalProject_Add(rcssserver
   GIT_REPOSITORY "https://github.com/mhauskn/rcssserver.git"
   GIT_TAG "master"
-  CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release
+  CMAKE_ARGS -DCMAKE_BUILD_TYPE=MinSizeRel
   UPDATE_COMMAND ""
   INSTALL_COMMAND "")
 ExternalProject_Get_Property(rcssserver SOURCE_DIR)
@@ -27,7 +27,7 @@ set(RCSSSERVER_BINARY_DIR ${BINARY_DIR}/bin)
 ExternalProject_Add(librcsc
   GIT_REPOSITORY "https://github.com/mhauskn/librcsc.git"
   GIT_TAG "master"
-  CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release
+  CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   UPDATE_COMMAND ""
   INSTALL_COMMAND "")
 ExternalProject_Get_Property(librcsc SOURCE_DIR)
@@ -46,7 +46,7 @@ if(BUILD_SOCCERWINDOW)
     DEPENDS librcsc
     GIT_REPOSITORY "https://github.com/mhauskn/soccerwindow2.git"
     GIT_TAG "master"
-    CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DLIBRCSC_INCLUDE_DIR=${LIBRCSC_INCLUDE_DIR} -DLIBRCSC_LINK_DIR=${LIBRCSC_LINK_DIR}
+    CMAKE_ARGS -DCMAKE_BUILD_TYPE=MinSizeRel -DLIBRCSC_INCLUDE_DIR=${LIBRCSC_INCLUDE_DIR} -DLIBRCSC_LINK_DIR=${LIBRCSC_LINK_DIR}
     UPDATE_COMMAND ""
     INSTALL_COMMAND "")
   ExternalProject_Get_Property(soccerwindow2 BINARY_DIR)

@@ -16,6 +16,7 @@ LowLevelFeatureExtractor::LowLevelFeatureExtractor(int num_teammates,
   assert(numOpponents >= 0);
   numFeatures = num_basic_features +
       features_per_player * (numTeammates + numOpponents);
+  numFeatures += numTeammates + numOpponents; // Uniform numbers
   feature_vec.resize(numFeatures);
 }
 
@@ -184,6 +185,38 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
       addFeature(0);
     }
   }
+
+  // ========================= UNIFORM NUMBERS ========================== //
+  detected_teammates = 0;
+  for (PlayerPtrCont::const_iterator it = teammates.begin();
+       it != teammates.end(); ++it) {
+    PlayerObject* teammate = *it;
+    if (teammate->pos().x > 0 && teammate->unum() > 0 &&
+        detected_teammates < numTeammates) {
+      addFeature(teammate->unum()/100.0);
+      detected_teammates++;
+    }
+  }
+  // Add -2 features for any missing teammates
+  for (int i=detected_teammates; i<numTeammates; ++i) {
+    addFeature(FEAT_MIN);
+  }
+
+  detected_opponents = 0;
+  for (PlayerPtrCont::const_iterator it = opponents.begin();
+       it != opponents.end(); ++it) {
+    PlayerObject* opponent = *it;
+    if (opponent->pos().x > 0 && opponent->unum() > 0 &&
+        detected_opponents < numOpponents) {
+      addFeature(opponent->unum()/100.0);
+      detected_opponents++;
+    }
+  }
+  // Add -2 features for any missing opponents
+  for (int i=detected_opponents; i<numOpponents; ++i) {
+    addFeature(FEAT_MIN);
+  }
+
   assert(featIndx == numFeatures);
   checkFeatures();
   return feature_vec;

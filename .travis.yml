@@ -14,12 +14,16 @@ install:
        brew install cartr/qt4/qt 
        ;
     fi
+  - sudo -H pip install nose numpy
 os:
   - linux
   - osx
 compiler:
   - clang
   - gcc
+env:
+  - PYTHONPATH="."
 script:
   - mkdir build && cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4 && make install
+  - cmake -DCMAKE_BUILD_TYPE=RelwithDebInfo .. && make -j4 && make install
+  - cd .. && pip install --user . && nosetests --exe tests/test_basic.py
