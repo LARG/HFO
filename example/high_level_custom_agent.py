@@ -78,7 +78,7 @@ def main():
       print("Python randomization seed: {0:d}".format(args.seed))
     else:
       print("Python randomization seed setting is useless without --rand-pass or --eps >0")
-  if args.rand_pass and (args.numTeammates > 0):
+  if args.rand_pass and (args.numTeammates > 1):
     print("Randomizing order of checking for a pass")
   if args.eps > 0:
     print("Using eps(ilon) {0:n}".format(args.eps))
