@@ -36,32 +36,45 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   // Allow the agent to go 10% over the playfield in any direction
   float tolerance_x = .1 * SP.pitchHalfLength();
   float tolerance_y = .1 * SP.pitchHalfWidth();
-  // Feature[0]: X-postion
+  // figure up min, max x, y
+  float min_x = 0; // Depends on offense vs defense
+  float max_x = 0;
   if (playingOffense) {
-    addNormFeature(self_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+    min_x = -tolerance_x;
+    max_x = SP.pitchHalfLength() + tolerance_x;
   } else {
-    addNormFeature(self_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+    min_x = -SP.pitchHalfLength()-tolerance_x;
+    max_x = tolerance_x;
+  }
+  float min_y = -SP.pitchHalfWidth() - tolerance_y;
+  float max_y = SP.pitchHalfWidth() + tolerance_y;
+  // Feature[0]: X-postion
+  // Feature[1]: Y-position
+  if (valid(self)) {
+    addNormFeature(self_pos.x, min_x, max_x);
+    addNormFeature(self_pos.y, min_y, max_y);
+  } else {
+    addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
   }
 
-  // Feature[1]: Y-Position
-  addNormFeature(self_pos.y, -SP.pitchHalfWidth() - tolerance_y,
-                 SP.pitchHalfWidth() + tolerance_y);
-
   // Feature[2]: Self Angle
-  addNormFeature(self_ang, -M_PI, M_PI);
+  addNormFeature(self_ang, -M_PI, M_PI); // Check for validity?
 
   float r;
   float th;
   // Features about the ball
-  Vector2D ball_pos = wm.ball().pos();
-  angleDistToPoint(self_pos, ball_pos, th, r);
-  // Feature[3] and [4]: (x,y) postition of the ball
-  if (playingOffense) {
-    addNormFeature(ball_pos.x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+  const BallObject& ball = wm.ball();
+  if (ball.rposValid()) {
+    Vector2D ball_pos = ball.pos();
+    angleDistToPoint(self_pos, ball_pos, th, r);
+    // Feature[3] and [4]: (x,y) postition of the ball
+    addNormFeature(ball_pos.x, min_x, max_x);
+    addNormFeature(ball_pos.y, min_y, max_y);
   } else {
-    addNormFeature(ball_pos.x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+    addFeature(FEAT_INVALID);
+    addFeature(FEAT_INVALID);
   }
-  addNormFeature(ball_pos.y, -SP.pitchHalfWidth() - tolerance_y, SP.pitchHalfWidth() + tolerance_y);
   // Feature[5]: Able to kick
   addNormFeature(self.isKickable(), false, true);
 
