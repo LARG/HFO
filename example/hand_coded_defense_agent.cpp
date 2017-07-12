@@ -104,7 +104,7 @@ action_with_params get_defense_action(const std::vector<float>& state_vec, doubl
                 //std:: cout << "In open Area" << "\n";
                 if (is_kickable(ball_pos_x, ball_pos_y, opp1_pos_x, opp1_pos_y) && 
                         get_dist_normalized(ball_pos_x, ball_pos_y, opp1_pos_x, opp1_pos_y) < 
-                        get_dist_normalized(ball_pos_x, ball_pos_y, opp1_pos_x, opp1_pos_y)) {
+                        get_dist_normalized(ball_pos_x, ball_pos_y, opp2_pos_x, opp2_pos_y)) {
                         return {MARK_PLAYER, opp2_unum};
                         //                      return {REDUCE_ANGLE_TO_GOAL, 1};
 

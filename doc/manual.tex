@@ -438,6 +438,16 @@ player's body 3) the magnitude of the player's velocity and 4) the
 global angle of the player's velocity. Eight floating point numbers
 are used to encode each player feature.
 
+\subsubsection{Uniform Number Features}
+In the low-level feature space, unknown uniform numbers, or \textit{unums},
+are encoded as -1, while known ones are encoded as $\frac{unum}{100}$, thus
+remaining well within the $[-1, 1]$ range. (Note that roundoff error may need
+to be allowed for when converting these back to integers, such as for use in
+high-level actions; e.g., 0.0799 will need to be converted back to 8.)
+Uniform number features, a later addition to the low-level feature space,
+are positioned after all other features to hopefully ensure compatibility
+with older programs.
+
 \subsubsection{Other Features}
 Some features, such as the agent's stamina, do not fall into any of
 the above categories. These features are referred to as \textit{other
@@ -445,7 +455,7 @@ the above categories. These features are referred to as \textit{other
 
 \subsubsection{Low Level State Feature List}
 Let $T$ denote the number of teammates and $O$ denote the number of
-opponents in the HFO game. Then there are a total of $58 + 8T + 8O$
+opponents in the HFO game. Then there are a total of $58 + 9T + 9O$
 low-level features:
 
 \begin{enumerate}[noitemsep]
@@ -493,6 +503,8 @@ low-level features:
   \itemrange{1}{\textbf{Ball Vel Ang} [Angle] Global angle of ball velocity.}
   \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features) for each teammate active in HFO, sorted by proximity to the agent.}
   \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features) for each opponent present, sorted by proximity to the player.}
+  \item [$T$]  {\textbf{Teammate Uniform Nums} [Unum] One uniform number for each teammate active in HFO, sorted by proximity to the agent.}
+  \item [$O$]  {\textbf{Opponent Uniform Nums} [Unum] One uniform number for each opponent present, sorted by proximity to the player.}
 \end{enumerate}
 
 \section{Action Space}
