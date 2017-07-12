@@ -153,6 +153,10 @@ add_executable(high_level_random_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/high_
 set_target_properties(high_level_random_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
 target_link_libraries(high_level_random_agent hfo-lib)
 
+add_executable(hand_coded_defense_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/hand_coded_defense_agent.cpp)
+set_target_properties(hand_coded_defense_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+target_link_libraries(hand_coded_defense_agent hfo-lib)
+
 add_executable(mid_level_move_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/mid_level_move_agent.cpp)
 set_target_properties(mid_level_move_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
 target_link_libraries(mid_level_move_agent hfo-lib)
