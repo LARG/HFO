@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
 # encoding: utf-8
 
 #MODIFIED#
 
 # First Start the server: $> bin/start.py
 import argparse
+import itertools
 import random
 try:
   import hfo
@@ -27,9 +29,6 @@ def has_better_pos(dist_to_op, goal_angle, pass_angle, curr_goal_angle):
     return False
   return True
 
-def can_dribble(dist_to_op):
-  return bool(dist_to_op > params['DRIB_DST'])
-
 def get_action(state,hfo_env,num_teammates,rand_pass):
   """Decides and performs the action to be taken by the agent."""
   
@@ -38,10 +37,9 @@ def get_action(state,hfo_env,num_teammates,rand_pass):
   if can_shoot(goal_dist, goal_op_angle):
     hfo_env.act(hfo.SHOOT)
     return
+  team_list = list(range(num_teammates))
   if rand_pass and (num_teammates > 1):
-    team_list = random.shuffle(range(num_teammates))
-  else:
-    team_list = range(num_teammates)
+    random.shuffle(team_list)
   for i in team_list:
     teammate_uniform_number=state[10 + 3*num_teammates + 3*i +2]
     if has_better_pos(dist_to_op = float(state[10 + num_teammates + i]),
@@ -50,14 +48,10 @@ def get_action(state,hfo_env,num_teammates,rand_pass):
                       curr_goal_angle = goal_op_angle):
       hfo_env.act(hfo.PASS, teammate_uniform_number)
       return
-  # not sure if below check is needed - doDribble in agent.cpp includes
-  # (via doPreprocess) doForceKick, which may cover this situation depending
-  # on what existKickableOpponent returns.
-  if can_dribble(dist_to_op = state[9]):
-    hfo_env.act(hfo.DRIBBLE)
-  else:
-    # If nothing can be done, do not do anything
-    hfo_env.act(hfo.NOOP)
+  # no check for can_dribble is needed; doDribble in agent.cpp includes
+  # (via doPreprocess) doForceKick, which will cover this situation since
+  # existKickableOpponent is based on distance.
+  hfo_env.act(hfo.DRIBBLE)
   return
     
 
@@ -79,26 +73,52 @@ def main():
   hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
                           'bin/teams/base/config/formations-dt', args.port,
                           'localhost', 'base_left', False)
-  status=hfo.IN_GAME
-  while status != hfo.SERVER_DOWN:
-    state = hfo_env.getState()
-    #print(state)
-    if int(state[5]) == 1: # state[5] is 1 when player has the ball
-      if (args.eps > 0) and (random.random() < args.eps):
-        if random.random() < 0.5:
-          hfo_env.act(hfo.SHOOT)
-        else:
-          hfo_env.act(hfo.DRIBBLE)
-      else:
-        get_action(state,hfo_env,args.numTeammates,args.rand_pass)
+  if args.seed:
+    if args.rand_pass or (args.eps > 0):
+      print("Python randomization seed: {0:d}".format(args.seed))
     else:
-      hfo_env.act(hfo.MOVE)
-    status=hfo_env.step()
-    #print(status)
+      print("Python randomization seed setting is useless without --rand-pass or --eps >0")
+  if args.rand_pass and (args.numTeammates > 0):
+    print("Randomizing order of checking for a pass")
+  if args.eps > 0:
+    print("Using eps(ilon) {0:n}".format(args.eps))
+  for episode in itertools.count():
+    num_eps = 0
+    num_had_ball = 0
+    num_move = 0
+    status = hfo.IN_GAME
+    while status == hfo.IN_GAME:
+      state = hfo_env.getState()
+      #print(state)
+      if int(state[5]) == 1: # state[5] is 1 when player has the ball
+        if (args.eps > 0) and (random.random() < args.eps):
+          if random.random() < 0.5:
+            hfo_env.act(hfo.SHOOT)
+          else:
+            hfo_env.act(hfo.DRIBBLE)
+          num_eps += 1
+        else:
+          get_action(state,hfo_env,args.numTeammates,args.rand_pass)
+        num_had_ball += 1
+      else:
+        hfo_env.act(hfo.MOVE)
+        num_move += 1
+      status=hfo_env.step()
+      #print(status)
 
-  hfo_env.act(hfo.QUIT)
-  exit()
-  
+    # Quit if the server goes down
+    if status == hfo.SERVER_DOWN:
+      hfo_env.act(hfo.QUIT)
+      exit()
+
+    # Check the outcome of the episode
+    print("Episode {0:d} ended with {1:s}".format(episode,
+                                                  hfo_env.statusToString(status)))
+    if args.eps > 0:
+      print("\tNum move: {0:d}; Random action: {1:d}; Nonrandom: {2:d}".format(num_move,
+                                                                               num_eps,
+                                                                               (num_had_ball-
+                                                                                num_eps)))
 
 if __name__ == '__main__':
   main()

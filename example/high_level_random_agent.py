@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 # encoding: utf-8
 
 # Before running this program, first Start HFO server:
@@ -30,6 +31,8 @@ def main():
   hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
                           'bin/teams/base/config/formations-dt', args.port,
                           'localhost', 'base_left', False)
+  if args.seed:
+    print("Python randomization seed: {0:d}".format(args.seed))
   for episode in itertools.count():
     status = hfo.IN_GAME
     while status == hfo.IN_GAME:
@@ -47,8 +50,8 @@ def main():
       status = hfo_env.step()
       
     # Check the outcome of the episode
-    print(('Episode %d ended with %s'%(episode,
-                                       hfo_env.statusToString(status))))
+    print("Episode {0:d} ended with {1:s}".format(episode,
+                                                  hfo_env.statusToString(status)))
     # Quit if the server goes down
     if status == hfo.SERVER_DOWN:
       hfo_env.act(hfo.QUIT)
