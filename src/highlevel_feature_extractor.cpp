@@ -50,7 +50,7 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
   float max_y = SP.pitchHalfWidth() + tolerance_y;
   // Feature[0]: X-postion
   // Feature[1]: Y-position
-  if (valid(self)) {
+  if (self.posValid()) {
     addNormFeature(self_pos.x, min_x, max_x);
     addNormFeature(self_pos.y, min_y, max_y);
   } else {
