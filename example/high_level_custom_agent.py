@@ -65,7 +65,7 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--port', type=int, default=6000, help="Server port")
   parser.add_argument('--seed', type=int, default=None,
-                      help="Seed for randomization; uses machine default if 0 or not given")
+                      help="Python randomization seed; uses python default if 0 or not given")
   parser.add_argument('--rand-pass', action="store_true",
                       help="Randomize order of checking teammates for a possible pass")
   parser.add_argument('--eps', type=float, default=0,
