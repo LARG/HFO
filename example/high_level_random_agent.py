@@ -47,7 +47,8 @@ def main():
       status = hfo_env.step()
       
     # Check the outcome of the episode
-    print(('Episode %d ended with %s'%(episode, hfo.statusToString(status))))
+    print(('Episode %d ended with %s'%(episode,
+                                       hfo_env.statusToString(status))))
     # Quit if the server goes down
     if status == hfo.SERVER_DOWN:
       hfo_env.act(hfo.QUIT)
