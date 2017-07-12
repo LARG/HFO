@@ -16,7 +16,7 @@ params = {'SHT_DST':0.136664020547, 'SHT_ANG':-0.747394386098,
           'PASS_ANG':0.464086704478, 'DRIB_DST':-0.999052871962}
 
 def can_shoot(goal_dist, goal_angle):
-  """Returns True if if player can have a good shot at goal"""
+  """Returns True if if player may have a good shot at the goal"""
   return bool((goal_dist < params['SHT_DST']) and (goal_angle > params['SHT_ANG']))
 
 def has_better_pos(dist_to_op, goal_angle, pass_angle, curr_goal_angle):
@@ -63,10 +63,13 @@ def get_action(state,hfo_env,num_teammates,rand_pass):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--port', type=int, default=6000)
-  parser.add_argument('--seed', type=int, default=None)
-  parser.add_argument('--rand-pass', type=bool, default=False)
-  parser.add_argument('--eps', type=float, default=0)
+  parser.add_argument('--port', type=int, default=6000, help="Server port")
+  parser.add_argument('--seed', type=int, default=None,
+                      help="Seed for randomization; uses machine default if 0 or not given")
+  parser.add_argument('--rand-pass', action="store_true",
+                      help="Randomize order of checking teammates for a possible pass")
+  parser.add_argument('--eps', type=float, default=0,
+                      help="Probability of a random action if has the ball, to adjust difficulty")
   parser.add_argument('--numTeammates', type=int, default=0)
   parser.add_argument('--numOpponents', type=int, default=1)
   args=parser.parse_args()

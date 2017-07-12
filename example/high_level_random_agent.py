@@ -16,8 +16,10 @@ except ImportError:
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--port', type=int, default=6000)
-  parser.add_argument('--seed', type=int, default=None)
+  parser.add_argument('--port', type=int, default=6000,
+                      help="Server port")
+  parser.add_argument('--seed', type=int, default=None,
+                      help="Randomization seed (uses machine default if 0 or not given")
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
