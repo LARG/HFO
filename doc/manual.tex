@@ -33,14 +33,14 @@ Installation with CMake:
 
 \begin{verbatim}
   > mkdir build && cd build
-  > cmake -DCMAKE_BUILD_TYPE=Release ..
+  > cmake -DCMAKE_BUILD_TYPE=RelwithDebInfo ..
   > make -j4 # Replace 4 with the number of cores on your machine
   > make install # This just copies binaries to the HFO directory; no sudo required
 \end{verbatim}
 
 HFO installation has been tested on Ubuntu Linux and OSX. Successful
 installation depends on
-\verb+CMake, Boost-system, Boost-filesystem, flex+.
+\verb+CMake, Boost-system, Boost-filesystem,+ and \verb+flex+.
 
 These depedencies can be installed on Ubuntu using the following
 command:\\
@@ -51,7 +51,7 @@ By default, the soccerwindow2 visualizer is also built and requires
 the visualizer. To disable this component, use the following cmake
 command:\\
 
-\noindent \verb+  > cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SOCCERWINDOW=False ..+
+\noindent \verb+  > cmake -DCMAKE_BUILD_TYPE=RelwithDebInfo -DBUILD_SOCCERWINDOW=False ..+
 
 \subsection{Python Interface}
 
@@ -65,6 +65,9 @@ or
 \noindent \verb+  > pip install --user .+
 
 if you have limited permissions on the machine.
+
+Successful installation depends on
+\verb+Python 2.7, 3.2, or above+ (tested with 2.7 and 3.5) and \verb+numpy+.
 
 \section{Uninstall}
 
