@@ -11,7 +11,7 @@
 \renewcommand*{\labelenumi}{\theenumi}
 
 \usepackage{hyperref,graphicx}
-\usepackage{fullpage}
+\usepackage[cm]{fullpage}
 \usepackage{enumitem}
 \usepackage{subcaption}
 
@@ -594,6 +594,40 @@ faithfully report which action spaces were used.
 \item{\textbf{Quit}: Indicates to the agent server that you wish to
   terminate the HFO environment.}
 \end{itemize}
+
+\subsection{Available Actions}
+The Special Actions are always available. The below table indicates whether
+other actions are available (only if there are no ``N''s indicated); check
+below the table for the action abbreviations.
+
+\begin{center}
+{\footnotesize
+\begin{tabular}{r         c     c      c    c     c     c      c     c     c    c    c     c     c     c     c     c     c}
+Action                  & Da  & Tu  &  Ta & K   & KT &  MT  &  DT &  I  &  M  & S  & P  &  Dr  & C  &  RG &  DG  & G  &  MP \\
+\hline
+Self position invalid   & Y   &  Y  &  Y  &  Y  & N  &  N   &  N? &  N? &  N? & N? & ?  &  Y?  & ?  &  N? &  N?  & ?  &  ? \\
+Self velocity invalid   & Y?  &  Y? &  Y? &  Y? & ?  &  ?   &  ?  &  N? &  N? & N? & ?  &  Y?  & ?  &  ?  &  ?   & ?  &  ? \\
+Ball position invalid   & Y   &  Y  &  Y  &  N  & N  &  Y   &  N? &  N  &  ?  & N  & N  &  Y?  & N  &  ?  &  ?   & N  &  ? \\
+Ball velocity invalid   & Y   &  Y  &  Y  &  ?  & ?  &  Y   &  ?  &  N? &  ?  & N? & N? &  Y?  & N? &  Y? &  Y?  & Y? &  Y? \\
+Teammate loc invalid    & Y   &  Y  &  Y  &  Y  & Y  &  Y   &  Y  &  Y  &  ?  & Y  & N  &  Y?  & Y  &  Y  &  Y   & Y  &  Y \\
+Teammate unum invalid   & Y   &  Y  &  Y  &  Y  & Y  &  Y   &  Y  &  Y  &  Y  & Y  & N  &  Y   & Y  &  Y  &  Y   & Y  &  Y \\
+Opponent loc invalid    & Y   &  Y  &  Y  &  Y  & Y  &  Y   &  Y? &  Y  &  ?  & Y? & Y  &  Y?  & Y  &  N  &  N   & Y  &  N \\
+Opponent unum invalid   & Y   &  Y  &  Y  &  Y  & Y  &  Y   &  Y  &  Y  &  Y  & Y  & Y  &  Y   & Y  &  Y  &  Y   & Y  &  N \\
+Ball kickable           & Y   &  Y  &  ?  &  Y  & Y  &  Y   &  Y  &  N? &  N  & Y  & Y  &  Y   & Y  &  N? &  N?  & N? &  Y? \\
+Ball not kickable       & Y   &  Y  &  Y  &  N  & N  &  Y   &  Y  &  Y  &  Y  & N  & N  &  N   & Y  &  Y  &  Y   & Y  &  Y \\
+Frozen                  & N   &  N  &  N? &  N  & N  &  N   &  N? &  N  &  N? & N  & N  &  Y?  & N? &  N  &  N   & N  &  N \\
+Colliding with ball     & ?   &  ?  &  N? &  ?  & ?  &  ?   &  ?  &  N? &  ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
+Colliding with player   & ?   &  ?  &  ?  &  N? & N? &  ?   &  ?  &  N? &  ?  & ?  & ?  &  Y?  & ?  &  ?  &  ?   & ?  &  ? \\
+Colliding with post     & ?   &  ?  &  N? &  N? & N? &  ?   &  ?  &  N? &  ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
+Offense                 & Y   &  Y  &  ?  &  Y  & Y  &  Y   &  Y  &  Y  &  Y  & Y  & Y  &  Y   & N  &  N  &  N   & Y  &  N \\
+Defense, not goalie     & Y   &  Y  &  ?  &  N? & N? &  Y   &  N  &  Y  &  ?  & N  & N  &  N   & N  &  Y  &  Y   & Y  &  Y \\
+Goalie (defense)        & Y   &  Y  &  ?  &  N? & N? &  Y   &  N  &  Y  &  ?  & N  & N  &  N   & Y  &  ?  &  ?   & ?  &  ? \\
+\end{tabular}
+}
+\end{center}
+Da: Dash; Tu: Turn; Ta: Tackle; K: Kick \\
+KT: Kick\_To; MT: Move\_To; DT: Dribble\_To; I: Intercept \\
+M: Move; S: Shoot; P: Pass; Dr: Dribble; C: Catch; RG: Reduce\_Angle\_To\_Goal; DG: Defend\_Goal; G: Go\_To\_Ball; MP: Mark\_Player
 
 \section{Developing a New Agent}
 
