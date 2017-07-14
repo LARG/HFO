@@ -21,6 +21,8 @@ def main():
                       help="Server port")
   parser.add_argument('--seed', type=int, default=None,
                       help="Python randomization seed; uses python default if 0 or not given")
+  parser.add_argument('--no-reorient', action='store_true',
+                      help="Do not use rew reorient action")
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
@@ -49,7 +51,8 @@ def main():
           hfo_env.act(hfo.DRIBBLE)
         num_had_ball += 1
       # 8 is frozen; rest are self or ball position/velocity valid
-      elif (state[8] > 0) or (min(state[0],state[1],state[50],state[54]) < 0):
+      elif (((state[8] > 0) or (min(state[0],state[1],state[50],state[54]) < 0)) and
+            not args.no_reorient):
         hfo_env.act(hfo.REORIENT)
         num_reorient += 1
       else:
