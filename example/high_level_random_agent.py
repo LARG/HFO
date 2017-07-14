@@ -21,6 +21,8 @@ def main():
                       help="Server port")
   parser.add_argument('--seed', type=int, default=None,
                       help="Python randomization seed; uses python default if 0 or not given")
+  parser.add_argument('--record-dir', type=str, default='log/',
+                      help="Set directory to use if doing HFO --record")
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
@@ -30,7 +32,8 @@ def main():
   # feature set. See feature sets in hfo.py/hfo.hpp.
   hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
                           'bin/teams/base/config/formations-dt', args.port,
-                          'localhost', 'base_left', False)
+                          'localhost', 'base_left', False,
+                          record_dir=args.record_dir)
   if args.seed:
     print("Python randomization seed: {0:d}".format(args.seed))
   for episode in itertools.count():
