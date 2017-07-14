@@ -173,8 +173,8 @@ compatibility.
 
 \section{Recording}
 
-It is possible to record the low-level state perceptions, actions, and
-game status of all players:\\
+It is possible to record the state perceptions (low- or high-level depending on
+the player), low-level actions, and game status of all players:\\
 
 \noindent \verb+  > ./bin/HFO --record + \\
 
@@ -391,6 +391,8 @@ changes in $\theta$.
 Given an angular feature $\langle \alpha_1, \alpha_2 \rangle$ we can
 recover the original angle $\theta$ (in radians) by taking the
 $cos^{-1}(\alpha_2)$ and multiplying by the sign of $\alpha_1$.
+Another method uses the common 'atan2' function as
+$atan2(\alpha_1, \alpha_2)$.
 
 \begin{figure*}[htp]
   \centering
