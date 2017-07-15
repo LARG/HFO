@@ -607,8 +607,8 @@ below the table for the action abbreviations.
 \begin{tabular}{r         c     c      c    c     c     c      c     c     c    c    c     c     c     c     c     c     c}
 Action                  & Da  & Tu  &  Ta & K   & KT &  MT  &  DT &  I  &  M  & S  & P  &  Dr  & C  &  RG &  DG  & G  &  MP \\
 \hline
-Self position invalid   & Y   &  Y  &  Y  &  Y  & N  &  N   &  N? &  N? &  N? & N? & ?  &  Y?  & ?  &  N? &  N?  & ?  &  ? \\
-Self velocity invalid   & Y?  &  Y? &  Y? &  Y? & ?  &  N?  &  ?  &  N? &  N? & N? & ?  &  Y?  & ?  &  ?  &  ?   & ?  &  ? \\
+Self position invalid   & Y   &  Y  &  Y  &  Y  & N  &  N   &  N? &  N? &  N? & N? & ?  &  Y   & ?  &  N? &  N?  & ?  &  ? \\
+Self velocity invalid   & Y?  &  Y? &  Y? &  Y? & ?  &  N?  &  ?  &  N? &  N? & N? & ?  &  Y   & ?  &  ?  &  ?   & ?  &  ? \\
 Ball position invalid   & Y   &  Y  &  Y? &  N  & N  &  Y   &  N? &  N  &  ?  & N  & N  &  Y?  & N  &  ?  &  ?   & N  &  ? \\
 Ball velocity invalid   & Y   &  Y  &  Y  &  ?  & ?  &  Y   &  ?  &  N? &  ?  & N  & N? &  Y?  & N? &  Y? &  Y?  & Y? &  Y? \\
 Teammate loc invalid    & Y   &  Y  &  Y  &  Y  & Y  &  Y   &  Y  &  Y  &  ?  & Y  & N  &  Y?  & Y  &  Y  &  Y   & Y  &  Y \\
@@ -617,12 +617,12 @@ Opponent loc invalid    & Y   &  Y  &  Y  &  Y  & Y  &  Y   &  Y? &  Y  &  ?  & 
 Opponent unum invalid   & Y   &  Y  &  Y  &  Y  & Y  &  Y   &  Y  &  Y  &  Y  & Y  & Y  &  Y   & Y  &  Y  &  Y   & Y  &  N \\
 Ball kickable           & Y   &  Y  &  ?  &  Y  & Y  &  Y   &  Y  &  N? &  N  & Y  & Y  &  Y   & Y  &  N? &  N?  & N? &  Y? \\
 Ball not kickable       & Y   &  Y  &  Y  &  N  & N  &  Y   &  Y  &  Y  &  Y  & N  & N  &  N   & Y  &  Y  &  Y   & Y  &  Y \\
-Frozen                  & N   &  N  &  N  &  N  & N  &  N   &  N? &  N  &  N? & N  & N  &  Y?  & N? &  N  &  N   & N  &  N \\
+Frozen                  & N   &  N  &  N  &  N  & N  &  N   &  N? &  N  &  N? & N  & N  &  Y   & N? &  N  &  N   & N  &  N \\
 Colliding with ball     & ?   &  ?  &  ?  &  ?  & ?  &  ?   &  ?  &  N? &  ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
 Colliding with player   & ?   &  ?  &  ?  &  N? & N? &  ?   &  ?  &  N? &  ?  & ?  & ?  &  Y?  & ?  &  ?  &  ?   & ?  &  ? \\
 Colliding with post     & ?   &  ?  &  N? &  N? & N? &  ?   &  ?  &  N? &  ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
 Offense                 & Y   &  Y  &  N  &  Y  & Y  &  Y   &  Y  &  Y  &  Y  & Y  & Y  &  Y   & N  &  N  &  N   & Y  &  N \\
-Defense, not goalie     & Y   &  Y  &  Y  &  N? & N? &  Y   &  N  &  Y  &  ?  & N  & N  &  N   & N  &  Y  &  ?   & Y  &  Y \\
+Defense, not goalie     & Y   &  Y  &  Y  &  N? & N? &  Y   &  N  &  Y  &  Y  & N  & N  &  N   & N  &  Y  &  ?   & Y  &  Y \\
 Goalie (defense)        & Y   &  Y  &  Y? &  N? & N? &  Y   &  N  &  Y  &  ?  & N  & N  &  N   & Y  &  ?  &  ?   & ?  &  ? \\
 \end{tabular}
 }
@@ -635,7 +635,7 @@ M: Move; S: Shoot; P: Pass; Dr: Dribble; C: Catch; RG: Reduce\_Angle\_To\_Goal; 
 
 New agents may be developed in C++ or Python. In Python, as long as
 the hfo interface has been installed, the agent needs only to
-\verb+from hfo import *+. In C++ it is necessary to
+either \verb+from hfo import *+ or \verb+import hfo+. In C++ it is necessary to
 \verb+#include <HFO.hpp>+ and also to link against the shared object
 library \verb+lib/libhfo.so+ when compiling:
 
