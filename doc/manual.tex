@@ -199,7 +199,7 @@ This seed will determine the placement of the players and the ball at
 the beginning of each episode. Due to non-determinism in the player
 policies, it is not sufficient to precisely replicate full games. It
 \textit{only} replicates the starting conditions for each episode. The
-player's behavior, observations, and physics all proceed
+players' behavior, observations, and physics all proceed
 stochastically.
 
 \section{Player On Ball}
@@ -579,14 +579,13 @@ faithfully report which action spaces were used.
   combination of short kicks and moves.}
 \item{\textbf{Catch}(): This goalie-specific action may be used to
   catch the ball.}
-\item {\textbf{Reduce\_Angle\_To\_Goal} (): Moves the agent to a point on the field, such that the kicker has the least open angle to the goal. }
-
-
-\item {\textbf{Defend\_Goal} () : Moves the agent to a point on a fixed line on the field, such that the kicker has the least open angle to the goal.}
-
-\item {\textbf{Go\_To\_Ball} (): Makes the agent go towards the ball.}
-
-\item {\textbf{Mark\_Player} (uniform\_number): Moves the agent so as to mark the player with the specified uniform number.}
+\item{\textbf{Reduce\_Angle\_To\_Goal}(): Moves the agent to a point on the field,
+	such that the kicker has the least open angle to the goal. }
+\item{\textbf{Defend\_Goal}(): Moves the agent to a point on a fixed line on the field,
+	such that the kicker has the least open angle to the goal.}
+\item{\textbf{Go\_To\_Ball}(): Makes the agent go towards the ball.}
+\item{\textbf{Mark\_Player}(uniform\_number): Moves the agent so as to mark the player
+	with the specified uniform number.}
 
 \end{itemize}
 
@@ -597,16 +596,16 @@ faithfully report which action spaces were used.
   terminate the HFO environment.}
 \end{itemize}
 
-\subsection{Available Actions}
-The Special Actions are always available. The below table indicates whether
-other actions are available (only if there are no ``N''s indicated); check
+\subsection{Applicable Actions}
+The Special Actions are always applicable. The below table indicates whether
+other actions are applicable (only if there are no ``N''s indicated); check
 below the table for the action abbreviations.
 
 \begin{center}
 {\footnotesize
-\begin{tabular}{r         c     c      c    c     c     c      c    c    c    c    c     c     c     c     c     c     c}
+\begin{tabular}{r       | c    c      c    c   | c     c      c    c  | c    c    c     c     c     c     c     c     c}
 Action                  & Da & Tu  &  Ta & K   & KT &  MT &  DT &  I  & M  & S  & P  &  Dr  & C  &  RG &  DG  & G  &  MP \\
-\hline
+\hline \hline
 Self position invalid   & Y  &  Y  &  Y  &  Y  & N  &  N  &  N? &  N? & N? & N? & ?  &  Y   & ?  &  N? &  N?  & ?  &  ? \\
 Self velocity invalid   & N  &  Y? &  Y? &  Y? & ?  &  N  &  ?  &  N? & N? & N? & ?  &  Y   & ?  &  ?  &  ?   & ?  &  ? \\
 Ball position invalid   & Y  &  Y  &  Y? &  N  & N  &  Y  &  N? &  N  & ?  & N  & N  &  Y?  & N  &  ?  &  ?   & N  &  ? \\
@@ -615,21 +614,26 @@ Teammate loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & ?  & Y  
 Team. unum invalid      & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & N  &  Y   & Y  &  Y  &  Y   & Y  &  Y \\
 Opponent loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y? &  Y  & ?  & Y? & Y  &  Y?  & Y  &  N  &  N   & Y  &  N \\
 Opp. unum invalid       & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & Y  &  Y   & Y  &  Y  &  Y   & Y  &  N \\
+\hline
 Ball kickable           & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  N? & N  & Y  & Y  &  Y   & Y  &  N? &  N?  & N? &  Y? \\
 Ball not kickable       & Y  &  Y  &  Y  &  N  & N  &  Y  &  Y  &  Y  & Y  & N  & N  &  N   & Y  &  Y  &  Y   & Y  &  Y \\
+\hline
 Frozen                  & N  &  N  &  N  &  N  & N  &  N  &  N? &  N  & N? & N  & N  &  Y   & N? &  N  &  N   & N  &  N \\
 Colliding w/ball        & ?  &  ?  &  ?  &  ?  & ?  &  ?  &  ?  &  N? & ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
 Colliding w/player      & ?  &  ?  &  ?  &  N? & N? &  ?  &  ?  &  N? & ?  & ?  & ?  &  Y?  & ?  &  ?  &  ?   & ?  &  ? \\
 Colliding w/post        & ?  &  ?  &  N? &  N? & N? &  ?  &  ?  &  N? & ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
+\hline
 Offense                 & Y  &  Y  &  N  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & Y  &  Y   & N  &  N  &  N   & Y  &  N \\
 Defense, not goalie     & Y  &  Y  &  Y  &  N? & N? &  Y  &  N  &  Y  & Y  & N  & N  &  N   & N  &  Y  &  ?   & Y  &  Y \\
 Goalie (defense)        & Y  &  Y  &  Y? &  N? & N? &  Y  &  N  &  Y  & ?  & N  & N  &  N   & Y  &  ?  &  ?   & ?  &  ? \\
 \end{tabular}
 }
 \end{center}
-Da: Dash; Tu: Turn; Ta: Tackle; K: Kick \\
-KT: Kick\_To; MT: Move\_To; DT: Dribble\_To; I: Intercept \\
-M: Move; S: Shoot; P: Pass; Dr: Dribble; C: Catch; RG: Reduce\_Angle\_To\_Goal; DG: Defend\_Goal; G: Go\_To\_Ball; MP: Mark\_Player
+\begin{itemize}[noitemsep]
+\item{Da:\,Dash; Tu:\,Turn; Ta:\,Tackle; K:\,Kick}
+\item{KT:\,Kick\_To; MT:\,Move\_To; DT:\,Dribble\_To; I:\,Intercept}
+\item{M:\,Move; S:\,Shoot; P:\,Pass; Dr:\,Dribble; C:\,Catch; RG:\,Reduce\_Angle\_To\_Goal; DG:\,Defend\_Goal; G:\,Go\_To\_Ball; MP:\,Mark\_Player}
+\end{itemize}
 
 \section{Developing a New Agent}
 
