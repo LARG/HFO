@@ -47,15 +47,18 @@ def main():
       # Get the vector of state features for the current state
       state = hfo_env.getState()
       # Perform the action
-      if state[12] > 0: # State[12] is 1 when the player can kick the ball
+      # 8 is frozen; 0 is self position valid, 1 is self velocity valid, 54 is ball velocity valid
+      if (((state[8] > 0) or (min(state[0],state[1],state[54]) < 0)) and not args.no_reorient):
+        hfo_env.act(hfo.REORIENT)
+        num_reorient += 1
+      elif state[12] > 0: # State[12] is 1 when the player can kick the ball
         if random.random() < 0.5: # more efficient than random.choice for 2
           hfo_env.act(hfo.SHOOT)
         else:
           hfo_env.act(hfo.DRIBBLE)
         num_had_ball += 1
-      # 8 is frozen; rest are self or ball position/velocity valid
-      elif (((state[8] > 0) or (min(state[0],state[1],state[50],state[54]) < 0)) and
-            not args.no_reorient):
+      # 50 is ball position valild
+      elif (state[50] < 0) and not args.no_reorient:
         hfo_env.act(hfo.REORIENT)
         num_reorient += 1
       else:
