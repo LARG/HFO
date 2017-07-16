@@ -153,6 +153,9 @@ visualizer. \\
 \noindent To change the logging directory:\\
 \verb+  > ./bin/HFO --log-dir /path/to/new/dir +
 
+Note that the logs can become quite large for a prolonged series of
+episodes.
+
 \section{Making Videos}
 It is possible to make videos from logs by saving frames from
 SoccerWindow2. It helps to full-screen SoccerWindow2 before making a
@@ -197,7 +200,7 @@ A seed may be specified as follows:\\
 
 This seed will determine the placement of the players and the ball at
 the beginning of each episode. Due to non-determinism in the player
-policies, it is not sufficient to precisely replicate full games. It
+policies, it is \textbf{not} sufficient to precisely replicate full games. It
 \textit{only} replicates the starting conditions for each episode. The
 players' behavior, observations, and physics all proceed
 stochastically.
@@ -601,7 +604,7 @@ faithfully report which action spaces were used.
 \end{itemize}
 
 \subsection{Applicable Actions}
-The Special Actions are always applicable. The below table indicates whether
+The Special Actions are always applicable (potentially appropriate). The below table indicates whether
 other actions are applicable (only if there are no ``N''s indicated); check
 below the table for the action abbreviations.
 
