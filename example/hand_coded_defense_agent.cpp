@@ -208,7 +208,8 @@ int main(int argc, char** argv) {
   HFOEnvironment hfo;
   int random = 0;
   double numGoals = 0;
-  double numEpisodes = 5000;
+  int numEpisodes = 5000;
+  double actualNumEpisodes = 0;
   // Connect to the server and request high-level feature set. See
   // manual for more information on feature sets.
   hfo.connectToServer(features, config_dir, port, server_addr,
@@ -233,15 +234,15 @@ int main(int argc, char** argv) {
               string s = hfo::ActionToString(a.action) + " " +to_string(a.param) + "\n";
              // std::cout << s;
       } else {
-                  std::cout <<"Randm";
-                  action_t a = get_random_high_lv_action();
-                   if (a == hfo :: MARK_PLAYER) {
-                  hfo.act(NOOP);
-              } else {
-                      hfo.act(a);
-              }
-          }
-          //hfo.act(hfo::INTERCEPT);
+	std::cout <<"Random";
+	action_t a = get_random_high_lv_action();
+	if (a == hfo :: MARK_PLAYER) {
+	  hfo.act(NOOP); // why not MOVE?
+	} else {
+	  hfo.act(a);
+	}
+      }
+      //hfo.act(hfo::INTERCEPT);
       status = hfo.step();
     }
     if (status==GOAL)
@@ -249,8 +250,14 @@ int main(int argc, char** argv) {
     // Check what the outcome of the episode was
     cout << "Episode " << episode << " ended with status: "
          << StatusToString(status) << std::endl;
+    
+    if (status==SERVER_DOWN) {
+      break;
+    } else {
+      actualNumEpisodes++;
+    }
   }
-  double cost = numGoals/numEpisodes;
+  double cost = numGoals/actualNumEpisodes;
   hfo.act(QUIT);
   //write_cost(cost);
 };
