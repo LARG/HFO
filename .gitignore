@@ -73,6 +73,7 @@ example/mid_level_move_agent
 example/mid_level_kick_agent
 example/mid_level_dribble_agent
 example/communication_agent
+example/hand_coded_defense_agent
 
 # Dependency directories
 librcsc-prefix/
