@@ -84,7 +84,7 @@ def main():
                             'bin/teams/base/config/formations-dt', args.port,
                             'localhost', 'base_left', False)
   if args.seed:
-    if (args.rand_pass and (numTeammates > 1)) or (args.epsilon > 0):
+    if (args.rand_pass and (args.numTeammates > 1)) or (args.epsilon > 0):
       print("Python randomization seed: {0:d}".format(args.seed))
     else:
       print("Python randomization seed useless without --rand-pass w/teammates or --epsilon >0")
