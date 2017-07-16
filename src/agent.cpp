@@ -804,8 +804,10 @@ bool Agent::doMarkPlayer(int unum) {
   int count = 0;
   for ( PlayerPtrCont::const_iterator it = wm.opponentsFromSelf().begin(); it != o_end; ++it ) {
       if ( (*it)->distFromBall() < 5 ) {
+	if ((kicker_unum == -1) || (kicker_unum != unum)) { // try to obey action instruction
           kicker_pos = (*it)->pos();
           kicker_unum = (*it)->unum();
+	}
       }
   }
 
