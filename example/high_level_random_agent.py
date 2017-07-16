@@ -22,9 +22,9 @@ def main():
   parser.add_argument('--seed', type=int, default=None,
                       help="Python randomization seed; uses python default if 0 or not given")
   parser.add_argument('--record', action='store_true',
-                      help="Doing HFO --record")
+                      help="If doing HFO --record")
   parser.add_argument('--rdir', type=str, default='log/',
-                      help="Set directory to use if doing HFO --record")
+                      help="Set directory to use if doing --record")
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
