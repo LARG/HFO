@@ -20,6 +20,10 @@ def main():
                       help="Server port")
   parser.add_argument('--seed', type=int, default=None,
                       help="Python randomization seed; uses python default if 0 or not given")
+  parser.add_argument('--record', action='store_true',
+                      help="Doing HFO --record")
+  parser.add_argument('--rdir', type=str, default='log/',
+                      help="Set directory to use if doing HFO --record")
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
@@ -27,8 +31,14 @@ def main():
   hfo_env = hfo.HFOEnvironment()
   # Connect to the server with the specified
   # feature set. See feature sets in hfo.py/hfo.hpp.
-  hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
-                          'bin/teams/base/config/formations-dt', args.port,
+  if args.record:
+    hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
+                            'bin/teams/base/config/formations-dt', args.port,
+                            'localhost', 'base_left', False,
+                            record_dir=args.rdir)
+  else:
+    hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
+                            'bin/teams/base/config/formations-dt', args.port,
                           'localhost', 'base_left', False)
   for episode in itertools.count():
     status = hfo.IN_GAME

@@ -62,26 +62,36 @@ def main():
                       help="Python randomization seed; uses python default if 0 or not given")
   parser.add_argument('--rand-pass', action="store_true",
                       help="Randomize order of checking teammates for a possible pass")
-  parser.add_argument('--eps', type=float, default=0,
+  parser.add_argument('--epsilon', type=float, default=0,
                       help="Probability of a random action if has the ball, to adjust difficulty")
+  parser.add_argument('--record', action='store_true',
+                      help="If doing HFO --record")
+  parser.add_argument('--rdir', type=str, default='log/',
+                      help="Set directory to use if doing --record")
   parser.add_argument('--numTeammates', type=int, default=0)
   parser.add_argument('--numOpponents', type=int, default=1)
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
   hfo_env = hfo.HFOEnvironment()
-  hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
-                          'bin/teams/base/config/formations-dt', args.port,
-                          'localhost', 'base_left', False)
+  if args.record:
+    hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
+                            'bin/teams/base/config/formations-dt', args.port,
+                            'localhost', 'base_left', False,
+                            record_dir=args.rdir)
+  else:
+    hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
+                            'bin/teams/base/config/formations-dt', args.port,
+                            'localhost', 'base_left', False)
   if args.seed:
-    if args.rand_pass or (args.eps > 0):
+    if (args.rand_pass and (numTeammates > 1)) or (args.epsilon > 0):
       print("Python randomization seed: {0:d}".format(args.seed))
     else:
-      print("Python randomization seed setting is useless without --rand-pass or --eps >0")
+      print("Python randomization seed useless without --rand-pass w/teammates or --epsilon >0")
   if args.rand_pass and (args.numTeammates > 1):
     print("Randomizing order of checking for a pass")
-  if args.eps > 0:
-    print("Using eps(ilon) {0:n}".format(args.eps))
+  if args.epsilon > 0:
+    print("Using epsilon {0:n}".format(args.epsilon))
   for episode in itertools.count():
     num_eps = 0
     num_had_ball = 0
@@ -91,7 +101,7 @@ def main():
       state = hfo_env.getState()
       #print(state)
       if int(state[5]) == 1: # state[5] is 1 when player has the ball
-        if (args.eps > 0) and (random.random() < args.eps):
+        if (args.epsilon > 0) and (random.random() < args.epsilon):
           if random.random() < 0.5:
             hfo_env.act(hfo.SHOOT)
           else:
@@ -114,7 +124,7 @@ def main():
     # Check the outcome of the episode
     print("Episode {0:d} ended with {1:s}".format(episode,
                                                   hfo_env.statusToString(status)))
-    if args.eps > 0:
+    if args.epsilon > 0:
       print("\tNum move: {0:d}; Random action: {1:d}; Nonrandom: {2:d}".format(num_move,
                                                                                num_eps,
                                                                                (num_had_ball-
