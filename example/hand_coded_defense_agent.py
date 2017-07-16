@@ -24,11 +24,12 @@ except ImportError:
 GOAL_POS_X = 1.0
 GOAL_POS_Y = 0.0
 
-# below - from hand_coded_defense_agent.cpp
-params = {'KICK_DIST':1.504052352, 'OPEN_AREA_HIGH_LIMIT_X':0.747311440447,
-          'TACKLE_DIST':1.613456553}
+# below - from hand_coded_defense_agent.cpp except LOW_KICK_DIST
 HALF_FIELD_WIDTH = 68 # y coordinate -34 to 34 (-34 = bottom 34 = top)
 HALF_FIELD_LENGTH = 52.5 # x coordinate 0 to 52.5 (0 = goalline 52.5 = center)
+params = {'KICK_DIST':1.504052352, 'OPEN_AREA_HIGH_LIMIT_X':0.747311440447,
+          'TACKLE_DIST':1.613456553, 'LOW_KICK_DIST':(5/HALF_FIELD_LENGTH)}
+
 
 def get_dist_normalized(ref_x, ref_y, src_x, src_y):
   return math.sqrt(math.pow((ref_x - src_x),2) +
@@ -61,7 +62,7 @@ def get_sorted_opponents(state_vec, num_opponents, num_teammates, pos_x, pos_y):
       opp_pos_x = state_vec[9+(i*3)+(6*num_teammates)+1]
       opp_pos_y = state_vec[9+(i*3)+(6*num_teammates)+2]
       dist = get_dist_normalized(pos_x, pos_y, opp_pos_x, opp_pos_y)
-      unum_list.append(tuple(unum, dist, opp_pos_x, opp_pos_y))
+      unum_list.append(tuple([unum, dist, opp_pos_x, opp_pos_y]))
     # otherwise, unknown
   if len(unum_list) > 1:
     return sorted(unum_list, key=lambda x: x[1])
@@ -70,7 +71,7 @@ def get_sorted_opponents(state_vec, num_opponents, num_teammates, pos_x, pos_y):
 def is_in_open_area(pos_x, ignored_pos_y):
   return pos_x >= params['OPEN_AREA_HIGH_LIMIT_X']
 
-def do_defense_action(state_vec, hfo_env,
+def do_defense_action(state_vec, hfo_env, episode,
                       num_opponents, num_teammates,
                       old_ball_pos_x, old_ball_pos_y):
   """Figures out and does the (hopefully) best defense action."""
@@ -83,25 +84,43 @@ def do_defense_action(state_vec, hfo_env,
   ball_pos_x = state_vec[3]
   ball_pos_y = state_vec[4]
 
+  # if get high_level working for invalid
+  if (min(agent_pos_x,agent_pos_y,ball_pos_x,ball_pos_y) < -2):
+    hfo_env.act(hfo.MOVE) # will be Reorient in that version
+    return
+
+  ball_toward_goal = ball_moving_toward_goal(ball_pos_x, ball_pos_y,
+                                             old_ball_pos_x, old_ball_pos_y)
+
   ball_sorted_list = get_sorted_opponents(state_vec, num_opponents, num_teammates,
                                           pos_x=ball_pos_x, pos_y=ball_pos_y)
   if not ball_sorted_list: # unknown opponent positions/unums
-    hfo_env.act(hfo.MOVE)
+    print("No known opponent locations " +
+          "(episode {0:d}; btg {1!r}; ".format(episode,ball_toward_goal) +
+          "ball xy {0:n}, {1:n}; ball old xy {2:n}, {3:n})".format(ball_pos_x,
+                                                                   ball_pos_y,
+                                                                   old_ball_pos_x,
+                                                                   old_ball_pos_y))
+    if ball_toward_goal and (not is_in_open_area(ball_pos_x, ball_pos_y)):
+      hfo_env.act(hfo.INTERCEPT)
+    else:
+      hfo_env.act(hfo.MOVE)
     return
 
   is_tackleable_opp = is_tackleable(agent_pos_x, agent_pos_y,
                                     ball_sorted_list[0][2], ball_sorted_list[0][3])
 
-  ball_toward_goal = ball_moving_toward_goal(ball_pos_x, ball_pos_y,
-                                             old_ball_pos_x, old_ball_pos_y)
-
   if state_vec[5] > 0: # kickable distance of player
-    if ball_sorted_list[0][1] < params['KICK_DIST']:
+    if ball_sorted_list[0][1] < params['LOW_KICK_DIST']:
       hfo_env.act(hfo.MOVE) # will do tackle
     elif ball_toward_goal:
       hfo_env.act(hfo.INTERCEPT)
     elif is_tackleable_opp:
-      hfo_env.act(hfo.MOVE) # will do tackle
+      if ball_sorted_list[0][1] < get_dist_normalized(agent_pos_x, agent_pos_y,
+                                                      ball_pos_x, ball_pos_y):
+        hfo_env.act(hfo.MOVE) # will do tackle
+      else:
+        hfo_env.act(hfo.INTERCEPT)
     else:
       hfo_env.act(hfo.GO_TO_BALL)
     return
@@ -114,23 +133,28 @@ def do_defense_action(state_vec, hfo_env,
         hfo_env.act(hfo.MARK_PLAYER, goal_sorted_list[0][0])
       elif get_dist_normalized(agent_pos_x, agent_pos_y,
                                ball_pos_x, ball_pos_y) < ball_sorted_list[0][1]:
-        # odd; why not kickable above?
+##        # odd; why not kickable above?
+##        print("Ball dist below {0:n}".format(ball_sorted_list[0][1]) +
+##              " but not kickable (btg {0!r} ito {1!r})".format(ball_toward_goal,
+##                                                                is_tackleable_opp))
         if ball_toward_goal:
           hfo_env.act(hfo.INTERCEPT)
-        elif is_tackleable_opp:
-          hfo_env.act(hfo.MOVE) # will do tackle
+        elif is_in_open_area(ball_pos_x, ball_pos_y) or (is_tackleable_opp and
+                                                         (ball_sorted_list[0][1] <
+                                                          params['LOW_KICK_DIST'])):
+          hfo_env.act(hfo.MOVE) # will do tackle or appropriate
         else:
           hfo_env.act(hfo.GO_TO_BALL)
-      elif is_tackleable_opp:
+      elif is_tackleable_opp and (ball_sorted_list[0][1] < params['LOW_KICK_DIST']):
         hfo_env.act(hfo.MOVE) # will do tackle
       else:
         hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
-    elif is_tackleable_opp:
+    elif is_tackleable_opp and (ball_sorted_list[0][1] < params['LOW_KICK_DIST']):
       hfo_env.act(hfo.MOVE) # will do tackle
     else:
       hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
     return
-
+  
   if (not is_in_open_area(ball_pos_x, ball_pos_y)) and ball_toward_goal:
     hfo_env.act(hfo.INTERCEPT)
     return
@@ -138,6 +162,8 @@ def do_defense_action(state_vec, hfo_env,
   if get_dist_normalized(agent_pos_x, agent_pos_y, ball_pos_x, ball_pos_y) < ball_sorted_list[0][1]:
     if ball_toward_goal:
       hfo_env.act(hfo.INTERCEPT)
+    elif is_in_open_area(ball_pos_x, ball_pos_y):
+      hfo_env.act(hfo.MOVE)
     else:
       hfo_env.act(hfo.GO_TO_BALL)
     return
@@ -180,12 +206,12 @@ def main():
   if args.record:
     hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
                             'bin/teams/base/config/formations-dt', args.port,
-                            'localhost', 'base_right', False,
+                            'localhost', 'base_right', play_goalie=False,
                             record_dir=args.rdir)
   else:
     hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
                             'bin/teams/base/config/formations-dt', args.port,
-                            'localhost', 'base_right', False)
+                            'localhost', 'base_right', play_goalie=False)
   numTeammates = hfo_env.getNumTeammates()
   numOpponents = hfo_env.getNumOpponents()
   if args.seed:
@@ -204,7 +230,7 @@ def main():
       if (args.epsilon > 0) and (random.random() < args.epsilon):
         do_random_defense_action(state, hfo_env)
       else:
-        do_defense_action(state_vec=state, hfo_env=hfo_env,
+        do_defense_action(state_vec=state, hfo_env=hfo_env, episode=episode,
                           num_opponents=numOpponents, num_teammates=numTeammates,
                           old_ball_pos_x=old_ball_pos_x, old_ball_pos_y=old_ball_pos_y)
       old_ball_pos_x=state[3]
