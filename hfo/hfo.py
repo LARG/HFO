@@ -79,6 +79,10 @@ hfo_lib.statusToString.argtypes = [c_int]
 hfo_lib.statusToString.restype = c_char_p
 hfo_lib.getUnum.argtypes = [c_void_p]
 hfo_lib.getUnum.restype = c_int
+hfo_lib.getNumTeammates.argtypes = [c_void_p]
+hfo_lib.getNumTeammates.restype = c_int
+hfo_lib.getNumOpponents.argtypes = [c_void_p]
+hfo_lib.getNumOpponents.restype = c_int
 
 class HFOEnvironment(object):
   def __init__(self):
@@ -154,3 +158,11 @@ class HFOEnvironment(object):
   def getUnum(self):
     """ Return the uniform number of the agent """
     return hfo_lib.getUnum(self.obj)
+
+  def getNumTeammates(self):
+    """ Returns the number of teammates of the agent """
+    return hfo_lib.getNumTeammates(self.obj)
+
+  def getNumOpponents(self):
+    """ Returns the number of opponents of the agent """
+    return hfo_lib.getNumOpponents(self.obj)

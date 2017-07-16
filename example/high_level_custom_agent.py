@@ -68,8 +68,6 @@ def main():
                       help="If doing HFO --record")
   parser.add_argument('--rdir', type=str, default='log/',
                       help="Set directory to use if doing --record")
-  parser.add_argument('--numTeammates', type=int, default=0)
-  parser.add_argument('--numOpponents', type=int, default=1)
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
@@ -83,12 +81,14 @@ def main():
     hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
                             'bin/teams/base/config/formations-dt', args.port,
                             'localhost', 'base_left', False)
+  num_teammates = hfo_env.getNumTeammates()
+  #num_opponents = hfo_env.getNumOpponents()
   if args.seed:
-    if (args.rand_pass and (args.numTeammates > 1)) or (args.epsilon > 0):
+    if (args.rand_pass and (num_teammates > 1)) or (args.epsilon > 0):
       print("Python randomization seed: {0:d}".format(args.seed))
     else:
-      print("Python randomization seed useless without --rand-pass w/teammates or --epsilon >0")
-  if args.rand_pass and (args.numTeammates > 1):
+      print("Python randomization seed useless without --rand-pass w/2+ teammates or --epsilon >0")
+  if args.rand_pass and (num_teammates > 1):
     print("Randomizing order of checking for a pass")
   if args.epsilon > 0:
     print("Using epsilon {0:n}".format(args.epsilon))
@@ -108,7 +108,7 @@ def main():
             hfo_env.act(hfo.DRIBBLE)
           num_eps += 1
         else:
-          get_action(state,hfo_env,args.numTeammates,args.rand_pass)
+          get_action(state,hfo_env,num_teammates,args.rand_pass)
         num_had_ball += 1
       else:
         hfo_env.act(hfo.MOVE)
