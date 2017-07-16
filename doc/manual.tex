@@ -491,8 +491,8 @@ low-level features:
     HFO play area.}
   \itemrange{2}{\textbf{Corner Top Left} [Landmark] Top left corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Top Right} [Landmark] Top right corner HFO Playfield.}
-  \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bot right corner HFO Playfield.}
-  \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bot left corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bottom right corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bottom left corner HFO Playfield.}
   \item{\textbf{OOB Left Dist} [Proximity] Proximity to the nearest
     point of the left side of the HFO playable area. E.g. distance
     remaining before the agent goes out of bounds in left field.}
@@ -506,17 +506,21 @@ low-level features:
   \item{\textbf{Ball Vel Valid} [Valid] Indicates the ball velocity estimate is valid.}
   \item{\textbf{Ball Vel Mag} [Other] Magnitude of the ball's velocity.}
   \itemrange{1}{\textbf{Ball Vel Ang} [Angle] Global angle of ball velocity.}
-  \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features) for each teammate active in HFO, sorted by proximity to the agent.}
-  \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features) for each opponent present, sorted by proximity to the player.}
-  \item [$T$]  {\textbf{Teammate Uniform Nums} [Unum] One uniform number for each teammate active in HFO, sorted by proximity to the agent.}
-  \item [$O$]  {\textbf{Opponent Uniform Nums} [Unum] One uniform number for each opponent present, sorted by proximity to the player.}
+  \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features)
+	for each teammate active in HFO, sorted by proximity to the agent.}
+  \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features)
+	for each opponent active in HFO, sorted by proximity to the player.}
+  \item [$T$]  {\textbf{Teammate Uniform Nums} [Unum] One uniform number for each teammate active in HFO,
+	sorted by proximity to the agent.}
+  \item [$O$]  {\textbf{Opponent Uniform Nums} [Unum] One uniform number for each opponent active in HFO,
+	sorted by proximity to the player.}
 \end{enumerate}
 
 \section{Action Space}
 The HFO domain provides support for both low-level primitive actions,
 mid-level, and high-level strategic actions. Low-level, parameterized
 actions are provided for locomotion and kicking. Mid-level actions are
-still parameterized by capture high level activities such as
+still mostly parameterized but capture high-level activities such as
 dribbling. Finally, high-level discrete, strategic actions are
 available for moving, shooting, passing and dribbling. Control of the
 agent's head and gaze is not provided and follows Agent2D's default
@@ -606,10 +610,10 @@ below the table for the action abbreviations.
 \begin{tabular}{r       | c    c      c    c   | c     c      c    c  | c    c    c     c     c     c     c     c     c}
 Action                  & Da & Tu  &  Ta & K   & KT &  MT &  DT &  I  & M  & S  & P  &  Dr  & C  &  RG &  DG  & G  &  MP \\
 \hline \hline
-Self position invalid   & Y  &  Y  &  Y  &  Y  & N  &  N  &  N? &  N? & N? & N? & ?  &  Y   & ?  &  N? &  N?  & ?  &  ? \\
-Self velocity invalid   & N  &  Y? &  Y? &  Y? & ?  &  N  &  ?  &  N? & N? & N? & ?  &  Y   & ?  &  ?  &  ?   & ?  &  ? \\
-Ball position invalid   & Y  &  Y  &  Y? &  N  & N  &  Y  &  N? &  N  & ?  & N  & N  &  Y?  & N  &  ?  &  ?   & N  &  ? \\
-Ball velocity invalid   & Y  &  Y  &  Y  &  ?  & ?  &  Y  &  ?  &  N? & ?  & N  & N? &  Y?  & N? &  Y? &  Y?  & Y? &  Y? \\
+Self position invalid   & Y  &  Y  &  Y  &  Y  & N  &  N  &  N? &  N? & N? & N? & N? &  Y   & ?  &  N  &  N   & N  &  N \\
+Self velocity invalid   & N  &  Y? &  Y? &  Y? & ?  &  N  &  ?  &  N? & N? & ?  & ?  &  Y   & ?  &  N  &  N   & N  &  N \\
+Ball position invalid   & Y  &  Y  &  Y? &  N  & N  &  Y  &  N? &  N  & ?  & N  & N  &  Y?  & N  &  ?  &  N   & N  &  N \\
+Ball velocity invalid   & Y  &  Y  &  Y  &  ?  & ?  &  Y  &  ?  &  N? & ?  & N  & N? &  Y?  & N? &  Y  &  Y   & Y  &  Y \\
 Teammate loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & ?  & Y  & N  &  Y?  & Y  &  Y  &  Y   & Y  &  Y \\
 Team. unum invalid      & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & N  &  Y   & Y  &  Y  &  Y   & Y  &  Y \\
 Opponent loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y? &  Y  & ?  & Y? & Y  &  Y?  & Y  &  N  &  N   & Y  &  N \\
