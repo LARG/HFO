@@ -49,6 +49,12 @@ class HFOEnvironment {
   // Returns the uniform number of the player
   virtual int getUnum();
 
+  // Returns the number of teammates
+  virtual int getNumTeammates();
+
+  // Returns the number of opponents
+  virtual int getNumOpponents();
+
   // Get the current player holding the ball
   virtual Player playerOnBall();
 

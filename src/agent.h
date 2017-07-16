@@ -61,6 +61,8 @@ protected:
   std::string say_msg, hear_msg;       // Messages to/from teammates
   hfo::action_t requested_action;      // Currently requested action
   std::vector<float> params;           // Parameters of current action
+  int num_teammates;                   // Number of teammates
+  int num_opponents;                   // Number of opponents
 
  public:
   inline const std::vector<float>& getState() { return state; }
@@ -68,6 +70,8 @@ protected:
   inline const hfo::Player& getPlayerOnBall() { return player_on_ball; }
   inline const std::string& getHearMsg() { return hear_msg; }
   int getUnum(); // Returns the uniform number of the player
+  inline int getNumTeammates() { return num_teammates; }
+  inline int getNumOpponents() { return num_opponents; }
 
   inline void setFeatureSet(hfo::feature_set_t fset) { feature_set = fset; }
   inline std::vector<float>* mutable_params() { return &params; }
