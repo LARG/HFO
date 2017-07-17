@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ./bin/HFO --offense-npcs=2 --defense-agents=1 --defense-npcs=1 --trials 20 --headless &
-sleep 5
+sleep 15
 ./example/hand_coded_defense_agent.py &> agent1.txt &
 sleep 5
 
