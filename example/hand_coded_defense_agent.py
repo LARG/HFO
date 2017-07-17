@@ -111,8 +111,15 @@ def do_defense_action(state_vec, hfo_env, episode,
       hfo_env.act(hfo.MOVE)
     return
 
-  if ball_toward_goal and (ball_sorted_list[0][1] < params['LOW_KICK_DIST']):
-    ball_toward_goal = False
+  goal_sorted_list = get_sorted_opponents(state_vec, num_opponents, num_teammates,
+                                          pos_x=GOAL_POS_X, pos_y=GOAL_POS_Y)
+
+  if ball_toward_goal:
+    if ball_sorted_list[0][1] < params['LOW_KICK_DIST']:
+      ball_toward_goal = False
+    elif goal_sorted_list[0][1] < get_dist_normalized(ball_pos_x,ball_pos_y,
+                                                      GOAL_POS_X,GOAL_POS_Y):
+      ball_toward_goal = False
 
   is_tackleable_opp = is_tackleable(agent_pos_x, agent_pos_y,
                                     ball_sorted_list[0][1],
@@ -156,8 +163,6 @@ def do_defense_action(state_vec, hfo_env, episode,
     return
 
   if ball_sorted_list[0][1] < params['KICK_DIST']:
-    goal_sorted_list = get_sorted_opponents(state_vec, num_opponents, num_teammates,
-                                            pos_x=GOAL_POS_X, pos_y=GOAL_POS_Y)
     if goal_sorted_list[0][0] != ball_sorted_list[0][0]: # top in each are opponents to worry about
       if is_in_open_area(ball_sorted_list[0][2],ball_sorted_list[0][3]) and (goal_sorted_list[0][1]
                                                                              < params['KICK_DIST']):
@@ -195,8 +200,7 @@ def do_defense_action(state_vec, hfo_env, episode,
       hfo_env.act(hfo.GO_TO_BALL)
     return
 
-  goal_sorted_list = get_sorted_opponents(state_vec, num_opponents, num_teammates,
-                                          pos_x=GOAL_POS_X, pos_y=GOAL_POS_Y)
+
   if is_in_open_area(goal_sorted_list[0][2], goal_sorted_list[0][3]):
     hfo_env.act(hfo.MOVE)
   elif goal_sorted_list[0][1] < min(params['KICK_DIST'],
