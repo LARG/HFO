@@ -85,7 +85,7 @@ def do_defense_action(state_vec, hfo_env, episode,
   ball_pos_y = state_vec[4]
 
   # if get high_level working for invalid
-  if (min(agent_pos_x,agent_pos_y,ball_pos_x,ball_pos_y) < -2):
+  if (min(agent_pos_x,agent_pos_y,ball_pos_x,ball_pos_y) < -1):
     hfo_env.act(hfo.REORIENT)
     return
 
