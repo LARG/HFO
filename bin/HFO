@@ -2,7 +2,13 @@
 # encoding: utf-8
 from __future__ import print_function
 
-import subprocess, os, time, numpy, sys
+import atexit
+import numpy
+import os
+import time
+import signal
+import subprocess
+import sys
 
 # Global list of all/essential running processes
 processes, necProcesses = [], []
@@ -11,6 +17,16 @@ processes, necProcesses = [], []
 SERVER_BIN = 'rcssserver'
 # Command to run the monitor. Edit as needed; ditto to the above re directories.
 MONITOR_BIN = 'soccerwindow2'
+
+def cleanup():
+  """Cleanup even if doing SystemExit, as with term."""
+  for p in reversed(processes):
+    p.terminate()
+    time.sleep(0.1)
+    p.kill()
+
+def term(received_signal, ignored_stack):
+  sys.exit("Signal {0!r} received; exiting".format(received_signal))
 
 def launch(cmd, name = 'Unknown', necessary = True, suppressOutput = True):
   """Launch a process.
@@ -22,8 +38,8 @@ def launch(cmd, name = 'Unknown', necessary = True, suppressOutput = True):
   """
   kwargs = {}
   if suppressOutput:
-    kwargs = {'stdout': open('/dev/null', 'w'),
-              'stderr': open('/dev/null', 'w')}
+    kwargs = {'stdout': open(os.devnull, 'w'),
+              'stderr': open(os.devnull, 'w')}
   try:
     p = subprocess.Popen(cmd.split(' '), shell = False, **kwargs)
   except (IOError, OSError):
@@ -68,6 +84,13 @@ def main(args):
                     args.offenseOnBall, args.seed, args.maxUntouchedTime,
                     args.min_ball_x, args.max_ball_x, args.messageSize,
                     args.verbose)
+
+  try:
+    signal.signal(signal.SIGTERM, term)
+  except (ValueError, AttributeError):
+    print("Not able to catch sigterm")
+
+  atexit.register(cleanup)
 
   try:
     # Launch the Server
