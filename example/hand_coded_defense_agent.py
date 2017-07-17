@@ -221,12 +221,22 @@ def main():
       print("Python randomization seed useless without --epsilon >0")
   if args.epsilon > 0:
     print("Using epsilon {0:n}".format(args.epsilon))
+  my_unum = hfo_env.getUnum()
+  assert ((my_unum > 1) and (my_unum <= 11)), "Bad unum {!r}".format(my_unum)
+  print("My unum is {0:d}".format(my_unum))
   for episode in itertools.count():
-    old_ball_pos_x = 0
+    old_ball_pos_x = -1
     old_ball_pos_y = 0
+    episode_start = True
     status = hfo.IN_GAME
     while status == hfo.IN_GAME:
       state = hfo_env.getState()
+      if episode_start:
+        if (state[3] >= -1) and (state[3] <= 1):
+          old_ball_pos_x = state[3]
+        if (state[4] >= -1) and (state[4] <= 1):
+          old_ball_pos_y = state[4]
+        episode_start = False
       if (args.epsilon > 0) and (random.random() < args.epsilon):
         do_random_defense_action(state, hfo_env)
       else:
