@@ -258,14 +258,15 @@ def do_defense_action(state_vec, hfo_env, episode,
 
 def do_random_defense_action(state, hfo_env):
   if state[5] > 0: # kickable
-    if random.random() < 0.5:
-      hfo_env.act(hfo.INTERCEPT)
+    hfo_env.act(random.choice([hfo.REDUCE_ANGLE_TO_GOAL,
+                               hfo.MOVE,
+                               HFO.GO_TO_BALL]))
+  else:
+    if random.random() < 0.25:
+      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
     else:
       hfo_env.act(hfo.MOVE)
-  else:
-    hfo_env.act(random.choose(hfo.MOVE,hfo.DEFEND_GOAL,
-                              hfo.REDUCE_ANGLE_TO_GOAL,hfo.REDUCE_ANGLE_TO_GOAL,
-                              hfo.GO_TO_BALL,hfo.INTERCEPT))
+
   return
 
 def main():
