@@ -7,8 +7,6 @@ keeper/goalie.
 from __future__ import print_function
 # encoding: utf-8
 
-#MODIFIED#
-
 # First Start the server: $> bin/start.py
 import argparse
 import itertools
@@ -83,9 +81,17 @@ def get_sorted_opponents(state_vec, num_opponents, num_teammates, pos_x, pos_y):
 def is_in_open_area(pos_x, ignored_pos_y):
   return pos_x >= params['OPEN_AREA_HIGH_LIMIT_X']
 
-def do_defense_action(state_vec, hfo_env, episode,
+def add_num_times(action, main_dict, opt_dict=None):
+  main_dict[action] += 1
+  if opt_dict:
+    opt_dict[action] += 1
+  return action
+
+def do_defense_action(state_vec, hfo_env,
                       num_opponents, num_teammates,
-                      old_ball_pos_x, old_ball_pos_y):
+                      old_ball_pos_x, old_ball_pos_y,
+                      num_times_overall, num_times_kickable,
+                      misc_tracked):
   """Figures out and does the (hopefully) best defense action."""
   min_vec_size = 10 + (6*num_teammates) + (3*num_opponents)
   if (len(state_vec) < min_vec_size):
@@ -110,19 +116,19 @@ def do_defense_action(state_vec, hfo_env, episode,
   ball_sorted_list = get_sorted_opponents(state_vec, num_opponents, num_teammates,
                                           pos_x=ball_pos_x, pos_y=ball_pos_y)
   if not ball_sorted_list: # unknown opponent positions/unums
-    print("No known opponent locations " +
-          "(episode {0:d}; btg {1!r}; ".format(episode,ball_toward_goal) +
+    print("No known opponent locations (btg {0!r}; bng {1!r}; ".format(ball_toward_goal,
+                                                                       ball_nearer_goal) +
           "ball xy {0:n}, {1:n}; ball old xy {2:n}, {3:n})".format(ball_pos_x,
                                                                    ball_pos_y,
                                                                    old_ball_pos_x,
                                                                    old_ball_pos_y))
-    if ball_toward_goal and (not is_in_open_area(ball_pos_x, ball_pos_y)):
+    if ball_toward_goal:
       if ball_nearer_goal:
-        hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+        hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
       else:
-        hfo_env.act(hfo.INTERCEPT)
+        hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall))
     else:
-      hfo_env.act(hfo.MOVE)
+      hfo_env.act(add_num_times(hfo.MOVE,num_times_overall))
     return
 
   goal_sorted_list = get_sorted_opponents(state_vec, num_opponents, num_teammates,
@@ -139,96 +145,96 @@ def do_defense_action(state_vec, hfo_env, episode,
                                     ball_sorted_list[0][1],
                                     ball_sorted_list[0][2], ball_sorted_list[0][3])
 
-  if state_vec[5] > 0: # kickable distance of player
-    if is_tackleable_opp:
-      hfo_env.act(hfo.MOVE) # will do tackle
-    elif ball_nearer_goal:
-      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
-    elif ball_toward_goal:
-      hfo_env.act(hfo.INTERCEPT)
-    else:
-      hfo_env.act(hfo.GO_TO_BALL)
-    return
-
   agent_to_ball_dist = get_dist_normalized(agent_pos_x, agent_pos_y,
                                            ball_pos_x, ball_pos_y)
+
+  if state_vec[5] > 0: # kickable distance of player
+    misc_tracked['max_kickable_dist'] = max(agent_to_ball_dist,misc_tracked['max_kickable_dist'])
+    if is_tackleable_opp:
+      hfo_env.act(add_num_times(hfo.MOVE,num_times_overall,num_times_kickable)) # will do tackle
+    elif ball_nearer_goal:
+      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall,num_times_kickable))
+    elif ball_toward_goal:
+      hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall,num_times_kickable))
+    else:
+      hfo_env.act(add_num_times(hfo.GO_TO_BALL,num_times_overall,num_times_kickable))
+    return
 
   if goal_sorted_list[0][0] != ball_sorted_list[0][0]:
     if is_in_open_area(ball_sorted_list[0][2],
                        ball_sorted_list[0][3]) and is_in_open_area(goal_sorted_list[0][2],
                                                                    goal_sorted_list[0][3]):
       if ball_sorted_list[0][1] < params['LOW_KICK_DIST']:
-        hfo_env.act(hfo.MARK_PLAYER, goal_sorted_list[0][0])
+        hfo_env.act(add_num_times(hfo.MARK_PLAYER,num_times_overall),
+                    goal_sorted_list[0][0])
       elif agent_to_ball_dist < ball_sorted_list[0][1]:
         if ball_nearer_goal:
-          hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+          hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
         elif ball_toward_goal:
-          hfo_env.act(hfo.INTERCEPT)
+          hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall))
         else:
-          hfo_env.act(hfo.GO_TO_BALL)
+          hfo_env.act(add_num_times(hfo.GO_TO_BALL,num_times_overall))
       else:
-        hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+        hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
     elif ball_sorted_list[0][1] >= params['KICK_DIST']:
       if agent_to_ball_dist < ball_sorted_list[0][1]:
         if ball_nearer_goal:
-          hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+          hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
         elif ball_toward_goal:
-          hfo_env.act(hfo.INTERCEPT)
+          hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall))
         else:
-          hfo_env.act(hfo.GO_TO_BALL)
+          hfo_env.act(add_num_times(hfo.GO_TO_BALL,num_times_overall))
       else:
-        hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+        hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
     elif is_tackleable_opp and (not is_in_open_area(ball_sorted_list[0][2],
                                                     ball_sorted_list[0][3])):
-      hfo_env.act(hfo.MOVE)
-##    elif is_in_open_area(ball_sorted_list[0][2],ball_sorted_list[0][3]):
-##      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL) # why not MARK_PLAYER for the one that is not in the open area?
+      hfo_env.act(add_num_times(hfo.MOVE,num_times_overall))
     elif ball_sorted_list[0][1] < (1*params['LOW_KICK_DIST']):
-      hfo_env.act(hfo.MARK_PLAYER, goal_sorted_list[0][0])
+      hfo_env.act(add_num_times(hfo.MARK_PLAYER,num_times_overall),
+                  goal_sorted_list[0][0])
     else:
-      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
     return
 
   if is_in_open_area(ball_sorted_list[0][2],ball_sorted_list[0][3]):
     if ball_sorted_list[0][1] < params['KICK_DIST']:
-      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
     elif agent_to_ball_dist < params['KICK_DIST']:
       if ball_nearer_goal:
-        hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+        hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
       elif ball_toward_goal:
-        hfo_env.act(hfo.INTERCEPT)
+        hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall))
       else:
-        hfo_env.act(hfo.GO_TO_BALL)
+        hfo_env.act(add_num_times(hfo.GO_TO_BALL,num_times_overall))
     elif is_tackleable_opp:
-      hfo_env.act(hfo.MOVE)
+      hfo_env.act(add_num_times(hfo.MOVE,num_times_overall))
     else:
-      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
   else:
     if ball_sorted_list[0][1] >= max(params['KICK_DIST'],agent_to_ball_dist):
       if ball_nearer_goal:
-        hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+        hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
       elif ball_toward_goal:
-        hfo_env.act(hfo.INTERCEPT)
+        hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall))
       else:
-        hfo_env.act(hfo.GO_TO_BALL)
+        hfo_env.act(add_num_times(hfo.GO_TO_BALL,num_times_overall))
     elif ball_sorted_list[0][1] >= params['KICK_DIST']:
-      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
     elif is_tackleable_opp:
-      hfo_env.act(hfo.MOVE)
+      hfo_env.act(add_num_times(hfo.MOVE,num_times_overall))
     else:
-      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
+      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
   return
 
 def do_random_defense_action(state, hfo_env):
   if state[5] > 0: # kickable
-    if random.random() < 0.5:
-      hfo_env.act(hfo.INTERCEPT)
+    hfo_env.act(hfo.MOVE)
+  else:
+    if random.random() < 0.25:
+      hfo_env.act(hfo.REDUCE_ANGLE_TO_GOAL)
     else:
       hfo_env.act(hfo.MOVE)
-  else:
-    hfo_env.act(random.choose(hfo.MOVE,hfo.DEFEND_GOAL,
-                              hfo.REDUCE_ANGLE_TO_GOAL,hfo.REDUCE_ANGLE_TO_GOAL,
-                              hfo.GO_TO_BALL,hfo.INTERCEPT))
+
   return
 
 def main():
@@ -267,6 +273,12 @@ def main():
   my_unum = hfo_env.getUnum()
   assert ((my_unum > 1) and (my_unum <= 11)), "Bad unum {!r}".format(my_unum)
   print("My unum is {0:d}".format(my_unum))
+  num_times_overall = {}
+  num_times_kickable = {}
+  for action in range(hfo.NUM_HFO_ACTIONS):
+    num_times_overall[action] = 0
+    num_times_kickable[action] = 0
+  misc_tracked = {'max_kickable_dist':0}
   for episode in itertools.count():
     old_ball_pos_x = -1
     old_ball_pos_y = 0
@@ -283,9 +295,12 @@ def main():
       if (args.epsilon > 0) and (random.random() < args.epsilon):
         do_random_defense_action(state, hfo_env)
       else:
-        do_defense_action(state_vec=state, hfo_env=hfo_env, episode=episode,
+        do_defense_action(state_vec=state, hfo_env=hfo_env,
                           num_opponents=numOpponents, num_teammates=numTeammates,
-                          old_ball_pos_x=old_ball_pos_x, old_ball_pos_y=old_ball_pos_y)
+                          old_ball_pos_x=old_ball_pos_x, old_ball_pos_y=old_ball_pos_y,
+                          num_times_overall=num_times_overall,
+                          num_times_kickable=num_times_kickable,
+                          misc_tracked=misc_tracked)
       old_ball_pos_x=state[3]
       old_ball_pos_y=state[4]
       status=hfo_env.step()
@@ -293,6 +308,15 @@ def main():
 
     # Quit if the server goes down
     if status == hfo.SERVER_DOWN:
+      for action in range(hfo.NUM_HFO_ACTIONS):
+        if num_times_overall[action]:
+          print("Overall times {0!s}: {1:d}".format(hfo_env.actionToString(action),
+                                                    num_times_overall[action]))
+      for action in range(hfo.NUM_HFO_ACTIONS):
+        if num_times_kickable[action]:
+          print("Kickable times {0!s}: {1:d}".format(hfo_env.actionToString(action),
+                                                     num_times_kickable[action]))
+      print("Max kickable dist: {0:n}".format(misc_tracked['max_kickable_dist']))
       hfo_env.act(hfo.QUIT)
       exit()
 

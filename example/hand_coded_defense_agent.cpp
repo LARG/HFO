@@ -66,7 +66,7 @@ bool is_in_open_area(double pos_x, double pos_y) {
         }
 }
 
-action_with_params get_defense_action(const std::vector<float>& state_vec, double no_of_opponents, double numTMates) {
+action_with_params get_defense_action(const std::vector<float>& state_vec, double no_of_opponents, int numTMates) {
         int size_of_vec = 10 + 6*numTMates + 3*no_of_opponents;
         if (size_of_vec != state_vec.size()) {
                 std :: cout <<"Invalid Feature Vector / Check the number of teammates/opponents provided";
@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
     // Get the vector of state features for the current state
       const vector<float>& feature_vec = hfo.getState();
       if (random == 0) {
-              action_with_params a = get_defense_action(feature_vec, 2,1);
+              action_with_params a = get_defense_action(feature_vec, 2, hfo.getNumTeammates());
          // std::cout << a.action << a.param;
          if (a.action == hfo :: MARK_PLAYER || a.action == hfo::TACKLE) {
                   hfo.act(a.action, a.param);

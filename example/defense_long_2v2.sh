@@ -2,7 +2,9 @@
 
 # HAS TO BE RUN FROM EXAMPLE DIR DUE TO hand_coded_defense_agent CONFIG!
 
-../bin/HFO --offense-npcs=2 --defense-agents=1 --defense-npcs=1 --trials 5000 --headless --port=7000 --seed 1500310928 --no-logging &
+# Change to a new seed for different experiments!
+
+../bin/HFO --offense-npcs=2 --defense-agents=1 --defense-npcs=1 --trials 5000 --headless --port=7000 --seed 1500348586 --no-logging &
 sleep 15
 ./hand_coded_defense_agent &> agent1.txt &
 sleep 5
