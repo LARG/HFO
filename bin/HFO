@@ -53,7 +53,11 @@ def launch(cmd, name = 'Unknown', necessary = True, suppressOutput = True):
 def main(args):
   """Sets up the teams, launches the server and monitor, starts the trainer.
   """
-  if args.logging and not os.path.exists(args.logDir):
+  if args.logging:
+    args.hfo_logging = True
+    if not os.path.exists(args.logDir):
+      os.makedirs(args.logDir)
+  elif args.hfo_logging and not os.path.exists(args.logDir):
     os.makedirs(args.logDir)
   num_agents   = args.offenseAgents + args.defenseAgents
   binary_dir   = os.path.dirname(os.path.realpath(__file__))
@@ -77,7 +81,7 @@ def main(args):
                   'server::say_msg_size=%i ' \
                   'server::record_messages=%i' \
                   %(server_port, coach_port, olcoach_port,
-                    args.logging, args.logging, args.logging,
+                    args.logging, args.logging, args.hfo_logging,
                     args.logDir, args.logDir, args.logDir,
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
@@ -166,6 +170,8 @@ def parseArgs():
                  'incrementally allocated the following ports.')
   p.add_argument('--no-logging', dest='logging', action='store_false',
                  default=True, help='Disable rcssserver logging.')
+  p.add_argument('--hfo-logging', dest='hfo_logging', action='store_true', default=False,
+                 help="Do .hfo logging even if no other logging")
   p.add_argument('--log-dir', dest='logDir', default='log/',
                  help='Directory to store logs. Default: log/')
   p.add_argument('--record', dest='record', action='store_true',
