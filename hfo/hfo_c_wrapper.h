@@ -48,6 +48,8 @@ extern "C" {
     return StatusToString(status).c_str();
   }
   int getUnum(hfo::HFOEnvironment *hfo) {return hfo->getUnum();}
+  int getNumTeammates(hfo::HFOEnvironment *hfo) {return hfo->getNumTeammates();}
+  int getNumOpponents(hfo::HFOEnvironment *hfo) {return hfo->getNumOpponents();}
 }
 
 #endif

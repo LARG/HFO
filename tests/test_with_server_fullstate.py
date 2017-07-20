@@ -54,6 +54,12 @@ def test_with_server():
 
         print("My unum is {!s}".format(my_unum))
 
+        num_teammates = hfo_env.getNumTeammates()
+        assert (num_teammates == 2), "Wrong num teammates ({!r})".format(num_teammates)
+
+        num_opponents = hfo_env.getNumOpponents()
+        assert (num_opponents == 2), "Wrong num opponents ({!r})".format(num_opponents)
+
         had_ok_unum = False
         had_ok_unum_set_my_side = set()
         had_ok_unum_set_their_side = set();

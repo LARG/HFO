@@ -212,16 +212,16 @@ bool Agent::initImpl(CmdLineParser & cmd_parser) {
 }
 
 FeatureExtractor* Agent::getFeatureExtractor(feature_set_t feature_set_indx,
-                                             int num_teammates,
-                                             int num_opponents,
+                                             int numTeammates,
+                                             int numOpponents,
                                              bool playing_offense) {
   switch (feature_set_indx) {
     case LOW_LEVEL_FEATURE_SET:
-      return new LowLevelFeatureExtractor(num_teammates, num_opponents,
+      return new LowLevelFeatureExtractor(numTeammates, numOpponents,
                                           playing_offense);
       break;
     case HIGH_LEVEL_FEATURE_SET:
-      return new HighLevelFeatureExtractor(num_teammates, num_opponents,
+      return new HighLevelFeatureExtractor(numTeammates, numOpponents,
                                            playing_offense);
       break;
     default:
@@ -336,10 +336,10 @@ Agent::ProcessTrainerMessages()
       hfo::Config hfo_config;
       if (hfo::ParseConfig(message, hfo_config)) {
         bool playing_offense = world().ourSide() == rcsc::LEFT;
-        int num_teammates = playing_offense ?
-            hfo_config.num_offense - 1 : hfo_config.num_defense - 1;
-        int num_opponents = playing_offense ?
-            hfo_config.num_defense : hfo_config.num_offense;
+        num_teammates = playing_offense ?
+	  hfo_config.num_offense - 1 : hfo_config.num_defense - 1;
+        num_opponents = playing_offense ?
+	  hfo_config.num_defense : hfo_config.num_offense;
         feature_extractor = getFeatureExtractor(
             feature_set, num_teammates, num_opponents, playing_offense);
       }
@@ -804,8 +804,10 @@ bool Agent::doMarkPlayer(int unum) {
   int count = 0;
   for ( PlayerPtrCont::const_iterator it = wm.opponentsFromSelf().begin(); it != o_end; ++it ) {
       if ( (*it)->distFromBall() < 5 ) {
+	if ((kicker_unum == -1) || (kicker_unum != unum)) { // try to obey action instruction
           kicker_pos = (*it)->pos();
           kicker_unum = (*it)->unum();
+	}
       }
   }
 
