@@ -83,6 +83,8 @@ hfo_lib.getNumTeammates.argtypes = [c_void_p]
 hfo_lib.getNumTeammates.restype = c_int
 hfo_lib.getNumOpponents.argtypes = [c_void_p]
 hfo_lib.getNumOpponents.restype = c_int
+hfo_lib.getLastActionStatus.argtypes = [c_void_p, c_int]
+hfo_lib.getLastActionStatus.restype = c_int
 
 class HFOEnvironment(object):
   def __init__(self):
@@ -166,3 +168,12 @@ class HFOEnvironment(object):
   def getNumOpponents(self):
     """ Returns the number of opponents of the agent """
     return hfo_lib.getNumOpponents(self.obj)
+
+  def getLastActionStatus(self, last_action):
+    """
+    If last_action is the last action with a recorded status,
+    returns a 1 for possible success, 0 for no possibility of success,
+    or -1 if unknown. If it is not the last action with a
+    recorded status, returns a -1.
+    """
+    return hfo_lib.getLastActionStatus(self.obj, last_action)

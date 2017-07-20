@@ -150,6 +150,10 @@ Agent::Agent()
 
     // set communication planner
     M_communication = Communication::Ptr(new SampleCommunication());
+
+    // setup last_action variables
+    last_action_with_status = NOOP;
+    last_action_status = -1;
 }
 
 Agent::~Agent() {
@@ -160,6 +164,23 @@ Agent::~Agent() {
 
 int Agent::getUnum() {
   return world().self().unum();
+}
+
+int Agent::getLastActionStatus(action_t last_action) {
+  if (last_action == last_action_with_status) {
+    return last_action_status;
+  } else {
+    return -1;
+  }
+}
+
+void Agent::addLastActionStatus(action_t last_action, bool action_status) {
+  last_action_with_status = last_action;
+  if (action_status) {
+    last_action_status = 1;
+  } else {
+    last_action_status = 0;
+  }
 }
 
 bool Agent::initImpl(CmdLineParser & cmd_parser) {
@@ -249,55 +270,55 @@ void Agent::actionImpl() {
   }
   switch(requested_action) {
     case DASH:
-      this->doDash(params[0], params[1]);
+      addLastActionStatus(DASH, this->doDash(params[0], params[1]));
       break;
     case TURN:
-      this->doTurn(params[0]);
+      addLastActionStatus(TURN, this->doTurn(params[0]));
       break;
     case TACKLE:
-      this->doTackle(params[0], false);
+      addLastActionStatus(TACKLE, this->doTackle(params[0], false));
       break;
     case KICK:
-      this->doKick(params[0], params[1]);
+      addLastActionStatus(KICK, this->doKick(params[0], params[1]));
       break;
     case KICK_TO:
       if (feature_extractor != NULL) {
-        Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                                feature_extractor->absoluteYPos(params[1])),
-                       params[2], params[2] * 0.99, 3).execute(this);
+        addLastActionStatus(KICK_TO, Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
+							 feature_extractor->absoluteYPos(params[1])),
+						params[2], params[2] * 0.99, 3).execute(this));
       }
       break;
     case MOVE_TO:
       if (feature_extractor != NULL) {
-        Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                                feature_extractor->absoluteYPos(params[1])), 0.25,
-                       ServerParam::i().maxDashPower()).execute(this);
+        addLastActionStatus(MOVE_TO, Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
+							 feature_extractor->absoluteYPos(params[1])), 0.25,
+						ServerParam::i().maxDashPower()).execute(this));
       }
       break;
     case DRIBBLE_TO:
       if (feature_extractor != NULL) {
-        Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                              feature_extractor->absoluteYPos(params[1])), 1.0,
-                     ServerParam::i().maxDashPower(), 2).execute(this);
+        addLastActionStatus(DRIBBLE_TO, Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
+							  feature_extractor->absoluteYPos(params[1])), 1.0,
+						 ServerParam::i().maxDashPower(), 2).execute(this));
       }
       break;
     case INTERCEPT:
-      Body_Intercept().execute(this);
+      addLastActionStatus(INTERCEPT, Body_Intercept().execute(this));
       break;
     case MOVE:
-      this->doMove();
+      addLastActionStatus(MOVE, this->doMove());
       break;
     case SHOOT:
-      this->doSmartKick();
+      addLastActionStatus(SHOOT, this->doSmartKick());
       break;
     case PASS:
-      this->doPassTo(int(params[0]));
+      addLastActionStatus(PASS, this->doPassTo(int(params[0])));
       break;
     case DRIBBLE:
-      this->doDribble();
+      addLastActionStatus(DRIBBLE, this->doDribble());
       break;
     case CATCH:
-      this->doCatch();
+      addLastActionStatus(CATCH, this->doCatch());
       break;
     case NOOP:
       break;
@@ -306,16 +327,16 @@ void Agent::actionImpl() {
       handleExit();
       return;
     case REDUCE_ANGLE_TO_GOAL:
-      this->doReduceAngleToGoal();
+      addLastActionStatus(REDUCE_ANGLE_TO_GOAL, this->doReduceAngleToGoal());
       break;
     case MARK_PLAYER:
-      this->doMarkPlayer(int(params[0]));
+      addLastActionStatus(MARK_PLAYER, this->doMarkPlayer(int(params[0])));
       break;
     case DEFEND_GOAL:
-      this->doDefendGoal();
+      addLastActionStatus(DEFEND_GOAL, this->doDefendGoal());
       break;
     case GO_TO_BALL:
-      this->doGoToBall();
+      addLastActionStatus(GO_TO_BALL, this->doGoToBall());
       break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
@@ -730,9 +751,8 @@ Agent::doSmartKick()
         ShootGenerator::instance().courses(this->world(), false);
     ShootGenerator::Container::const_iterator best_shoot
         = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
-    Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
-                   best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
-    return true;
+    return Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
+			  best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
 }
 
 
@@ -754,8 +774,7 @@ Agent::doPassTo(int receiver)
 {
     Force_Pass pass;
     pass.get_pass_to_player(this->world(), receiver);
-    pass.execute(this);
-    return true;
+    return pass.execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -765,6 +784,7 @@ Agent::doPassTo(int receiver)
 bool
 Agent::doDribble()
 {
+  bool success = false;
   Strategy::instance().update( world() );
   M_field_evaluator = createFieldEvaluator();
   CompositeActionGenerator * g = new CompositeActionGenerator();
@@ -772,10 +792,13 @@ Agent::doDribble()
   M_action_generator = ActionGenerator::ConstPtr(g);
   ActionChainHolder::instance().setFieldEvaluator( M_field_evaluator );
   ActionChainHolder::instance().setActionGenerator( M_action_generator );
-  doPreprocess();
+  success = doPreprocess();
   ActionChainHolder::instance().update( world() );
-  Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this);
-  return true;
+  if (Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this)) {
+    return true;
+  } else {
+    return success;
+  }
 }
 
 /*-------------------------------------------------------------------*/
@@ -787,8 +810,7 @@ Agent::doMove()
 {
   Strategy::instance().update( world() );
   int role_num = Strategy::i().roleNumber(world().self().unum());
-  Bhv_BasicMove().execute(this);
-  return true;
+  return Bhv_BasicMove().execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -831,8 +853,7 @@ bool Agent::doMarkPlayer(int unum) {
   }
   double x = player_pos.x + (kicker_pos.x - player_pos.x)*0.1;
   double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
-  Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+  return Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -853,7 +874,12 @@ bool Agent::doReduceAngleToGoal() {
 
   const PlayerPtrCont::const_iterator o_end = wm.opponentsFromSelf().end();
 
-  Vector2D ball_pos = wm.ball().pos();
+  const BallObject& ball = wm.ball();
+  if (! ball.rposValid()) {
+    return false;
+  }
+
+  Vector2D ball_pos = ball.pos();
   double nearRatio = 0.9;
   const PlayerPtrCont::const_iterator o_t_end = wm.teammatesFromSelf().end();
 
@@ -919,8 +945,7 @@ bool Agent::doReduceAngleToGoal() {
   double dist_to_end2 = targetLineEnd2.dist2(ball_pos);
   double ratio = dist_to_end2/(dist_to_end1+dist_to_end2);
   Vector2D target = targetLineEnd1 * ratio + targetLineEnd2 * (1-ratio);
-  Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+  return Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -934,13 +959,17 @@ bool Agent::doDefendGoal() {
   const WorldModel & wm = this->world();
   Vector2D goal_pos1( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), ServerParam::i().goalHalfWidth() );
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), -ServerParam::i().goalHalfWidth() );
-  Vector2D ball_pos = wm.ball().pos();
+  const BallObject& ball = wm.ball();
+  if (! ball.rposValid()) {
+    return false;
+  }
+
+  Vector2D ball_pos = ball.pos();
   double dist_to_post1 = goal_pos1.dist2(ball_pos);
   double dist_to_post2 = goal_pos2.dist2(ball_pos);
   double ratio = dist_to_post2/(dist_to_post1+dist_to_post2);
   Vector2D target = goal_pos1 * ratio + goal_pos2 * (1-ratio);
-  Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+  return Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -953,8 +982,11 @@ bool Agent::doDefendGoal() {
 
 bool Agent::doGoToBall() {
   const WorldModel & wm = this->world();
-  Body_GoToPoint(wm.ball().pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+  const BallObject& ball = wm.ball();
+  if (! ball.rposValid()) {
+    return false;
+  }
+  return Body_GoToPoint(ball.pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -984,9 +1016,9 @@ Agent::doForceKick()
             dlog.addText( Logger::TEAM,
                           __FILE__": simultaneous kick cross type" );
         }
-        Body_KickOneStep( goal_pos,
-                          ServerParam::i().ballSpeedMax()
-                          ).execute( this );
+	Body_KickOneStep( goal_pos,
+			  ServerParam::i().ballSpeedMax()
+			  ).execute( this );
         this->setNeckAction( new Neck_ScanField() );
         return true;
     }

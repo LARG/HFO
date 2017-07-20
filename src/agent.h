@@ -63,6 +63,8 @@ protected:
   std::vector<float> params;           // Parameters of current action
   int num_teammates;                   // Number of teammates
   int num_opponents;                   // Number of opponents
+  hfo::action_t last_action_with_status; // Last action with a recorded return status
+  int last_action_status;              // Recorded return status of last action (1 = true, 0 = false, -1 = not available)
 
  public:
   inline const std::vector<float>& getState() { return state; }
@@ -72,6 +74,7 @@ protected:
   int getUnum(); // Returns the uniform number of the player
   inline int getNumTeammates() { return num_teammates; }
   inline int getNumOpponents() { return num_opponents; }
+  int getLastActionStatus(hfo::action_t last_action); // if last_action is correct, returns status if available
 
   inline void setFeatureSet(hfo::feature_set_t fset) { feature_set = fset; }
   inline std::vector<float>* mutable_params() { return &params; }
@@ -94,6 +97,7 @@ protected:
   bool doDefendGoal();
   bool doGoToBall();
   bool doNewAction1();
+  void addLastActionStatus(hfo::action_t last_action, bool action_status);
 
 
   Communication::Ptr M_communication;

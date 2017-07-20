@@ -123,6 +123,10 @@ int HFOEnvironment::getNumOpponents() {
   return agent->getNumOpponents();
 }
 
+int HFOEnvironment::getLastActionStatus(action_t last_action) {
+  return agent->getLastActionStatus(last_action);
+}
+
 Player HFOEnvironment::playerOnBall() {
   return agent->getPlayerOnBall();
 }

@@ -60,6 +60,7 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
 {
     dlog.addText( Logger::TEAM,
                   __FILE__": Bhv_BasicMove" );
+    bool success = true;
 
     //-----------------------------------------------
     // tackle
@@ -84,16 +85,21 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": intercept" );
-        Body_Intercept().execute( agent );
+        success = Body_Intercept().execute( agent );
         agent->setNeckAction( new Neck_OffensiveInterceptNeck() );
 
-        return true;
+        return success;
     }
 
     const Vector2D target_point = Strategy::i().getPosition( wm.self().unum() );
     const double dash_power = Strategy::get_normal_dash_power( wm );
 
-    double dist_thr = wm.ball().distFromSelf() * 0.1;
+    const BallObject& ball = wm.ball();
+    if (! ball.rposValid()) {
+      success = false;
+    }
+
+    double dist_thr = ball.distFromSelf() * 0.1;
     if ( dist_thr < 1.0 ) dist_thr = 1.0;
 
     dlog.addText( Logger::TEAM,
@@ -108,10 +114,13 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     if ( ! Body_GoToPoint( target_point, dist_thr, dash_power
                            ).execute( agent ) )
     {
-        Body_TurnToBall().execute( agent );
+      if (! Body_TurnToBall().execute( agent )) {
+	success = false;
+      }
     }
 
-    if ( wm.existKickableOpponent()
+    if ( wm.existKickableOpponent() &&
+	 ball.rposValid()
          && wm.ball().distFromSelf() < 18.0 )
     {
         agent->setNeckAction( new Neck_TurnToBall() );
@@ -121,5 +130,5 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
         agent->setNeckAction( new Neck_TurnToBallOrScan() );
     }
 
-    return true;
+    return success;
 }
