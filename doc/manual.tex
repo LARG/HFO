@@ -613,13 +613,13 @@ below the table for the action abbreviations and notes.
 \begin{tabular}{r       | c    c      c    c   | c     c      c    c  | c    c    c     c     c     c     c     c     c}
 Action                  & Da & Tu  &  Ta & K   & KT &  MT &  DT &  I  & M  & S  & P  &  Dr  & C  &  RG &  DG  & G  &  MP \\
 \hline \hline
-Self position invalid   & Y  &  Y  &  Y  &  Y  & N  &  N  &  N? &  N? & N? & N? & N? &  Y   & ?  &  N  &  N   & N  &  N \\
-Self velocity invalid   & N  &  Y? &  Y? &  Y? & ?  &  N  &  ?  &  N? & N? & ?  & ?  &  Y   & Y  &  N  &  N   & N  &  N \\
-Ball position invalid   & Y  &  Y  &  Y? &  N  & N  &  Y  &  N? &  N  & ?  & N  & N  &  Y?  & N  &  N  &  N   & N  &  N \\
-Ball velocity invalid   & Y  &  Y  &  Y  &  ?  & ?  &  Y  &  ?  &  N? & ?  & N  & N? &  Y?  & Y? &  Y  &  Y   & Y  &  Y \\
-Teammate loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & ?  & Y  & N  &  Y?  & Y  &  Y  &  Y   & Y  &  Y \\
+Self position invalid   & Y  &  Y  &  Y  &  Y  & N  &  N  &  N? &  N? & N  & N? & N? &  Y   & ?  &  N  &  N   & N  &  N \\
+Self velocity invalid   & N  &  Y? &  Y? &  Y? & ?  &  N  &  N  &  N  & N  & ?  & ?  &  Y   & Y  &  N  &  N   & N  &  N \\
+Ball position invalid   & Y  &  Y  &  Y? &  N  & N  &  Y  &  N  &  N  & N  & N  & N  &  Y?  & N  &  N  &  N   & N  &  N \\
+Ball velocity invalid   & Y  &  Y  &  Y  &  ?  & ?  &  Y  &  Y  &  N? & ?  & N  & N? &  Y?  & Y? &  Y  &  Y   & Y  &  Y \\
+Teammate loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & N  & Y  & N  &  Y?  & Y  &  Y  &  Y   & Y  &  Y \\
 Team. unum invalid      & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & N  &  Y   & Y  &  Y  &  Y   & Y  &  Y \\
-Opponent loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y? &  Y  & ?  & Y? & Y  &  Y?  & Y  &  Y  &  Y   & Y  &  N \\
+Opponent loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y? &  Y  & N  & Y? & Y  &  Y?  & Y  &  Y  &  Y   & Y  &  N \\
 Opp. unum invalid       & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & Y  &  Y   & Y  &  Y  &  Y   & Y  &  N \\
 \hline
 Ball kickable           & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  ?  & *  & Y  & Y  &  Y   & Y  &  ?  &  ?   & ?  &  Y \\
@@ -636,7 +636,7 @@ Goalie (defense)        & Y  &  Y  &  Y? &  N? & N? &  Y  &  N  &  Y  & ?  & N  
 \end{tabular}
 }
 \end{center}
-*: The Move command is not recommended for offensive players able to kick the ball, but can work for defensive players (triggering a tackle).\\
+*: The Move command is not recommended for offensive players able to kick the ball, but can work for defensive players (for triggering a tackle).\\
 \begin{itemize}[noitemsep]
 \item{Da:\,Dash; Tu:\,Turn; Ta:\,Tackle; K:\,Kick}
 \item{KT:\,Kick\_To; MT:\,Move\_To; DT:\,Dribble\_To; I:\,Intercept}
