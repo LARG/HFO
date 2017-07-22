@@ -115,6 +115,14 @@ int HFOEnvironment::getUnum() {
   return agent->getUnum();
 }
 
+int HFOEnvironment::getNumTeammates() {
+  return agent->getNumTeammates();
+}
+
+int HFOEnvironment::getNumOpponents() {
+  return agent->getNumOpponents();
+}
+
 Player HFOEnvironment::playerOnBall() {
   return agent->getPlayerOnBall();
 }
