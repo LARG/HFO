@@ -4,6 +4,8 @@
 # Before running this program, first Start HFO server:
 # $> ./bin/HFO --offense-agents 1
 
+from __future__ import print_function
+
 import argparse
 import itertools
 import random
@@ -39,7 +41,7 @@ def main():
   else:
     hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
                             'bin/teams/base/config/formations-dt', args.port,
-                          'localhost', 'base_left', False)
+                            'localhost', 'base_left', False)
   for episode in itertools.count():
     status = hfo.IN_GAME
     while status == hfo.IN_GAME:
@@ -55,10 +57,11 @@ def main():
         hfo_env.act(hfo.MOVE)
       # Advance the environment and get the game status
       status = hfo_env.step()
-      
+
     # Check the outcome of the episode
-    print(('Episode %d ended with %s'%(episode,
-                                       hfo_env.statusToString(status))))
+    end_status = hfo_env.statusToString(status)
+    print("Episode {} ended with {}".format(episode, end_status))
+
     # Quit if the server goes down
     if status == hfo.SERVER_DOWN:
       hfo_env.act(hfo.QUIT)
