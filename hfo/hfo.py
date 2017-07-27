@@ -147,7 +147,7 @@ class HFOEnvironment(object):
 
   def actionToString(self, action):
     """ Returns a string representation of an action """
-    return ACTION_STRINGS(action)
+    return ACTION_STRINGS[action]
 
   def statusToString(self, status):
     """ Returns a string representation of a game status """
