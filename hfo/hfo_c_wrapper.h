@@ -40,13 +40,6 @@ extern "C" {
   hfo::status_t step(hfo::HFOEnvironment *hfo) { return hfo->step(); }
 
   int numParams(const hfo::action_t action) { return NumParams(action); }
-  const char* actionToString(const hfo::action_t action) {
-    return ActionToString(action).c_str();
-  }
-  const char* statusToString(const hfo::status_t status) {
-    StatusToString(status); // TODO: OSX requires two calls...?!
-    return StatusToString(status).c_str();
-  }
   int getUnum(hfo::HFOEnvironment *hfo) {return hfo->getUnum();}
   int getNumTeammates(hfo::HFOEnvironment *hfo) {return hfo->getNumTeammates();}
   int getNumOpponents(hfo::HFOEnvironment *hfo) {return hfo->getNumOpponents();}
