@@ -29,6 +29,7 @@ LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(NUM_FEATURE_SETS))
 NUM_HFO_ACTIONS = 19
 DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
     MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL = list(range(NUM_HFO_ACTIONS))
+ACTION_STRINGS = ["Dash", "Turn", "Tackle", "Kick", "KickTo", "MoveTo", "DribbleTo", "Intercept", "Move", "Shoot", "Pass", "Dribble", "Catch", "No-op", "Quit", "Reduce_Angle_To_Goal", "Mark_Player", "Defend_Goal", "Go_To_Ball"]
 
 ''' Possible game status
   [IN_GAME] Game is currently active
@@ -40,6 +41,7 @@ DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
 '''
 NUM_GAME_STATUS_STATES = 6
 IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME, SERVER_DOWN = list(range(NUM_GAME_STATUS_STATES))
+STATUS_STRINGS = ["InGame", "Goal", "CapturedByDefense", "OutOfBounds", "OutOfTime", "ServerDown"]
 
 ''' Possible sides '''
 RIGHT, NEUTRAL, LEFT = list(range(-1,2))
@@ -73,10 +75,6 @@ hfo_lib.step.argtypes = [c_void_p]
 hfo_lib.step.restype = c_int
 hfo_lib.numParams.argtypes = [c_int]
 hfo_lib.numParams.restype = c_int
-hfo_lib.actionToString.argtypes = [c_int]
-hfo_lib.actionToString.restype = c_char_p
-hfo_lib.statusToString.argtypes = [c_int]
-hfo_lib.statusToString.restype = c_char_p
 hfo_lib.getUnum.argtypes = [c_void_p]
 hfo_lib.getUnum.restype = c_int
 hfo_lib.getNumTeammates.argtypes = [c_void_p]
@@ -149,11 +147,11 @@ class HFOEnvironment(object):
 
   def actionToString(self, action):
     """ Returns a string representation of an action """
-    return hfo_lib.actionToString(action).decode('utf-8')
+    return ACTION_STRINGS[action]
 
   def statusToString(self, status):
     """ Returns a string representation of a game status """
-    return hfo_lib.statusToString(status).decode('utf-8')
+    return STATUS_STRINGS[status]
 
   def getUnum(self):
     """ Return the uniform number of the agent """
