@@ -11,7 +11,7 @@
 \renewcommand*{\labelenumi}{\theenumi}
 
 \usepackage{hyperref,graphicx}
-\usepackage{fullpage}
+\usepackage[cm]{fullpage}
 \usepackage{enumitem}
 \usepackage{subcaption}
 
@@ -153,6 +153,9 @@ visualizer. \\
 \noindent To change the logging directory:\\
 \verb+  > ./bin/HFO --log-dir /path/to/new/dir +
 
+Note that the logs can become quite large for a prolonged series of
+episodes.
+
 \section{Making Videos}
 It is possible to make videos from logs by saving frames from
 SoccerWindow2. It helps to full-screen SoccerWindow2 before making a
@@ -197,9 +200,9 @@ A seed may be specified as follows:\\
 
 This seed will determine the placement of the players and the ball at
 the beginning of each episode. Due to non-determinism in the player
-policies, it is not sufficient to precisely replicate full games. It
+policies, it is \textbf{not} sufficient to precisely replicate full games. It
 \textit{only} replicates the starting conditions for each episode. The
-player's behavior, observations, and physics all proceed
+players' behavior, observations, and physics all proceed
 stochastically.
 
 \section{Player On Ball}
@@ -491,8 +494,8 @@ low-level features:
     HFO play area.}
   \itemrange{2}{\textbf{Corner Top Left} [Landmark] Top left corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Top Right} [Landmark] Top right corner HFO Playfield.}
-  \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bot right corner HFO Playfield.}
-  \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bot left corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bottom right corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bottom left corner HFO Playfield.}
   \item{\textbf{OOB Left Dist} [Proximity] Proximity to the nearest
     point of the left side of the HFO playable area. E.g. distance
     remaining before the agent goes out of bounds in left field.}
@@ -506,17 +509,21 @@ low-level features:
   \item{\textbf{Ball Vel Valid} [Valid] Indicates the ball velocity estimate is valid.}
   \item{\textbf{Ball Vel Mag} [Other] Magnitude of the ball's velocity.}
   \itemrange{1}{\textbf{Ball Vel Ang} [Angle] Global angle of ball velocity.}
-  \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features) for each teammate active in HFO, sorted by proximity to the agent.}
-  \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features) for each opponent present, sorted by proximity to the player.}
-  \item [$T$]  {\textbf{Teammate Uniform Nums} [Unum] One uniform number for each teammate active in HFO, sorted by proximity to the agent.}
-  \item [$O$]  {\textbf{Opponent Uniform Nums} [Unum] One uniform number for each opponent present, sorted by proximity to the player.}
+  \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features)
+	for each teammate active in HFO, sorted by proximity to the agent.}
+  \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features)
+	for each opponent active in HFO, sorted by proximity to the player.}
+  \item [$T$]  {\textbf{Teammate Uniform Nums} [Unum] One uniform number for each teammate active in HFO,
+	sorted by proximity to the agent.}
+  \item [$O$]  {\textbf{Opponent Uniform Nums} [Unum] One uniform number for each opponent active in HFO,
+	sorted by proximity to the player.}
 \end{enumerate}
 
 \section{Action Space}
 The HFO domain provides support for both low-level primitive actions,
 mid-level, and high-level strategic actions. Low-level, parameterized
 actions are provided for locomotion and kicking. Mid-level actions are
-still parameterized by capture high level activities such as
+still mostly parameterized but capture high-level activities such as
 dribbling. Finally, high-level discrete, strategic actions are
 available for moving, shooting, passing and dribbling. Control of the
 agent's head and gaze is not provided and follows Agent2D's default
@@ -579,14 +586,13 @@ faithfully report which action spaces were used.
   combination of short kicks and moves.}
 \item{\textbf{Catch}(): This goalie-specific action may be used to
   catch the ball.}
-\item {\textbf{Reduce\_Angle\_To\_Goal} (): Moves the agent to a point on the field, such that the kicker has the least open angle to the goal. }
-
-
-\item {\textbf{Defend\_Goal} () : Moves the agent to a point on a fixed line on the field, such that the kicker has the least open angle to the goal.}
-
-\item {\textbf{Go\_To\_Ball} (): Makes the agent go towards the ball.}
-
-\item {\textbf{Mark\_Player} (uniform\_number): Moves the agent so as to mark the player with the specified uniform number.}
+\item{\textbf{Reduce\_Angle\_To\_Goal}(): Moves the agent to a point on the field,
+	such that the kicker has the least open angle to the goal. }
+\item{\textbf{Defend\_Goal}(): Moves the agent to a point on a fixed line on the field,
+	such that the kicker has the least open angle to the goal.}
+\item{\textbf{Go\_To\_Ball}(): Makes the agent go towards the ball.}
+\item{\textbf{Mark\_Player}(uniform\_number): Moves the agent so as to mark the player
+	with the specified uniform number.}
 
 \end{itemize}
 
@@ -597,11 +603,51 @@ faithfully report which action spaces were used.
   terminate the HFO environment.}
 \end{itemize}
 
+\subsection{Applicable Actions}
+The Special Actions are always applicable (potentially appropriate). The below table indicates whether
+other actions are applicable (only if there are no ``N''s indicated); check
+below the table for the action abbreviations and notes.
+
+\begin{center}
+{\footnotesize
+\begin{tabular}{r       | c    c      c    c   | c     c      c    c  | c    c    c     c     c     c     c     c     c}
+Action                  & Da & Tu  &  Ta & K   & KT &  MT &  DT &  I  & M  & S  & P  &  Dr  & C  &  RG &  DG  & G  &  MP \\
+\hline \hline
+Self position invalid   & Y  &  Y  &  Y  &  Y  & N  &  N  &  N? &  N? & N  & N? & N? &  Y   & ?  &  N  &  N   & N  &  N \\
+Self velocity invalid   & N  &  Y? &  Y? &  Y? & ?  &  N  &  N  &  N  & N  & ?  & ?  &  Y   & Y  &  N  &  N   & N  &  N \\
+Ball position invalid   & Y  &  Y  &  Y? &  N  & N  &  Y  &  N  &  N  & N  & N  & N  &  Y?  & N  &  N  &  N   & N  &  N \\
+Ball velocity invalid   & Y  &  Y  &  Y  &  ?  & ?  &  Y  &  Y  &  N? & ?  & N  & N? &  Y?  & Y? &  Y  &  Y   & Y  &  Y \\
+Teammate loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & N  & Y  & N  &  Y?  & Y  &  Y  &  Y   & Y  &  Y \\
+Team. unum invalid      & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & N  &  Y   & Y  &  Y  &  Y   & Y  &  Y \\
+Opponent loc invalid    & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y? &  Y  & N  & Y? & Y  &  Y?  & Y  &  Y  &  Y   & Y  &  N \\
+Opp. unum invalid       & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & Y  &  Y   & Y  &  Y  &  Y   & Y  &  N \\
+\hline
+Ball kickable           & Y  &  Y  &  Y  &  Y  & Y  &  Y  &  Y  &  ?  & *  & Y  & Y  &  Y   & Y  &  ?  &  ?   & ?  &  Y \\
+Ball not kickable       & Y  &  Y  &  Y  &  N  & N  &  Y  &  Y  &  Y  & Y  & N  & N  &  N   & Y  &  Y  &  Y   & Y  &  Y \\
+\hline
+Frozen                  & N  &  N  &  N  &  N  & N  &  N  &  N? &  N  & N? & N  & N  &  Y   & N? &  N  &  N   & N  &  N \\
+Colliding w/ball        & Y  &  ?  &  ?  &  ?  & ?  &  Y? &  ?  &  N? & ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
+Colliding w/player      & Y  &  ?  &  ?  &  N? & N? &  Y? &  ?  &  N? & ?  & ?  & ?  &  Y?  & ?  &  ?  &  ?   & ?  &  ? \\
+Colliding w/post        & Y  &  ?  &  N? &  N? & N? &  Y? &  ?  &  N? & ?  & ?  & ?  &  ?   & ?  &  ?  &  ?   & ?  &  ? \\
+\hline
+Offense                 & Y  &  Y  &  N  &  Y  & Y  &  Y  &  Y  &  Y  & Y  & Y  & Y  &  Y   & N  &  N  &  N   & Y  &  N \\
+Defense, not goalie     & Y  &  Y  &  Y  &  N? & N? &  Y  &  N  &  Y  & Y  & N  & N  &  N   & N  &  Y  &  ?   & Y  &  Y \\
+Goalie (defense)        & Y  &  Y  &  Y? &  N? & N? &  Y  &  N  &  Y  & ?  & N  & N  &  N   & Y  &  ?  &  ?   & ?  &  ? \\
+\end{tabular}
+}
+\end{center}
+*: The Move command is not recommended for offensive players able to kick the ball, but can work for defensive players (for triggering a tackle).\\
+\begin{itemize}[noitemsep]
+\item{Da:\,Dash; Tu:\,Turn; Ta:\,Tackle; K:\,Kick}
+\item{KT:\,Kick\_To; MT:\,Move\_To; DT:\,Dribble\_To; I:\,Intercept}
+\item{M:\,Move; S:\,Shoot; P:\,Pass; Dr:\,Dribble; C:\,Catch; RG:\,Reduce\_Angle\_To\_Goal; DG:\,Defend\_Goal; G:\,Go\_To\_Ball; MP:\,Mark\_Player}
+\end{itemize}
+
 \section{Developing a New Agent}
 
 New agents may be developed in C++ or Python. In Python, as long as
 the hfo interface has been installed, the agent needs only to
-\verb+from hfo import *+. In C++ it is necessary to
+either \verb+from hfo import *+ or \verb+import hfo+. In C++ it is necessary to
 \verb+#include <HFO.hpp>+ and also to link against the shared object
 library \verb+lib/libhfo.so+ when compiling:
 
