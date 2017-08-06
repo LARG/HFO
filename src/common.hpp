@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 namespace hfo {
 
@@ -33,14 +34,14 @@ enum action_t
   DRIBBLE,    // [High-Level] Dribble(): Offensive dribble
   CATCH,      // [High-Level] Catch(): Catch the ball (Goalie only!)
   NOOP,       // Do nothing
-  QUIT,        // Special action to quit the game
+  QUIT,       // Special action to quit the game
   REDUCE_ANGLE_TO_GOAL, // [High-Level] Reduce_Angle_To_Goal : Reduces the shooting angle
-  MARK_PLAYER, 			// [High-Level] Mark_Player(opponent_unum [0,11]) : Moves to the position in between the kicker and a given player
+  MARK_PLAYER, // [High-Level] Mark_Player(opponent_unum [0,11]) : Moves to the position in between the kicker and a given player
   DEFEND_GOAL,
   GO_TO_BALL
 };
 
-// Status of a HFO game
+// Status of an HFO game
 enum status_t
 {
   IN_GAME,             // Game is currently active
@@ -50,6 +51,24 @@ enum status_t
   OUT_OF_TIME,         // Trial has ended due to time limit
   SERVER_DOWN          // Server is not alive
 };
+
+// Action status
+enum action_status_t {
+  ACTION_STATUS_UNKNOWN = -1, // cannot tell or invalid action # in status request
+  ACTION_STATUS_BAD = 0, // definitely not OK
+  ACTION_STATUS_MAYBE = 1, // may be OK, may not
+};
+
+/**
+ * Translates from boolean false (bad) or true (maybe OK) to action status
+ */
+inline action_status_t BooleanToActionStatus(const bool status) {
+  if (status) {
+    return ACTION_STATUS_MAYBE;
+  } else{
+    return ACTION_STATUS_BAD;
+  }
+}
 
 // Configuration of the HFO domain including the team names and player
 // numbers for each team. This struct is populated by ParseConfig().
@@ -171,7 +190,7 @@ inline std::string ActionToString(action_t action) {
 };
 
 /**
- * Returns a string representation of a game_status.
+ * Returns a string representation of a game status.
  */
 inline std::string StatusToString(status_t status) {
   switch (status) {
@@ -191,6 +210,22 @@ inline std::string StatusToString(status_t status) {
       return "Unknown";
   }
 };
+
+/**
+ * Returns a string representation of an action status.
+ */
+inline std::string ActionStatusToString(action_status_t status) {
+  switch (status) {
+  case ACTION_STATUS_BAD:
+    return "Bad";
+  case ACTION_STATUS_MAYBE:
+    return "MaybeOK";
+  case ACTION_STATUS_UNKNOWN:
+    return "Unknown";
+  default:
+    return "Invalid";
+  }
+}
 
 /**
  * Parse a Trainer message to populate config. Returns a bool

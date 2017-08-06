@@ -68,15 +68,15 @@ STATUS_STRINGS = {IN_GAME: "InGame",
                   OUT_OF_TIME: "OutOfTime",
                   SERVER_DOWN: "ServerDown"}
 
-"""Possible sides."""
-RIGHT, NEUTRAL, LEFT = list(range(-1,2))
-
 """Possible action result statuses."""
 ACTION_STATUS_UNKNOWN, ACTION_STATUS_BAD, ACTION_STATUS_MAYBE = list(range(-1,2))
 ACTION_STATUS_MAYBE_OK = ACTION_STATUS_MAYBE # typos
 ACTION_STATUS_STRINGS = {ACTION_STATUS_UNKNOWN: "Unknown",
                          ACTION_STATUS_BAD: "Bad",
                          ACTION_STATUS_MAYBE: "MaybeOK"}
+
+"""Possible sides."""
+RIGHT, NEUTRAL, LEFT = list(range(-1,2))
 
 class Player(Structure): pass
 Player._fields_ = [

@@ -1,3 +1,5 @@
+// -*-c++-*-
+
 #ifndef AGENT_H
 #define AGENT_H
 
@@ -64,7 +66,7 @@ protected:
   int num_teammates;                   // Number of teammates
   int num_opponents;                   // Number of opponents
   hfo::action_t last_action_with_status; // Last action with a recorded return status
-  int last_action_status;              // Recorded return status of last action (1 = true, 0 = false, -1 = not available)
+  hfo::action_status_t last_action_status;  // Recorded return status of last action
 
  public:
   inline const std::vector<float>& getState() { return state; }
@@ -74,7 +76,7 @@ protected:
   int getUnum(); // Returns the uniform number of the player
   inline int getNumTeammates() { return num_teammates; }
   inline int getNumOpponents() { return num_opponents; }
-  int getLastActionStatus(hfo::action_t last_action); // if last_action is correct, returns status if available
+  hfo::action_status_t getLastActionStatus(hfo::action_t last_action); // if last_action is correct, returns status if available
 
   inline void setFeatureSet(hfo::feature_set_t fset) { feature_set = fset; }
   inline std::vector<float>* mutable_params() { return &params; }
@@ -83,21 +85,22 @@ protected:
 
  private:
   bool doPreprocess();
-  bool doSmartKick();
-  bool doShoot();
+  hfo::action_status_t doSmartKick();
+  hfo::action_status_t doShoot();
   bool doPass();
-  bool doPassTo(int receiver);
-  bool doDribble();
-  bool doMove();
+  hfo::action_status_t doPassTo(int receiver);
+  hfo::action_status_t doDribble();
+  hfo::action_status_t doMove();
   bool doForceKick();
   bool doHeardPassReceive();
-  bool doMarkPlayer(int unum);
+  hfo::action_status_t doMarkPlayer(int unum);
   bool doMarkPlayerNearIndex(int near_index);
-  bool doReduceAngleToGoal();
-  bool doDefendGoal();
-  bool doGoToBall();
+  hfo::action_status_t doReduceAngleToGoal();
+  hfo::action_status_t doDefendGoal();
+  hfo::action_status_t doGoToBall();
   bool doNewAction1();
-  void addLastActionStatus(hfo::action_t last_action, bool action_status);
+  void addLastActionStatus(hfo::action_t last_action, hfo::action_status_t action_status);
+  void addLastActionStatusCollision(hfo::action_t last_action, bool may_fix, bool likely_success);
 
 
   Communication::Ptr M_communication;

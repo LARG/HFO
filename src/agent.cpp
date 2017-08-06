@@ -153,7 +153,7 @@ Agent::Agent()
 
     // setup last_action variables
     last_action_with_status = NOOP;
-    last_action_status = -1;
+    last_action_status = ACTION_STATUS_UNKNOWN;
 }
 
 Agent::~Agent() {
@@ -166,20 +166,27 @@ int Agent::getUnum() {
   return world().self().unum();
 }
 
-int Agent::getLastActionStatus(action_t last_action) {
+action_status_t Agent::getLastActionStatus(action_t last_action) {
   if (last_action == last_action_with_status) {
     return last_action_status;
   } else {
-    return -1;
+    return ACTION_STATUS_UNKNOWN;
   }
 }
 
-void Agent::addLastActionStatus(action_t last_action, bool action_status) {
+void Agent::addLastActionStatus(action_t last_action, action_status_t action_status) {
   last_action_with_status = last_action;
-  if (action_status) {
-    last_action_status = 1;
+  last_action_status = action_status;
+}
+
+void Agent::addLastActionStatusCollision(action_t last_action, bool may_fix, bool likely_success) {
+  last_action_with_status = last_action;
+  if (likely_success) {
+    last_action_status = ACTION_STATUS_MAYBE;
+  } else if (may_fix) {
+    last_action_status = ACTION_STATUS_UNKNOWN;
   } else {
-    last_action_status = 0;
+    last_action_status = ACTION_STATUS_BAD;
   }
 }
 
@@ -268,42 +275,55 @@ void Agent::actionImpl() {
               << " parameters, given " << params.size() << std::endl;
     exit(1);
   }
+
+  // For now let's not worry about turning the neck or setting the vision.
+  // But do the settings now, so that doesn't override any set by the actions below.
+  // TODO: Add setViewActionDefault, setNeckActionDefault to librcsc that only set if not already set.
+  this->setViewAction(new View_Tactical());
+  this->setNeckAction(new Neck_TurnToBallOrScan());
+
+  const WorldModel & wm = this->world();
+  bool may_fix = wm.self().collidesWithPost();
+
   switch(requested_action) {
     case DASH:
-      addLastActionStatus(DASH, this->doDash(params[0], params[1]));
+      addLastActionStatusCollision(DASH, may_fix, this->doDash(params[0], params[1]));
       break;
     case TURN:
-      addLastActionStatus(TURN, this->doTurn(params[0]));
+      addLastActionStatusCollision(TURN, may_fix, this->doTurn(params[0]));
       break;
     case TACKLE:
-      addLastActionStatus(TACKLE, this->doTackle(params[0], false));
+      addLastActionStatus(TACKLE, BooleanToActionStatus(this->doTackle(params[0], false)));
       break;
     case KICK:
-      addLastActionStatus(KICK, this->doKick(params[0], params[1]));
+      addLastActionStatus(KICK, BooleanToActionStatus(this->doKick(params[0], params[1])));
       break;
     case KICK_TO:
       if (feature_extractor != NULL) {
-        addLastActionStatus(KICK_TO, Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
-							 feature_extractor->absoluteYPos(params[1])),
-						params[2], params[2] * 0.99, 3).execute(this));
+        addLastActionStatus(KICK_TO,
+			    BooleanToActionStatus(Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
+									  feature_extractor->absoluteYPos(params[1])),
+								 params[2], params[2] * 0.99, 3).execute(this)));
       }
       break;
     case MOVE_TO:
       if (feature_extractor != NULL) {
-        addLastActionStatus(MOVE_TO, Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
-							 feature_extractor->absoluteYPos(params[1])), 0.25,
-						ServerParam::i().maxDashPower()).execute(this));
+        addLastActionStatusCollision(MOVE_TO, may_fix,
+				     Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
+							     feature_extractor->absoluteYPos(params[1])), 0.25,
+						    ServerParam::i().maxDashPower()).execute(this));
       }
       break;
     case DRIBBLE_TO:
       if (feature_extractor != NULL) {
-        addLastActionStatus(DRIBBLE_TO, Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
-							  feature_extractor->absoluteYPos(params[1])), 1.0,
-						 ServerParam::i().maxDashPower(), 2).execute(this));
+        addLastActionStatusCollision(DRIBBLE_TO, may_fix,
+				     Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
+							   feature_extractor->absoluteYPos(params[1])), 1.0,
+						  ServerParam::i().maxDashPower(), 2).execute(this));
       }
       break;
     case INTERCEPT:
-      addLastActionStatus(INTERCEPT, Body_Intercept().execute(this));
+      addLastActionStatusCollision(INTERCEPT, may_fix, Body_Intercept().execute(this));
       break;
     case MOVE:
       addLastActionStatus(MOVE, this->doMove());
@@ -318,7 +338,7 @@ void Agent::actionImpl() {
       addLastActionStatus(DRIBBLE, this->doDribble());
       break;
     case CATCH:
-      addLastActionStatus(CATCH, this->doCatch());
+      addLastActionStatus(CATCH, BooleanToActionStatus(this->doCatch()));
       break;
     case NOOP:
       break;
@@ -343,9 +363,7 @@ void Agent::actionImpl() {
                 << requested_action << std::endl;
       exit(1);
   }
-  // For now let's not worry about turning the neck or setting the vision.
-  this->setViewAction(new View_Tactical());
-  this->setNeckAction(new Neck_TurnToBallOrScan());
+
 }
 
 void
@@ -723,7 +741,7 @@ Agent::doPreprocess()
 /*!
 
 */
-bool
+action_status_t
 Agent::doShoot()
 {
     const WorldModel & wm = this->world();
@@ -738,21 +756,23 @@ Agent::doShoot()
 
         // reset intention
         this->setIntention( static_cast< SoccerIntention * >( 0 ) );
-        return true;
+        return ACTION_STATUS_MAYBE;
     }
 
-    return false;
+    return ACTION_STATUS_BAD;
 }
 
-bool
+action_status_t
 Agent::doSmartKick()
 {
     const ShootGenerator::Container & cont =
         ShootGenerator::instance().courses(this->world(), false);
     ShootGenerator::Container::const_iterator best_shoot
         = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
-    return Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
-			  best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
+    return BooleanToActionStatus(Body_SmartKick(best_shoot->target_point_,
+						best_shoot->first_ball_speed_,
+						best_shoot->first_ball_speed_ * 0.99,
+						3).execute(this));
 }
 
 
@@ -769,19 +789,19 @@ Agent::doPass()
     return true;
 }
 
-bool
+action_status_t
 Agent::doPassTo(int receiver)
 {
     Force_Pass pass;
     pass.get_pass_to_player(this->world(), receiver);
-    return pass.execute(this);
+    return BooleanToActionStatus(pass.execute(this));
 }
 
 /*-------------------------------------------------------------------*/
 /*!
 
 */
-bool
+action_status_t
 Agent::doDribble()
 {
   bool success = false;
@@ -795,9 +815,9 @@ Agent::doDribble()
   success = doPreprocess();
   ActionChainHolder::instance().update( world() );
   if (Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this)) {
-    return true;
+    return ACTION_STATUS_MAYBE;
   } else {
-    return success;
+    return BooleanToActionStatus(success);
   }
 }
 
@@ -805,19 +825,19 @@ Agent::doDribble()
 /*!
 
 */
-bool
+action_status_t
 Agent::doMove()
 {
   Strategy::instance().update( world() );
-  int role_num = Strategy::i().roleNumber(world().self().unum());
-  return Bhv_BasicMove().execute(this);
+  int role_num = Strategy::i().roleNumber(world().self().unum()); // Unused?
+  return Bhv_BasicMove().action_execute(this);
 }
 
 /*-------------------------------------------------------------------*/
 /*!
  * This Action marks the player with the specified uniform number.
 */
-bool Agent::doMarkPlayer(int unum) {
+action_status_t Agent::doMarkPlayer(int unum) {
   const WorldModel & wm = this->world();
   Vector2D kicker_pos = Vector2D :: INVALIDATED;
   Vector2D player_pos =  Vector2D :: INVALIDATED;
@@ -841,19 +861,27 @@ bool Agent::doMarkPlayer(int unum) {
 
   if (!player_pos.isValid()) {
       //Player to be marked not found
-      return false;
+      return ACTION_STATUS_BAD;
   }
   if (!kicker_pos.isValid()) {
       //Kicker not found
-      return false;
+      return ACTION_STATUS_BAD;
   }
   if (unum == kicker_unum || kicker_pos.equals(player_pos)) {
     //Player to be marked is kicker
-    return false;
+    return ACTION_STATUS_BAD;
   }
   double x = player_pos.x + (kicker_pos.x - player_pos.x)*0.1;
   double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
-  return Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this);
+  bool may_fix = wm.self().collidesWithPost();
+
+  if (Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this)) {
+    return ACTION_STATUS_MAYBE;
+  } else if (may_fix) {
+    return ACTION_STATUS_UNKNOWN;
+  } else {
+    return ACTION_STATUS_BAD;
+  }
 }
 
 /*-------------------------------------------------------------------*/
@@ -867,7 +895,7 @@ bool compare_y_pos (PlayerObject* i, PlayerObject* j) {
   return i->pos().y < j->pos().y;
 }
 
-bool Agent::doReduceAngleToGoal() {
+action_status_t Agent::doReduceAngleToGoal() {
   const WorldModel & wm = this->world();
   Vector2D goal_pos1( -ServerParam::i().pitchHalfLength(), ServerParam::i().goalHalfWidth() );
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength(), -ServerParam::i().goalHalfWidth() );
@@ -876,7 +904,7 @@ bool Agent::doReduceAngleToGoal() {
 
   const BallObject& ball = wm.ball();
   if (! ball.rposValid()) {
-    return false;
+    return ACTION_STATUS_BAD;
   }
 
   Vector2D ball_pos = ball.pos();
@@ -945,23 +973,30 @@ bool Agent::doReduceAngleToGoal() {
   double dist_to_end2 = targetLineEnd2.dist2(ball_pos);
   double ratio = dist_to_end2/(dist_to_end1+dist_to_end2);
   Vector2D target = targetLineEnd1 * ratio + targetLineEnd2 * (1-ratio);
-  return Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
+  bool may_fix = wm.self().collidesWithPost();
+  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this)) {
+    return ACTION_STATUS_MAYBE;
+  } else if (may_fix) {
+    return ACTION_STATUS_UNKNOWN;
+  } else {
+    return ACTION_STATUS_BAD;
+  }
 }
 
 /*-------------------------------------------------------------------*/
 
 /*!
  *
- * This action cuts off the angle between the shooter and the goal the players always moves on a fixed line.
+ * This action cuts off the angle between the shooter and the goal; the player always moves on a fixed line.
  */
 
-bool Agent::doDefendGoal() {
+action_status_t Agent::doDefendGoal() {
   const WorldModel & wm = this->world();
   Vector2D goal_pos1( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), ServerParam::i().goalHalfWidth() );
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), -ServerParam::i().goalHalfWidth() );
   const BallObject& ball = wm.ball();
   if (! ball.rposValid()) {
-    return false;
+    return ACTION_STATUS_BAD;
   }
 
   Vector2D ball_pos = ball.pos();
@@ -969,7 +1004,15 @@ bool Agent::doDefendGoal() {
   double dist_to_post2 = goal_pos2.dist2(ball_pos);
   double ratio = dist_to_post2/(dist_to_post1+dist_to_post2);
   Vector2D target = goal_pos1 * ratio + goal_pos2 * (1-ratio);
-  return Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
+  bool may_fix = wm.self().collidesWithPost();
+
+  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this)) {
+    return ACTION_STATUS_MAYBE;
+  } else if (may_fix) {
+    return ACTION_STATUS_UNKNOWN;
+  } else {
+    return ACTION_STATUS_BAD;
+  }
 }
 
 /*-------------------------------------------------------------------*/
@@ -980,13 +1023,13 @@ bool Agent::doDefendGoal() {
  */
 
 
-bool Agent::doGoToBall() {
+action_status_t Agent::doGoToBall() {
   const WorldModel & wm = this->world();
   const BallObject& ball = wm.ball();
   if (! ball.rposValid()) {
-    return false;
+    return ACTION_STATUS_BAD;
   }
-  return Body_GoToPoint(ball.pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
+  return BooleanToActionStatus(Body_GoToPoint(ball.pos(), 0.25, ServerParam::i().maxDashPower()).execute(this));
 }
 
 /*-------------------------------------------------------------------*/

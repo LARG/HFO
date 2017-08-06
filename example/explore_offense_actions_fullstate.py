@@ -284,7 +284,7 @@ def get_abs_x_y_pos(abs_angle, dist, self_x_pos, self_y_pos, warn=True, of_what=
       if dist < 10:
         raise RuntimeError("\n".join(error_strings))
       else:
-        if warn or (dist < 60):
+        if warn or (dist < 50):
           print("\n".join(error_strings), file=sys.stderr)
           sys.stderr.flush()
         return (None, None)
@@ -641,9 +641,36 @@ def evaluate_previous_action(hfo_env,
   action_status_observed = hfo.ACTION_STATUS_UNKNOWN # NOTE: Check intent + other bitflags!
 
   if namespace.action == hfo.DASH:
-    pass # TODO
+    if (namespace.intent !=
+      INTENT_GOAL_COLLISION) and namespace.prestate_bit_list[3] and (not bit_list[3]):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent !=
+          INTENT_BALL_COLLISION) and namespace.prestate_bit_list[2] and (not bit_list[2]):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_BALL_KICKABLE) and (not namespace.prestate_bit_list[4]) and bit_list[4]:
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_GOAL_COLLISION) and (not namespace.prestate_bit_list[3]) and bit_list[3]:
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_BALL_COLLISION) and (((not namespace.prestate_bit_list[2]) and bit_list[2]) or
+                                                          ((not namespace.prestate_bit_list[4]) and bit_list[4])):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    else:
+      pass # TODO
   elif namespace.action == hfo.TURN:
-    if (namespace.prestate_self_dict['body_angle'] is not None) and (self_dict['body_angle'] is not None):
+    if (namespace.intent !=
+        INTENT_GOAL_COLLISION) and namespace.prestate_bit_list[3] and (not bit_list[3]):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent !=
+          INTENT_BALL_COLLISION) and namespace.prestate_bit_list[2] and (not bit_list[2]):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_BALL_KICKABLE) and (not namespace.prestate_bit_list[4]) and bit_list[4]:
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_GOAL_COLLISION) and (not namespace.prestate_bit_list[3]) and bit_list[3]:
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_BALL_COLLISION) and (((not namespace.prestate_bit_list[2]) and bit_list[2]) or
+                                                          ((not namespace.prestate_bit_list[4]) and bit_list[4])):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.prestate_self_dict['body_angle'] is not None) and (self_dict['body_angle'] is not None):
       intended_body_angle = namespace.prestate_self_dict['body_angle'] + namespace.action_params[0]
       if get_angle_diff(namespace.prestate_self_dict['body_angle'],
                         intended_body_angle) > get_angle_diff(self_dict['body_angle'],
@@ -652,7 +679,15 @@ def evaluate_previous_action(hfo_env,
       else:
         action_status_observed = hfo.ACTION_STATUS_BAD
   elif namespace.action == hfo.KICK:
-    pass # TODO
+    if bit_list[4]:
+      if namespace.prestate_bit_list[2] and (not bit_list[2]):
+        action_status_observed = hfo.ACTION_STATUS_MAYBE
+      elif namespace.prestate_bit_list[3] and (not bit_list[3]):
+        action_status_observed = hfo.ACTION_STATUS_MAYBE
+      else:
+        action_status_observed = hfo.ACTION_STATUS_BAD
+    else:
+      pass # TODO
   elif namespace.action == hfo.KICK_TO:
     if (namespace.prestate_ball_dict['x_pos'] is not None) and (ball_dict['x_pos'] is not None):
       dist_before = get_dist_real(namespace.prestate_ball_dict['x_pos'],
@@ -665,10 +700,30 @@ def evaluate_previous_action(hfo_env,
                                  namespace.action_params[1])
       if dist_before > dist_after:
         action_status_observed = hfo.ACTION_STATUS_MAYBE
+      elif bit_list[4]:
+        if namespace.prestate_bit_list[2] and (not bit_list[2]):
+          action_status_observed = hfo.ACTION_STATUS_MAYBE
+        elif namespace.prestate_bit_list[3] and (not bit_list[3]):
+          action_status_observed = hfo.ACTION_STATUS_MAYBE
+        else:
+          action_status_observed = hfo.ACTION_STATUS_BAD
       else:
         action_status_observed = hfo.ACTION_STATUS_BAD
   elif namespace.action == hfo.MOVE_TO:
-    if (namespace.prestate_self_dict['x_pos'] is not None) and (self_dict['x_pos'] is not None):
+    if (namespace.intent !=
+        INTENT_GOAL_COLLISION) and namespace.prestate_bit_list[3] and (not bit_list[3]):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent !=
+          INTENT_BALL_COLLISION) and namespace.prestate_bit_list[2] and (not bit_list[2]):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_BALL_KICKABLE) and (not namespace.prestate_bit_list[4]) and bit_list[4]:
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_GOAL_COLLISION) and (not namespace.prestate_bit_list[3]) and bit_list[3]:
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_BALL_COLLISION) and (((not namespace.prestate_bit_list[2]) and bit_list[2]) or
+                                                          ((not namespace.prestate_bit_list[4]) and bit_list[4])):
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.prestate_self_dict['x_pos'] is not None) and (self_dict['x_pos'] is not None):
       dist_before = get_dist_real(namespace.prestate_self_dict['x_pos'],
                                   namespace.prestate_self_dict['y_pos'],
                                   namespace.action_params[0],
@@ -685,6 +740,10 @@ def evaluate_previous_action(hfo_env,
     if namespace.prestate_bit_list[4]:
       if not bit_list[4]:
         action_status_observed = hfo.ACTION_STATUS_BAD
+      elif namespace.prestate_bit_list[3] and (not bit_list[3]): # goal collision
+        action_status_observed = hfo.ACTION_STATUS_MAYBE
+      elif namespace.prestate_bit_list[2] and (not bit_list[2]): # ball collision
+        action_status_observed = hfo.ACTION_STATUS_MAYBE
       elif (namespace.prestate_self_dict['x_pos'] is not None) and (self_dict['x_pos'] is not None):
         dist_before = get_dist_real(namespace.prestate_self_dict['x_pos'],
                                     namespace.prestate_self_dict['y_pos'],
@@ -700,6 +759,10 @@ def evaluate_previous_action(hfo_env,
           action_status_observed = hfo.ACTION_STATUS_BAD
     elif bit_list[4]:
       action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif namespace.prestate_bit_list[3] and (not bit_list[3]): # goal collision
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif namespace.prestate_bit_list[2] and (not bit_list[2]): # ball collision
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
     elif namespace.prestate_ball_dict['dist'] > ball_dict['dist']:
       action_status_observed = hfo.ACTION_STATUS_MAYBE
     elif namespace.prestate_ball_dict['dist'] < ball_dict['dist']:
@@ -709,10 +772,19 @@ def evaluate_previous_action(hfo_env,
   elif (namespace.action == hfo.INTERCEPT) or (namespace.action == hfo.GO_TO_BALL):
     if namespace.prestate_bit_list[4]:
       if bit_list[4]:
-        action_status_observed = hfo.ACTION_STATUS_MAYBE
+        if (namespace.intent != INTENT_BALL_COLLISION) and bit_list[2]:
+          action_status_observed = hfo.ACTION_STATUS_BAD
+        elif (namespace.intent != INTENT_GOAL_COLLISION) and bit_list[3]:
+          action_status_observed = hfo.ACTION_STATUS_BAD
+        else:
+          action_status_observed = hfo.ACTION_STATUS_MAYBE
       else:
         action_status_observed = hfo.ACTION_STATUS_BAD
     elif bit_list[4]:
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif namespace.prestate_bit_list[3] and (not bit_list[3]): # goal collision
+      action_status_observed = hfo.ACTION_STATUS_MAYBE
+    elif (namespace.intent == INTENT_BALL_COLLISION) and (not namespace.prestate_bit_list[2]) and bit_list[2]:
       action_status_observed = hfo.ACTION_STATUS_MAYBE
     elif namespace.prestate_ball_dict['dist'] > ball_dict['dist']:
       action_status_observed = hfo.ACTION_STATUS_MAYBE
@@ -759,16 +831,18 @@ def evaluate_previous_action(hfo_env,
     namespace.struct_tried[pack_action_bit_list(namespace.action,namespace.prestate_bit_list)] += 1
     # further analysis...
 
-  # further analysis...
-  if namespace.prestate_bit_list[3] and (namespace.action in (hfo.DASH, hfo.MOVE_TO)) and (action_status_guessed == hfo.ACTION_STATUS_MAYBE):
-    print("OK status from {0!s} despite goal collision in prestate (poststate: {1!s})".format(
-      action_string, bit_list[3]))
-    sys.stdout.flush()
-  
-  if namespace.prestate_bit_list[2] and (namespace.action in (hfo.DASH, hfo.TURN, hfo.MOVE_TO)) and (action_status_guessed == hfo.ACTION_STATUS_MAYBE):
-    print("OK status from {0!s} despite ball collision in prestate (poststate: {1!s})".format(
-      action_string, bit_list[2]))
-    sys.stdout.flush()
+  if action_status_guessed == hfo.ACTION_STATUS_MAYBE:
+    # further analysis...
+    if namespace.prestate_bit_list[3] and (namespace.action in (hfo.KICK, hfo.KICK_TO)):
+      print("OK status from {0!s} despite goal collision in prestate (poststate: {1!s})".format(
+        action_string, bit_list[3]))
+      sys.stdout.flush()
+      
+    if namespace.prestate_bit_list[2] and (namespace.action in (hfo.KICK, hfo.MOVE_TO,
+                                                                hfo.GO_TO_BALL)):
+      print("OK status from {0!s} despite ball collision in prestate (poststate: {1!s})".format(
+        action_string, bit_list[2]))
+      sys.stdout.flush()
 
 def save_action_prestate(action,
                          prestate_bit_list,
@@ -886,6 +960,8 @@ def do_intent(hfo_env,
       poss_actions_list.append(hfo.TURN)
     if abs(ball_rel_angle) < 1.0:
       poss_actions_list.append(hfo.DASH)
+    if bit_list[0] and (ball_dict['x_pos'] is not None):
+      poss_actions_list.append(hfo.MOVE_TO)
 
     action = determine_which_action(poss_actions_list, namespace, bit_list)
 
@@ -898,6 +974,11 @@ def do_intent(hfo_env,
     elif action == hfo.DASH:
       hfo_env.act(*save_action_prestate(action=hfo.DASH,
                                         action_params=[80, ball_rel_angle],
+                                        **prestate_dict))
+    elif action == hfo.MOVE_TO:
+      hfo_env.act(*save_action_prestate(action=hfo.MOVE_TO,
+                                        action_params=[ball_dict['x_pos'],
+                                                       ball_dict['y_pos']],
                                         **prestate_dict))
     else:
       raise RuntimeError("Unknown action {0!r}".format(action))
@@ -1023,13 +1104,15 @@ def do_next_action(hfo_env,
 
   # figure out what to do next
 
-  if not (bit_list[2] or bit_list[3] or bit_list[4]):
+  if not (bit_list[2] or bit_list[3]):
     poss_intent_set = set([INTENT_BALL_KICKABLE,INTENT_BALL_COLLISION,INTENT_GOAL_COLLISION])
     if not bit_list[5]:
       poss_intent_set.remove(INTENT_BALL_KICKABLE)
       poss_intent_set.remove(INTENT_BALL_COLLISION)
     if not bit_list[0]:
       poss_intent_set.remove(INTENT_GOAL_COLLISION)
+    if bit_list[4]:
+      poss_intent_set.remove(INTENT_BALL_KICKABLE)
     if not poss_intent_set:
       raise NotImplementedError("Not yet set up for self+ball location invalid")
     
@@ -1044,14 +1127,22 @@ def do_next_action(hfo_env,
     
     return do_intent(hfo_env, state, namespace)
 
-  elif bit_list[4]: # kickable
-    actions_want_check = set([hfo.INTERCEPT, hfo.GO_TO_BALL])
-    if bit_list[2] or bit_list[3]:
-      actions_want_check |= set([hfo.KICK, hfo.KICK_TO])
-  else: # colliding
-    actions_want_check = set([hfo.DASH, hfo.TURN, hfo.KICK, hfo.KICK_TO,
-                             hfo.MOVE_TO, hfo.DRIBBLE_TO, hfo.INTERCEPT,
-                             hfo.GO_TO_BALL])
+##  elif bit_list[4]: # kickable
+##    actions_want_check = set([hfo.INTERCEPT, hfo.GO_TO_BALL])
+##    if bit_list[2] or bit_list[3]:
+##      actions_want_check |= set([hfo.KICK, hfo.KICK_TO])
+  elif bit_list[2]: # colliding with ball
+    actions_want_check = set([hfo.GO_TO_BALL])
+    if bit_list[3]: # colliding with goal
+      actions_want_check |= set([hfo.KICK, hfo.KICK_TO, hfo.DRIBBLE_TO])
+  else: # colliding with goal
+    actions_want_check = set([hfo.KICK, hfo.KICK_TO, hfo.DRIBBLE_TO])
+
+  if prior_intent is not None:
+    print("INTENT: WAS {}".format(INTENT_DICT[prior_intent]))
+  else:
+    print("INTENT: NONE")
+  sys.stdout.flush()
 
   if bit_list[4] and (prior_intent not in (None, INTENT_BALL_KICKABLE)):
     namespace.intent_done[INTENT_BALL_KICKABLE] += 1

@@ -123,7 +123,7 @@ int HFOEnvironment::getNumOpponents() {
   return agent->getNumOpponents();
 }
 
-int HFOEnvironment::getLastActionStatus(action_t last_action) {
+action_status_t HFOEnvironment::getLastActionStatus(action_t last_action) {
   return agent->getLastActionStatus(last_action);
 }
 

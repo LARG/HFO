@@ -48,25 +48,36 @@
 #include <rcsc/common/server_param.h>
 
 #include "neck_offensive_intercept_neck.h"
+#include "common.hpp"
 
 using namespace rcsc;
+
+bool
+Bhv_BasicMove::execute( PlayerAgent * agent )
+{
+  if (Bhv_BasicMove::action_execute(agent) == hfo::ACTION_STATUS_MAYBE) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 /*-------------------------------------------------------------------*/
 /*!
 
  */
-bool
-Bhv_BasicMove::execute( PlayerAgent * agent )
+hfo::action_status_t
+Bhv_BasicMove::action_execute( PlayerAgent * agent )
 {
     dlog.addText( Logger::TEAM,
                   __FILE__": Bhv_BasicMove" );
-    bool success = true;
+    hfo::action_status_t success = hfo::ACTION_STATUS_UNKNOWN;
 
     //-----------------------------------------------
     // tackle
     if ( Bhv_BasicTackle( 0.8, 80.0 ).execute( agent ) )
     {
-        return true;
+      return hfo::ACTION_STATUS_MAYBE;
     }
 
     const WorldModel & wm = agent->world();
@@ -85,9 +96,8 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": intercept" );
-        success = Body_Intercept().execute( agent );
+        success = hfo::BooleanToActionStatus(Body_Intercept().execute( agent ));
         agent->setNeckAction( new Neck_OffensiveInterceptNeck() );
-
         return success;
     }
 
@@ -96,7 +106,9 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
 
     const BallObject& ball = wm.ball();
     if (! ball.rposValid()) {
-      success = false;
+      if (! wm.self().collidesWithPost()) {
+	success = hfo::ACTION_STATUS_BAD;
+      }
     }
 
     double dist_thr = ball.distFromSelf() * 0.1;
@@ -115,8 +127,10 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
                            ).execute( agent ) )
     {
       if (! Body_TurnToBall().execute( agent )) {
-	success = false;
+	success = hfo::ACTION_STATUS_BAD;
       }
+    } else if (success != hfo::ACTION_STATUS_BAD) {
+      success = hfo::ACTION_STATUS_MAYBE;
     }
 
     if ( wm.existKickableOpponent() &&
