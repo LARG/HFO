@@ -104,7 +104,7 @@ def do_defense_action(state_vec, hfo_env,
 
   # if get high_level working for invalid
   if (min(agent_pos_x,agent_pos_y,ball_pos_x,ball_pos_y) < -1):
-    hfo_env.act(hfo.MOVE) # will be Reorient in that version
+    hfo_env.act(add_num_times(hfo.REORIENT,num_times_overall))
     return
 
   ball_toward_goal = ball_moving_toward_goal(ball_pos_x, ball_pos_y,
@@ -118,11 +118,16 @@ def do_defense_action(state_vec, hfo_env,
   if not ball_sorted_list: # unknown opponent positions/unums
     print("No known opponent locations (btg {0!r}; bng {1!r}; ".format(ball_toward_goal,
                                                                        ball_nearer_goal) +
-          "ball xy {0:n}, {1:n}; ball old xy {2:n}, {3:n})".format(ball_pos_x,
-                                                                   ball_pos_y,
-                                                                   old_ball_pos_x,
-                                                                   old_ball_pos_y))
-    if ball_toward_goal:
+          "ball xy {0:n}, {1:n}; ball old xy {2:n}, {3:n}; kickable {4:n})".format(ball_pos_x,
+                                                                                   ball_pos_y,
+                                                                                   old_ball_pos_x,
+                                                                                   old_ball_pos_y,
+                                                                                   state_vec[5]))
+    if ((min(agent_pos_x,agent_pos_y,ball_pos_x,ball_pos_y) <= -1) or
+        (max(agent_pos_x,agent_pos_y,ball_pos_x,ball_pos_y) >= 1)):
+      # remove if get high-level working for invalid
+      hfo_env.act(add_num_times(hfo.REORIENT,num_times_overall))
+    elif ball_toward_goal:
       if ball_nearer_goal:
         hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
       else:

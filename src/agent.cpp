@@ -358,6 +358,9 @@ void Agent::actionImpl() {
     case GO_TO_BALL:
       addLastActionStatus(GO_TO_BALL, this->doGoToBall());
       break;
+    case REORIENT:
+      addLastActionStatus(REORIENT, this->doReorient());
+      break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
                 << requested_action << std::endl;
@@ -735,6 +738,131 @@ Agent::doPreprocess()
     }
 
     return false;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+  Alternative high-level action to always doing "Move"; usable by either side, although
+  probably more useful for offense. Variant of doPreprocess (above), which is called by doDribble.
+*/
+action_status_t
+Agent::doReorient()
+{
+    // check tackle expires
+    // check self position accuracy
+    // ball search
+    // check queued intention
+
+    const WorldModel & wm = this->world();
+
+    dlog.addText( Logger::TEAM,
+                  __FILE__": (doPreProcessAsAction)" );
+
+    //
+    // frozen by tackle effect
+    //
+    if ( wm.self().isFrozen() )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": tackle wait. expires= %d",
+                      wm.self().tackleExpires() );
+        // face neck to ball
+        this->setViewAction( new View_Tactical() );
+        this->setNeckAction( new Neck_TurnToBallOrScan() );
+        return ACTION_STATUS_MAYBE;
+    }
+
+    //
+    // BeforeKickOff or AfterGoal. jump to the initial position
+    //
+    if ( wm.gameMode().type() == GameMode::BeforeKickOff
+         || wm.gameMode().type() == GameMode::AfterGoal_ )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": before_kick_off" );
+        Vector2D move_point =  Strategy::i().getPosition( wm.self().unum() );
+	Bhv_CustomBeforeKickOff( move_point ).execute( this );
+        this->setViewAction( new View_Tactical() );
+        return ACTION_STATUS_MAYBE;
+    }
+
+    //
+    // self localization error
+    //
+    if ( ! ( wm.self().posValid() && wm.self().velValid() ) )
+    {
+      if (! wm.self().posValid() ) {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": invalid my pos" );
+      } else {
+	dlog.addText( Logger::TEAM,
+                      __FILE__": invalid my vel" );
+      }
+      if (Bhv_Emergency().execute( this )) { // includes change view
+	return ACTION_STATUS_MAYBE;
+      } else {
+	return ACTION_STATUS_UNKNOWN;
+      }
+    }
+
+    //
+    // set default change view
+    //
+
+    this->setViewAction( new View_Tactical() );
+
+    //
+    // ball localization error
+    //
+    const int count_thr = ( wm.self().goalie()
+                            ? 10
+                            : 5 );
+    if ( wm.ball().posCount() > count_thr
+         || ( wm.gameMode().type() != GameMode::PlayOn
+              && wm.ball().seenPosCount() > count_thr + 10 ) )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": search ball" );
+        if (Bhv_NeckBodyToBall().execute( this )) {
+	  return ACTION_STATUS_MAYBE;
+	} else {
+	  return ACTION_STATUS_UNKNOWN;
+	}
+    }
+
+
+
+    //
+    // check queued action
+    //
+    if ( this->doIntention() )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": do queued intention" );
+        return ACTION_STATUS_MAYBE;
+    }
+
+    //
+    // check pass message
+    //
+    if ( doHeardPassReceive() )
+    {
+        return ACTION_STATUS_MAYBE;
+    }
+
+    const BallObject& ball = wm.ball();
+    if (! ( ball.rposValid() && ball.velValid() )) {
+      dlog.addText( Logger::TEAM,
+		    __FILE__": search ball" );
+      if (Bhv_NeckBodyToBall().execute( this )) {
+	return ACTION_STATUS_MAYBE;
+      } else {
+	return ACTION_STATUS_UNKNOWN;
+      }
+    }
+    
+
+    return ACTION_STATUS_BAD;
 }
 
 /*-------------------------------------------------------------------*/

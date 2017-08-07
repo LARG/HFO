@@ -85,6 +85,7 @@ protected:
 
  private:
   bool doPreprocess();
+  hfo::action_status_t doReorient();
   hfo::action_status_t doSmartKick();
   hfo::action_status_t doShoot();
   bool doPass();

@@ -5,8 +5,6 @@ from __future__ import print_function
 # Before running this program, first Start HFO server:
 # $> ./bin/HFO --offense-agents 1
 
-from __future__ import print_function
-
 import argparse
 import itertools
 import random
@@ -23,10 +21,12 @@ def main():
                       help="Server port")
   parser.add_argument('--seed', type=int, default=None,
                       help="Python randomization seed; uses python default if 0 or not given")
+  parser.add_argument('--no-reorient', action='store_true',
+                      help="Do not use the new Reorient action")
   parser.add_argument('--record', action='store_true',
-                      help="If doing HFO --record")
+                      help="Doing HFO --record")
   parser.add_argument('--rdir', type=str, default='log/',
-                      help="Set directory to use if doing --record")
+                      help="Set directory to use if doing HFO --record")
   args=parser.parse_args()
   if args.seed:
     random.seed(args.seed)
@@ -35,39 +35,51 @@ def main():
   # Connect to the server with the specified
   # feature set. See feature sets in hfo.py/hfo.hpp.
   if args.record:
-    hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
+    hfo_env.connectToServer(hfo.LOW_LEVEL_FEATURE_SET,
                             'bin/teams/base/config/formations-dt', args.port,
                             'localhost', 'base_left', False,
                             record_dir=args.rdir)
   else:
-    hfo_env.connectToServer(hfo.HIGH_LEVEL_FEATURE_SET,
+    hfo_env.connectToServer(hfo.LOW_LEVEL_FEATURE_SET,
                             'bin/teams/base/config/formations-dt', args.port,
                             'localhost', 'base_left', False)
-
   if args.seed:
     print("Python randomization seed: {0:d}".format(args.seed))
-
   for episode in itertools.count():
+    num_reorient = 0
+    num_move = 0
+    num_had_ball = 0
     status = hfo.IN_GAME
     while status == hfo.IN_GAME:
       # Get the vector of state features for the current state
       state = hfo_env.getState()
       # Perform the action
-      if state[5] == 1: # State[5] is 1 when the player can kick the ball
+      # 8 is frozen; 0 is self position valid, 1 is self velocity valid, 54 is ball velocity valid
+      if (((state[8] > 0) or (min(state[0],state[1],state[54]) < 0)) and not args.no_reorient):
+        hfo_env.act(hfo.REORIENT)
+        num_reorient += 1
+      elif state[12] > 0: # State[12] is 1 when the player can kick the ball
         if random.random() < 0.5: # more efficient than random.choice for 2
           hfo_env.act(hfo.SHOOT)
         else:
           hfo_env.act(hfo.DRIBBLE)
+        num_had_ball += 1
+      # 50 is ball position valild
+      elif (state[50] < 0) and not args.no_reorient:
+        hfo_env.act(hfo.REORIENT)
+        num_reorient += 1
       else:
         hfo_env.act(hfo.MOVE)
+        num_move += 1
       # Advance the environment and get the game status
       status = hfo_env.step()
-
+      
     # Check the outcome of the episode
-
-    end_status = hfo_env.statusToString(status)
-    print("Episode {0:n} ended with {1:s}".format(episode, end_status))
-
+    print("Episode {0:d} ended with status {1}".format(episode,
+                                                       hfo_env.statusToString(status)))
+    print("\tHad ball: {0:d}; Reorient: {1:d}; Move: {2:d}".format(num_had_ball,
+                                                                   num_reorient,
+                                                                   num_move))
     # Quit if the server goes down
     if status == hfo.SERVER_DOWN:
       hfo_env.act(hfo.QUIT)

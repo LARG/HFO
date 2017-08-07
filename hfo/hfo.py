@@ -28,8 +28,8 @@ An enum of the possible HFO actions, including:
   NOOP(): Do Nothing
   QUIT(): Quit the game
 """
-NUM_HFO_ACTIONS = 19
-DASH,TURN,TACKLE,KICK,KICK_TO,MOVE_TO,DRIBBLE_TO,INTERCEPT,MOVE,SHOOT,PASS,DRIBBLE,CATCH,NOOP,QUIT,REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL = list(range(NUM_HFO_ACTIONS))
+NUM_HFO_ACTIONS = 20
+DASH,TURN,TACKLE,KICK,KICK_TO,MOVE_TO,DRIBBLE_TO,INTERCEPT,MOVE,SHOOT,PASS,DRIBBLE,CATCH,NOOP,QUIT,REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL,REORIENT = list(range(NUM_HFO_ACTIONS))
 ACTION_STRINGS = {DASH: "Dash",
                   TURN: "Turn",
                   TACKLE: "Tackle",
@@ -48,7 +48,8 @@ ACTION_STRINGS = {DASH: "Dash",
                   REDUCE_ANGLE_TO_GOAL: "Reduce_Angle_To_Goal",
                   MARK_PLAYER: "Mark_Player",
                   DEFEND_GOAL: "Defend_Goal",
-                  GO_TO_BALL: "Go_To_Ball"}
+                  GO_TO_BALL: "Go_To_Ball",
+                  REORIENT: "Reorient"}
 
 """
 Possible game statuses:
@@ -132,7 +133,7 @@ class HFOEnvironment(object):
                       play_goalie=False,
                       record_dir=''):
     """
-      Connect to the server on the specified port. The
+      Connects to the server on the specified port. The
       following information is provided by the ./bin/HFO
 
       feature_set: High or low level state features
@@ -143,7 +144,14 @@ class HFOEnvironment(object):
       play_goalie: is this player the goalie
       record_dir: record agent's states/actions/rewards to this directory
     """
-    hfo_lib.connectToServer(self.obj, feature_set, config_dir.encode('utf-8'), server_port,server_addr.encode('utf-8'), team_name.encode('utf-8'), play_goalie, record_dir.encode('utf-8'))
+    hfo_lib.connectToServer(self.obj,
+                            feature_set,
+                            config_dir.encode('utf-8'),
+                            server_port,server_addr.encode('utf-8'),
+                            team_name.encode('utf-8'),
+                            play_goalie,
+                            record_dir.encode('utf-8'))
+
   def getStateSize(self):
     """ Returns the number of state features """
     return hfo_lib.getStateSize(self.obj)
@@ -164,7 +172,7 @@ class HFOEnvironment(object):
     hfo_lib.act(self.obj, action_type, params.ctypes.data_as(POINTER(c_float)))
 
   def say(self, message):
-    """ Transmit a message """
+    """ Transmits a message """
     hfo_lib.say(self.obj, message.encode('utf-8'))
 
   def hear(self):
@@ -188,7 +196,7 @@ class HFOEnvironment(object):
     return STATUS_STRINGS[status]
 
   def getUnum(self):
-    """ Return the uniform number of the agent """
+    """ Returns the uniform number of the agent """
     return hfo_lib.getUnum(self.obj)
 
   def getNumTeammates(self):
