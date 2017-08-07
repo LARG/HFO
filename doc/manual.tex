@@ -230,7 +230,7 @@ follows:\\
 
 This would take offense NPCs from Helios' 2013 Eindhoven release and
 defensive NPCs from the default Agent2D-base. Currently the only
-supported teams are Helios and Base.
+supported teams are Helios (on Linux only) and Base.
 
 \section{Communication}
 HFO allows agents to receive and broadcast messages. This is
@@ -242,19 +242,20 @@ maximum allowed message size is controlled by HFO's
 
 \section{Fullstate}
 By default, perceptions and actions in HFO are noisy. The
-\verb+ --fullstate+ flag in HFO removes noise from the agent's
+\verb|--fullstate| flag in HFO removes noise from the agent's
 perception of the world. Many tasks become significantly easier as a
 result. Noise in actions remains. This flag is disabled by default.
 
 \section{Controlling Trials}
-HFO trials typically end with a goal, the defense capturing the ball,
-the ball going out of bounds, or running out of time. The trials flag
-specifies a maximum number of trials
-\verb+ > ./bin/HFO --trials 500+. Instead, a maximum number of frames
-may be specified: \verb+ > ./bin/HFO --frames 1000+ will stop the
-server after 10,000 steps have passed. Each trial is run for a maximum
-of \verb --frames-per-trial \ steps, but may stop early if no agent
-approaches the ball within \verb --untouched-time \ steps.
+HFO trials typically end with a goal, the defense capturing
+the ball, the ball going out of bounds, or running out of time.
+The trials flag specifies a maximum number of
+trials: \verb|> ./bin/HFO --trials 500|.
+Instead, a maximum number of frames may be specified; for
+instance, \verb|--frames 1000| will stop the
+server after 1,000 steps have passed. Each trial is run for a
+maximum of \verb|--frames-per-trial| steps, but may stop early
+if no agent approaches the ball within \verb|--untouched-time| steps.
 
 \section{State Spaces}
 The HFO domains provides a choice between a low and a high-level
@@ -274,7 +275,7 @@ used. The following sections explain the feature sets.
 
 \subsection{High Level Feature Set}
 A set of high-level features is provided following the example given
-by Barrett et al. pp. 159-160 \cite{THESIS14-Barrett}. Barrett writes
+by Barrett pp. 159-160 \cite{THESIS14-Barrett}. Barrett writes:
 ``There are many ways to represent the state of a game of half field
 offense.  Ideally, we want a compact representation that allows the
 agent to learn quickly by generalizing its knowledge about a state to
@@ -376,8 +377,8 @@ value of -1. Otherwise it will assume the maximum value of 1.
 
 The features associated with a valid feature are given the value of
 zero if an inconsistency is detected. For example, if the world model
-detects that the agent's velocity is invalid, the feature that encodes
-the magnitude of self velocity will be set to zero.
+detects that the agent's velocity perception is invalid, the feature
+that encodes the magnitude of self velocity will be set to zero.
 
 \subsubsection{Angular Features}
 \textit{Angular features} (e.g. the angle to the ball), are encoded as
@@ -394,8 +395,8 @@ changes in $\theta$.
 Given an angular feature $\langle \alpha_1, \alpha_2 \rangle$ we can
 recover the original angle $\theta$ (in radians) by taking the
 $cos^{-1}(\alpha_2)$ and multiplying by the sign of $\alpha_1$.
-Another method uses the common 'atan2' function as
-$atan2(\alpha_1, \alpha_2)$.
+Another method, possibly preferable in the presence of noise, uses
+the common 'atan2' function as $atan2(\alpha_1, \alpha_2)$.
 
 \begin{figure*}[htp]
   \centering
