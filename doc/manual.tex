@@ -435,7 +435,7 @@ Landmark features encode the relative angle and proximity of the agent
 to a landmark of interest. Each landmark feature consists of three
 floating point values, two to encode the agent's relative angle to the
 landmark and one to encode the landmark's proximity. Note that if the
-agent's self position is invalid, then the landmark feature values are
+agent's self position is invalid, the landmark feature values are
 zeroed.
 
 \subsubsection{Player Features}
@@ -451,7 +451,7 @@ In the low-level feature space, unknown uniform numbers, or \textit{unums},
 are encoded as -1, while known ones are encoded as $\frac{unum}{100}$, thus
 remaining well within the $[-1, 1]$ range. (Note that roundoff error may need
 to be allowed for when converting these back to integers, such as for use in
-high-level actions; e.g., 0.0799 will need to be converted back to 8.)
+high-level actions; \textit{e.g.}, 0.0799 will need to be converted back to 8.)
 Uniform number features, a later addition to the low-level feature space,
 are positioned after all other features to hopefully ensure compatibility
 with older programs.
@@ -490,8 +490,8 @@ low-level features:
   \itemrange{2}{\textbf{Penalty Box Center} [Landmark] Center of the penalty box line.}
   \itemrange{2}{\textbf{Penalty Box Top} [Landmark] Top corner of the penalty box.}
   \itemrange{2}{\textbf{Penalty Box Bot} [Landmark] Bottom corner of the penalty box.}
-  \itemrange{2}{\textbf{Center Field} [Landmark] The left middle point of the
-    HFO play area.}
+  \itemrange{2}{\textbf{Center Field} [Landmark] The left middle point of the RoboCup field
+    (note that this is \textbf{not} the center of the HFO play area).}
   \itemrange{2}{\textbf{Corner Top Left} [Landmark] Top left corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Top Right} [Landmark] Top right corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bottom right corner HFO Playfield.}
@@ -610,29 +610,29 @@ below the table for the action abbreviations and notes.
 
 \begin{center}
 {\footnotesize
-\begin{tabular}{r       | c    c    c    c  | c    c    c    c  | c    c    c    c    c    c    c    c    c}
-Action                  & Da & Tu & Ta & K  & KT & MT & DT & I  & M  & S  & P  & Dr & C  & RG & DG & G  & MP \\
+\begin{tabular}{r       | c    c    c    c | c    c    c    c  | c    c    c    c    c    c    c    c    c}
+Action                  & Da & Tu & Ta & K & KT & MT & DT & I  & M  & S  & P  & Dr & C  & RG & DG & G & MP \\
 \hline \hline
-Self position invalid   & Y  & Y  & Y  & Y  & N  & N  & N? & N? & N  & N? & N? & Y  & ?  & N  & N  & N  & N \\
-Self velocity invalid   & N  & Y? & Y? & Y? & ?  & N  & N  & N  & N  & ?  & ?  & Y  & Y  & N  & N  & N  & N \\
-Ball position invalid   & Y  & Y  & Y? & N  & N  & Y  & N  & N  & N  & N  & N  & Y? & N  & N  & N  & N  & N \\
-Ball velocity invalid   & Y  & Y  & Y  & ?  & ?  & Y  & Y  & N? & ?  & N  & N? & Y? & Y? & Y  & Y  & Y  & Y \\
-Teammate loc invalid    & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & N  & Y  & N  & Y? & Y  & Y  & Y  & Y  & Y \\
-Team. unum invalid      & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & N  & Y  & Y  & Y  & Y  & Y  & Y \\
-Opponent loc invalid    & Y  & Y  & Y  & Y  & Y  & Y  & Y? & Y  & N  & Y? & Y  & Y? & Y  & Y  & Y  & Y  & N \\
-Opp. unum invalid       & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & N \\
+Self position invalid   & Y  & Y  & Y  & Y & N  & N  & N? & N? & N  & N? & N? & Y  & ?  & N  & N  & N & N \\
+Self velocity invalid   & N  & Y? & Y? & Y & ?  & N  & N  & N  & N  & ?  & ?  & Y  & Y  & N  & N  & N & N \\
+Ball position invalid   & Y  & Y  & Y? & N & N  & Y  & N  & N  & N  & N  & N  & Y  & N  & N  & N  & N & N \\
+Ball velocity invalid   & Y  & Y  & Y  & ? & ?  & Y  & Y  & N? & ?  & N  & N? & Y? & Y? & Y  & Y  & Y & Y \\
+Teammate loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y  & N  & Y  & N  & Y? & Y  & Y  & Y  & Y & Y \\
+Team. unum invalid      & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y  & Y  & Y  & N  & Y  & Y  & Y  & Y  & Y & Y \\
+Opponent loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & Y? & Y  & N  & Y? & Y  & Y? & Y  & Y  & Y  & Y & N \\
+Opp. unum invalid       & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y & N \\
 \hline
-Ball kickable           & Y  & Y  & Y  & Y  & Y  & Y  & Y  & N  & *  & Y  & Y  & Y  & Y  & ?  & ?  & N  & Y \\
-Ball not kickable       & Y  & Y  & Y  & N  & N  & Y  & Y  & Y  & Y  & N  & N  & N  & Y  & Y  & Y  & Y  & Y \\
+Ball kickable           & Y  & Y  & Y  & Y & Y  & N  & Y  & N  & *  & Y  & Y  & Y  & Y  & ?  & ?  & N & Y \\
+Ball not kickable       & Y  & Y  & Y  & N & N  & Y  & Y  & Y  & Y  & N  & N  & N  & Y  & Y  & Y  & Y & Y \\
 \hline
-Frozen                  & N  & N  & N  & N  & N  & N  & N? & N  & N? & N  & N  & Y  & N? & N  & N  & N  & N \\
-Colliding w/ball        & Y  & Y  & ?  & N  & Y  & Y  & Y  & Y  & ?  & ?  & ?  & ?  & ?  & ?  & ?  & N  & ? \\
-Colliding w/player      & Y  & Y? & ?  & N? & N? & Y? & ?  & Y? & ?  & ?  & ?  & Y? & ?  & ?  & ?  & Y? & ? \\
-Colliding w/post        & Y  & Y  & N? & N? & N? & Y  & Y  & Y  & Y  & ?  & ?  & Y  & ?  & Y  & Y  & Y  & Y \\
+Frozen                  & N  & N  & N  & N & N  & N  & N? & N  & N? & N  & N  & Y  & N? & N  & N  & N & N \\
+Colliding w/ball        & Y  & Y  & ?  & N & Y  & N  & Y  & Y  & Y  & ?  & Y  & Y  & ?  & ?  & ?  & N & ? \\
+Colliding w/player      & Y  & Y  & ?  & Y & Y  & Y  & Y  & Y  & Y  & ?  & N  & Y  & ?  & ?  & ?  & Y & ? \\
+Colliding w/post        & Y  & Y  & N? & Y & Y  & Y  & N  & Y  & Y  & ?  & N  & Y  & ?  & Y  & Y  & Y & Y \\
 \hline
-Offense                 & Y  & Y  & N  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & N  & N  & N  & Y  & N \\
-Defense, not goalie     & Y  & Y  & Y  & N? & N? & Y  & N  & Y  & Y  & N  & N  & N  & N  & Y  & ?  & Y  & Y \\
-Goalie (defense)        & Y  & Y  & Y? & N? & N? & Y  & N  & Y  & ?  & N  & N  & N  & Y  & ?  & ?  & ?  & ? \\
+Offense                 & Y  & Y  & N  & Y & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & N  & N  & N  & Y & N \\
+Defense, not goalie     & Y  & Y  & Y  & N & N  & Y  & N  & Y  & Y  & N  & N  & N  & N  & Y  & ?  & Y & Y \\
+Goalie (defense)        & Y  & Y  & Y  & N & N  & Y  & N  & Y  & ?  & N  & N  & N  & Y  & ?  & ?  & ? & N \\
 \end{tabular}
 }
 \end{center}
@@ -647,8 +647,8 @@ Goalie (defense)        & Y  & Y  & Y? & N? & N? & Y  & N  & Y  & ?  & N  & N  &
 
 New agents may be developed in C++ or Python. In Python, as long as
 the hfo interface has been installed, the agent only needs to
-\verb+import hfo+ (or \verb+from hfo import *+). In C++ it is necessary to
-\verb+#include <HFO.hpp>+ and also to link against the shared object
+\verb+import hfo+ (or \verb+from hfo import *+). In C++, it is necessary to
+\verb+#include <HFO.hpp>+ and also link against the shared object
 library \verb+lib/libhfo.so+ when compiling:
 
 \begin{verbatim}
