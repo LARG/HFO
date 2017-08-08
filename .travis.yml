@@ -1,9 +1,6 @@
 sudo: required
 language: cpp
 dist: trusty
-branches:
-  except:
-    - action_chart
 addons:
   apt:
     sources:
