@@ -155,11 +155,13 @@ INTENT_BALL_COLLISION = 0
 INTENT_BALL_KICKABLE = 1
 INTENT_GOAL_COLLISION = 2
 INTENT_PLAYER_COLLISION = 3
+INTENT_RANDOM_MANEUVER = 4
 
 INTENT_DICT = {INTENT_BALL_COLLISION: 'INTENT_BALL_COLLISION',
                INTENT_BALL_KICKABLE: 'INTENT_BALL_KICKABLE',
                INTENT_GOAL_COLLISION: 'INTENT_GOAL_COLLISION',
-               INTENT_PLAYER_COLLISION: 'INTENT_PLAYER_COLLISION'}
+               INTENT_PLAYER_COLLISION: 'INTENT_PLAYER_COLLISION',
+               INTENT_RANDOM_MANEUVER: 'INTENT_RANDOM_MANEUVER'}
 
 BIT_LIST_LEN = 8
 STRUCT_PACK = "BH"
@@ -205,12 +207,7 @@ def get_abs_angle(body_angle,rel_angle):
   return angle
 
 def get_angle_diff(angle1, angle2):
-  if angle1 > angle2:
-    return min((angle1 - angle2),abs(angle1 - angle2 - 360))
-  elif angle1 < angle2:
-    return min((angle2 - angle1),abs(angle2 - angle1 - 360))
-
-  return 0.0
+  return min(abs(angle1 - angle2),abs(angle1 - angle2 - 360),abs(angle2 - angle1 - 360))
 
 def reverse_angle(angle):
   angle += 180
@@ -332,6 +329,7 @@ def get_abs_x_y_pos(abs_angle, dist, self_x_pos, self_y_pos, warn=True, of_what=
   return (est_x_pos, est_y_pos)
 
 landmark_start_to_location = {13: (GOAL_POS_X, get_y_normalized(0.0)), # center of goal
+                              31: (get_x_normalized(0.0), get_y_normalized(0.0)), # center of RoboCup field
                               34: (get_x_normalized(0.0), get_y_normalized(-0.5*HALF_FIELD_WIDTH)), # Top Left
                               37: (get_x_normalized(HALF_FIELD_LENGTH), get_y_normalized(-0.5*HALF_FIELD_WIDTH)), # Top Right
                               40: (get_x_normalized(HALF_FIELD_LENGTH), get_y_normalized(HALF_FIELD_WIDTH/2)), # Bottom Right
@@ -380,17 +378,18 @@ def filter_low_level_state(state, namespace):
     y_pos_from['OOB'] = get_y_normalized((y_pos1_real+y_pos2_real)/2)
     y_pos_weight['OOB'] = max(ERROR_TOLERANCE,(1.0-min(1.0,abs(y_pos_from['OOB']))))
 
-    x_pos_from['OTHER'] = namespace.other_dict['self_x_pos'].value
-    y_pos_from['OTHER'] = namespace.other_dict['self_y_pos'].value
-    other_proximity = get_proximity_from_dist(get_dist_real(x_pos_from['OTHER'],
-                                                            y_pos_from['OTHER'],
-                                                            namespace.other_dict['x_pos'].value,
-                                                            namespace.other_dict['y_pos'].value))
-    x_pos_weight['OTHER'] = y_pos_weight['OTHER'] = (other_proximity+1)/2
-    if abs(x_pos_from['OTHER']) > (1.0-ERROR_TOLERANCE):
-      x_pos_weight['OTHER'] = min(ERROR_TOLERANCE,x_pos_weight['OTHER'])
-    if abs(y_pos_from['OTHER']) > (1.0-ERROR_TOLERANCE):
-      y_pos_weight['OTHER'] = min(ERROR_TOLERANCE,y_pos_weight['OTHER'])
+    if (abs(namespace.other_dict['self_x_pos'].value) <= 1) and (abs(namespace.other_dict['self_y_pos'].value) <= 1):
+      x_pos_from['OTHER'] = namespace.other_dict['self_x_pos'].value
+      y_pos_from['OTHER'] = namespace.other_dict['self_y_pos'].value
+      other_proximity = get_proximity_from_dist(get_dist_real(x_pos_from['OTHER'],
+                                                              y_pos_from['OTHER'],
+                                                              namespace.other_dict['x_pos'].value,
+                                                              namespace.other_dict['y_pos'].value))
+      x_pos_weight['OTHER'] = y_pos_weight['OTHER'] = max(ERROR_TOLERANCE,(((other_proximity+1)/2)**2))
+      if abs(x_pos_from['OTHER']) > (1.0-ERROR_TOLERANCE):
+        x_pos_weight['OTHER'] = min(ERROR_TOLERANCE,x_pos_weight['OTHER'])
+      if abs(y_pos_from['OTHER']) > (1.0-ERROR_TOLERANCE):
+        y_pos_weight['OTHER'] = min(ERROR_TOLERANCE,y_pos_weight['OTHER'])
 
     if self_dict['body_angle'] is not None:
       for landmark_start, xy_location in iteritems(landmark_start_to_location):
@@ -409,10 +408,10 @@ def filter_low_level_state(state, namespace):
             x_pos_from[landmark_start] = x_pos
             y_pos_from[landmark_start] = y_pos
             x_pos_weight[landmark_start] = y_pos_weight[landmark_start] = max(ERROR_TOLERANCE,
-                                                                              ((state[landmark_start+2]+1)/2))
+                                                                              (((state[landmark_start+2]+1)/2)**2))
             # except extremely close can be a problem for the angle...
-            if state[landmark_start+2] > (1.0-POS_ERROR_TOLERANCE):
-              max_weight = (1.0-state[landmark_start+2])/POS_ERROR_TOLERANCE
+            if state[landmark_start+2] > (1.0-(POS_ERROR_TOLERANCE/5)):
+              max_weight = (1.0-state[landmark_start+2])/(POS_ERROR_TOLERANCE/5)
               max_weight = max(max_weight, ERROR_TOLERANCE)
               x_pos_weight[landmark_start] = y_pos_weight[landmark_start] = min(x_pos_weight[landmark_start],
                                                                                 max_weight)
@@ -598,9 +597,9 @@ def filter_low_level_state(state, namespace):
     ball_dict['x_pos'] = None
     ball_dict['y_pos'] = None
 
-  if (ball_dict['x_pos'] is None) and (abs(namespace.other_dict['ball_x_pos'].value) < 1):
+  if (ball_dict['x_pos'] is None) and (abs(namespace.other_dict['ball_x_pos'].value) <= 1):
     ball_dict['x_pos'] = namespace.other_dict['ball_x_pos'].value
-  if (ball_dict['y_pos'] is None) and (abs(namespace.other_dict['ball_y_pos'].value) < 1):
+  if (ball_dict['y_pos'] is None) and (abs(namespace.other_dict['ball_y_pos'].value) <= 1):
     ball_dict['y_pos'] = namespace.other_dict['ball_y_pos'].value
 
   if state[54] > 0: # ball velocity valid
@@ -691,7 +690,7 @@ def evaluate_previous_action(hfo_env,
     action_status_observed = hfo.ACTION_STATUS_MAYBE
   elif (namespace.intent == INTENT_PLAYER_COLLISION) and (not namespace.prestate_bit_list[7]) and bit_list[7]:
     action_status_observed = hfo.ACTION_STATUS_MAYBE
-  elif (namespace.action == hfo.DASH) or (namespace.action == hfo.MOVE):
+  elif (namespace.action == hfo.DASH) or (namespace.action == hfo.MOVE) or (namespace.action == hfo.REORIENT):
       pass # TODO
   elif namespace.action == hfo.TURN:
     if (namespace.prestate_self_dict['body_angle'] is not None) and (self_dict['body_angle'] is not None):
@@ -855,22 +854,41 @@ def evaluate_previous_action(hfo_env,
 
   if action_status_guessed == hfo.ACTION_STATUS_MAYBE:
     # further analysis...
-    if namespace.prestate_bit_list[3] and (namespace.action in (hfo.KICK_TO, hfo.KICK)):
-      print("OK status from {0!s} despite goal collision in prestate (poststate: {1!s})".format(
-        action_string, bit_list[3]))
+    if (not namespace.prestate_bit_list[0]) and (namespace.action in (hfo.KICK_TO, hfo.MOVE_TO, hfo.DRIBBLE_TO, hfo.INTERCEPT,
+                                                                      hfo.MOVE, hfo.PASS, hfo.GO_TO_BALL)):
+      print("OK status from {0!s} despite unknown self location in prestate (poststate: {1!s})".format(
+        action_string, bit_list[0]))
       sys.stdout.flush()
 
-    if namespace.prestate_bit_list[2] and (namespace.action == hfo.MOVE):
-      print("OK status from {0!s} despite ball collision in prestate (poststate: {1!s})".format(
-        action_string, bit_list[2]))
+    if (not namespace.prestate_bit_list[1]) and (namespace.action in (hfo.DASH, hfo.TURN, hfo.KICK_TO, hfo.MOVE_TO,
+                                                                      hfo.DRIBBLE_TO, hfo.INTERCEPT, hfo.MOVE, hfo.PASS,
+                                                                      hfo.GO_TO_BALL)):
+      print("OK status from {0!s} despite unknown self velocity in prestate (poststate: {1!s})".format(
+        action_string, bit_list[1]))
       sys.stdout.flush()
 
-    if namespace.prestate_bit_list[7]:
-      print("OK status from {0!s} despite player collision in prestate (poststate: {1!s})".format(
-        action_string, bit_list[2]))
+    if (not namespace.prestate_bit_list[5]) and (namespace.action in (hfo.KICK, hfo.KICK_TO, hfo.DRIBBLE_TO, hfo.INTERCEPT,
+                                                                      hfo.MOVE, hfo.PASS, hfo.GO_TO_BALL)):
+      print("OK status from {0!s} despite unknown ball location in prestate (poststate: {1!s})".format(
+        action_string, bit_list[0]))
+      sys.stdout.flush()
+
+    if (not namespace.prestate_bit_list[6]) and (namespace.action in (hfo.KICK, hfo.KICK_TO,
+                                                                      hfo.PASS, hfo.DRIBBLE)):
+      print("OK status from {0!s} despite unknown ball velocity in prestate (poststate: {1!s})".format(
+        action_string, bit_list[1]))
+      sys.stdout.flush()
+
+    if (namespace.action == hfo.REORIENT) and (namespace.prestate_bit_list[2] or
+                                               namespace.prestate_bit_list[3] or
+                                               namespace.prestate_bit_list[7]):
+      print("OK status from {0!s} despite collision in prestate {1!s} (poststate: {2!s})".format(
+        action_string,
+        "".join(map(str,map(int,namespace.prestate_bit_list))),
+        "".join(map(str,map(int,bit_list)))))
       sys.stdout.flush()
   elif action_status_guessed == hfo.ACTION_STATUS_BAD:
-    if namespace.action in (hfo.MOVE_TO, hfo.INTERCEPT, hfo.MOVE, hfo.DRIBBLE, hfo.PASS, hfo.KICK_TO, hfo.KICK):
+    if namespace.action in (hfo.REORIENT, hfo.TURN, hfo.DRIBBLE):
       print("Bad status from {0!s}: prestate {1!s}, poststate {2!s}".format(
         action_string,
         "".join(map(str,map(int,namespace.prestate_bit_list))),
@@ -1165,6 +1183,59 @@ def do_intent(hfo_env,
 
     return
 
+  elif namespace.intent == INTENT_RANDOM_MANEUVER:
+
+    if not bit_list[1]:
+      hfo_env.act(save_action_prestate(action=hfo.REORIENT,
+                                       **prestate_dict))
+      return
+
+    poss_actions_set = set([hfo.DASH, hfo.MOVE_TO, hfo.INTERCEPT, hfo.MOVE, hfo.GO_TO_BALL])
+
+    if not bit_list[0]:
+      poss_actions_set.discard(hfo.MOVE_TO)
+      poss_actions_set.discard(hfo.MOVE)
+      poss_actions_set.discard(hfo.GO_TO_BALL)
+    if bit_list[4] or (not bit_list[5]):
+      poss_actions_set.discard(hfo.INTERCEPT)
+      poss_actions_set.discard(hfo.MOVE)
+      poss_actions_set.discard(hfo.GO_TO_BALL)
+
+    action = determine_which_action(list(poss_actions_set), namespace, bit_list)
+
+    if action in (hfo.INTERCEPT, hfo.MOVE, hfo.GO_TO_BALL):
+      hfo_env.act(save_action_prestate(action=action,
+                                       **prestate_dict))
+    elif action == hfo.DASH:
+      hfo_env.act(*save_action_prestate(action=hfo.DASH,
+                                        action_params=[random.uniform(60,100),
+                                                       random.uniform(-180,180)],
+                                        **prestate_dict))
+    elif action == hfo.MOVE_TO:
+      r = random.random()
+      if r < 0.25:
+        hfo_env.act(*save_action_prestate(action=hfo.MOVE_TO,
+                                          action_params=[random.uniform(-1.0,0.0),
+                                                         random.uniform(-1.0,-0.5)],
+                                          **prestate_dict))
+      elif r < 0.5:
+        hfo_env.act(*save_action_prestate(action=hfo.MOVE_TO,
+                                          action_params=[random.uniform(-1.0,0.0),
+                                                         random.uniform(0.5,1.0)],
+                                          **prestate_dict))
+      elif r < 0.75:
+        hfo_env.act(*save_action_prestate(action=hfo.MOVE_TO,
+                                          action_params=[random.uniform(0.0,1.0),
+                                                         random.uniform(-1.0,-0.5)],
+                                          **prestate_dict))
+      else:
+        hfo_env.act(*save_action_prestate(action=hfo.MOVE_TO,
+                                          action_params=[random.uniform(0.0,1.0),
+                                                         random.uniform(0.5,1.0)],
+                                          **prestate_dict))
+    else:
+      raise RuntimeError("Unknown action {0!r}".format(action))
+
   else:
     raise RuntimeError("Unexpected intent {0!r}".format(namespace.intent))
 
@@ -1179,13 +1250,29 @@ def do_next_action(hfo_env,
                    namespace):
   bit_list, self_dict, goal_dict, ball_dict = filter_low_level_state(state, namespace)
 
+  reorient_dict = {'action': hfo.REORIENT,
+                   'prestate_bit_list': bit_list,
+                   'prestate_self_dict': self_dict,
+                   'prestate_goal_dict': goal_dict,
+                   'prestate_ball_dict': ball_dict,
+                   'checking_intent': False,
+                   'intent': namespace.intent,
+                   'namespace': namespace}
+
   if not bit_list[1]: # self velocity invalid
-    # long-term: Turn, Kick, Kick_To
-    raise NotImplementedError("Not yet set up for self velocity invalid")
+    if namespace.intent is not None:
+      hfo_env.act(save_action_prestate(**reorient_dict))
+      return None
 
   prior_intent = namespace.intent
   # admittedly, need to check for some of "intent" circumstances in combo!
-  if namespace.intent == INTENT_BALL_COLLISION:
+  if namespace.intent == INTENT_RANDOM_MANEUVER:
+    if ((bit_list[0] < namespace.prestate_bit_list[0]) or
+        (bit_list[1] < namespace.prestate_bit_list[1]) or
+        (bit_list[5] < namespace.prestate_bit_list[5]) or
+        (bit_list[6] < namespace.prestate_bit_list[6])):
+      namespace.intent = None
+  elif namespace.intent == INTENT_BALL_COLLISION:
     if bit_list[2]:
       namespace.intent = None
     else:
@@ -1198,7 +1285,8 @@ def do_next_action(hfo_env,
             namespace.intent = decide_intent([INTENT_GOAL_COLLISION, INTENT_PLAYER_COLLISION],
                                              namespace)
         else:
-          raise NotImplementedError("Not yet set up for self+ball location invalid")
+          hfo_env.act(save_action_prestate(**reorient_dict))
+          return None
   elif namespace.intent == INTENT_BALL_KICKABLE:
     if bit_list[4]:
       namespace.intent = None
@@ -1212,7 +1300,7 @@ def do_next_action(hfo_env,
             namespace.intent = decide_intent([INTENT_GOAL_COLLISION, INTENT_PLAYER_COLLISION],
                                              namespace)
         else:
-          raise NotImplementedError("Not yet set up for self+ball location invalid")
+          hfo_env.act(save_action_prestate(**reorient_dict))
   elif namespace.intent == INTENT_GOAL_COLLISION:
     if bit_list[3]:
       namespace.intent = None
@@ -1245,24 +1333,37 @@ def do_next_action(hfo_env,
   # figure out what to do next
 
   actions_want_check = set([])
-  if (bit_list[4] and bit_list[3]):
-    actions_want_check |= set([hfo.KICK, hfo.KICK_TO])
-  elif ((not bit_list[4]) and bit_list[2]):
-    actions_want_check |= set([hfo.MOVE])
-##  if bit_list[2] or bit_list[3]:
-##    if bit_list[4]: # kickable
-##      actions_want_check |= set([hfo.KICK, hfo.KICK_TO])
-##    elif bit_list[2]:
-##      actions_want_check |= set([hfo.MOVE])
-##    if bit_list[7]: # collision w/player
-##      if bit_list[4]:
-##        actions_want_check |= set([hfo.DRIBBLE])
-##      else:
-##        actions_want_check |= set([hfo.GO_TO_BALL])
+  if not bit_list[0]:
+    actions_want_check |= set([hfo.DASH, hfo.TURN, hfo.REORIENT, hfo.DRIBBLE_TO])
+    if bit_list[4]:
+      actions_want_check |= set([hfo.KICK])
+      if self_dict['other_angle'] is not None:
+        actions_want_check |= set([hfo.PASS])
+    else:
+      actions_want_check |= set([hfo.INTERCEPT])
+  elif not bit_list[1]:
+    actions_want_check |= set([hfo.TURN, hfo.REORIENT])
+    if bit_list[4]:
+      actions_want_check |= set([hfo.KICK_TO])
+      if self_dict['other_angle'] is not None:
+        actions_want_check |= set([hfo.PASS])
+    elif bit_list[5]:
+      actions_want_check |= set([hfo.INTERCEPT])
+
+  if bit_list[5] and not bit_list[6]:
+    actions_want_check |= set([hfo.REORIENT, hfo.DRIBBLE_TO])
+    if bit_list[4]:
+      actions_want_check |= set([hfo.KICK, hfo.DRIBBLE])
+      if bit_list[0]:
+        actions_want_check |= set([hfo.KICK_TO])
+        if self_dict['other_angle'] is not None:
+          actions_want_check |= set([hfo.PASS])
+    else:
+      if bit_list[1] and (not bit_list[0]):
+        actions_want_check |= set([hfo.INTERCEPT])
 
   if not actions_want_check:
-    poss_intent_set = set([INTENT_BALL_KICKABLE,INTENT_BALL_COLLISION,
-                           INTENT_GOAL_COLLISION])
+    poss_intent_set = set([INTENT_BALL_KICKABLE,INTENT_RANDOM_MANEUVER])
 
     if (not bit_list[5]) or (ball_dict['x_pos'] is None):
       poss_intent_set.discard(INTENT_BALL_KICKABLE)
@@ -1277,7 +1378,9 @@ def do_next_action(hfo_env,
       poss_intent_set.discard(INTENT_PLAYER_COLLISION)
 
     if not poss_intent_set:
-      raise NotImplementedError("Not yet set up for self+ball location invalid")
+      hfo_env.act(save_action_prestate(**reorient_dict))
+      return None
+      #raise NotImplementedError("Not yet set up for self+ball location invalid")
 
     namespace.intent = decide_intent(list(poss_intent_set), namespace)
 
@@ -1296,26 +1399,14 @@ def do_next_action(hfo_env,
   if bit_list[7] and (prior_intent not in (None, INTENT_PLAYER_COLLISION)):
     namespace.intent_done[INTENT_PLAYER_COLLISION] += 1
 
-  actions_maybe_check = set([hfo.TURN])
-  if bit_list[4]:
-    actions_maybe_check |= set([hfo.KICK])
-  else:
-    actions_maybe_check |= set([hfo.DASH])
-
-  if bit_list[0]:
-    actions_maybe_check |= set([hfo.MOVE_TO])
-    if bit_list[5] and (ball_dict['x_pos'] is not None):
-      actions_maybe_check |= set([hfo.DRIBBLE_TO])
-      if bit_list[4]:
-        actions_maybe_check |= set([hfo.KICK_TO,hfo.DRIBBLE])
-        if (self_dict['other_angle'] is not None) and (1 <= namespace.other_dict['unum'].value <= 11):
-          actions_maybe_check |= set([hfo.PASS])
-      else:
-        actions_maybe_check |= set([hfo.INTERCEPT,hfo.GO_TO_BALL,hfo.MOVE])
-
-  if not bit_list[6]: # ball velocity invalid
-    # long-term: Kick, Kick_To, Intercept - if know ball location; Kick_To requires self location valid
-    raise NotImplementedError("Not yet set up for ball velocity invalid")
+  actions_maybe_check = set([hfo.DASH, hfo.TURN, hfo.KICK_TO, hfo.INTERCEPT, hfo.MOVE,
+                             hfo.DRIBBLE, hfo.REORIENT])
+  if not bit_list[2]: # ball collision
+    actions_maybe_check |= set([hfo.KICK, hfo.MOVE_TO, hfo.GO_TO_BALL])
+  if not bit_list[3]: # post collision
+    actions_maybe_check |= set([hfo.DRIBBLE_TO])
+    if not bit_list[7]: # player collision
+      actions_maybe_check |= set([hfo.PASS])
 
   poss_actions = actions_want_check & actions_maybe_check
 
@@ -1383,7 +1474,7 @@ def do_next_action(hfo_env,
   else:
     direction = random.uniform(-180,180)
 
-  if action in (hfo.INTERCEPT, hfo.GO_TO_BALL, hfo.DRIBBLE, hfo.MOVE):
+  if action in (hfo.INTERCEPT, hfo.GO_TO_BALL, hfo.DRIBBLE, hfo.MOVE, hfo.REORIENT):
     hfo_env.act(save_action_prestate(**prestate_dict))
   elif action is hfo.PASS:
     hfo_env.act(*save_action_prestate(action_params=[namespace.other_dict['unum'].value],
@@ -1440,6 +1531,7 @@ def run_player2(conf_dir, args, namespace):
 
   status=hfo.IN_GAME
   while status != hfo.SERVER_DOWN:
+    did_reorient = False
     if status == hfo.IN_GAME:
       state2 = hfo_env2.getState()
       namespace.other_dict['x_pos'].value = state2[0]
@@ -1448,17 +1540,26 @@ def run_player2(conf_dir, args, namespace):
       namespace.other_dict['ball_y_pos'].value = state2[4]
       namespace.other_dict['self_x_pos'].value = state2[13]
       namespace.other_dict['self_y_pos'].value = state2[14]
-                                          
+
       if (abs(state2[0])
-          <= 1) and (abs(state2[1])
-                     <= 1) and (get_dist_normalized(0.0,
-                                                    0.0,
-                                                    state2[0],
-                                                    state2[1])
-                                > POS_ERROR_TOLERANCE):
+          < 1) and (abs(state2[1])
+                    < 1):
+        if get_dist_normalized(0.0,
+                               0.0,
+                               state2[0],
+                               state2[1]) > POS_ERROR_TOLERANCE:
+          hfo_env2.act(hfo.MOVE_TO,0.0,0.0)
+          did_reorient = False
+        else:
+          hfo_env2.act(hfo.TURN,random.uniform(-180,180))
+          did_reorient = False
+      elif did_reorient and (abs(state2[0]) <= 1) and (abs(state2[1]) <= 1):
         hfo_env2.act(hfo.MOVE_TO,0.0,0.0)
+        did_reorient = False
       else:
-        hfo_env2.act(hfo.TURN,random.uniform(-180,180))
+        hfo_env2.act(hfo.REORIENT)
+        did_reorient = True
+        
       
       status = hfo_env2.step()
 
@@ -1469,7 +1570,7 @@ def run_player2(conf_dir, args, namespace):
   sys.exit(0)
 
 
-def main_explore_offense_actions_fullstate():
+def main_explore_offense_actions():
   parser = argparse.ArgumentParser()
   parser.add_argument('--port', type=int, default=6000,
                       help="Server port")
@@ -1489,6 +1590,7 @@ def main_explore_offense_actions_fullstate():
   namespace.intent_done[INTENT_BALL_KICKABLE] = 0
   namespace.intent_done[INTENT_GOAL_COLLISION] = 0
   namespace.intent_done[INTENT_PLAYER_COLLISION] = 0
+  namespace.intent_done[INTENT_RANDOM_MANEUVER] = 0
   namespace.action_tried = {}
   namespace.struct_tried = {}
   for n in list(range(hfo.NUM_HFO_ACTIONS)):
@@ -1514,8 +1616,7 @@ def main_explore_offense_actions_fullstate():
                 "--frames-per-trial=3000", "--untouched-time=2000",
                 "--port={0:d}".format(args.port),
                 "--offense-agents=2", "--defense-npcs=0",
-                "--offense-npcs=0", "--trials=20", "--headless",
-                "--fullstate"]
+                "--offense-npcs=0", "--trials=20", "--headless"]
 
   if args.record:
     popen_list.append("--record")
@@ -1606,4 +1707,4 @@ def main_explore_offense_actions_fullstate():
 
 
 if __name__ == '__main__':
-  main_explore_offense_actions_fullstate()
+  main_explore_offense_actions()

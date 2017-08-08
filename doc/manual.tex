@@ -14,6 +14,7 @@
 \usepackage[cm]{fullpage}
 \usepackage{enumitem}
 \usepackage{subcaption}
+\usepackage{color}
 
 \title{RoboCup 2D Half Field Offense \\ Technical Manual}
 \author{Matthew Hausknecht}
@@ -613,29 +614,29 @@ below the table for the action abbreviations and notes.
 
 \begin{center}
 {\footnotesize
-\begin{tabular}{r       | c    c    c    c | c    c    c    c  | c    c    c    c    c    c    c    c    c    c}
-Action                  & Da & Tu & Ta & K & KT & MT & DT & I  & M  & S  & P  & Dr & C  & RG & DG & G & MP & Re \\
+\begin{tabular}{r       | c    c    c    c | c    c    c    c | c   c   c   c   c   c    c    c   c    c}
+Action                  & Da & Tu & Ta & K & KT & MT & DT & I & M & S & P & D & C & RG & DG & G & MP & Re \\
 \hline \hline
-Self position invalid   & Y  & Y  & Y  & Y & N  & N  & N? & N? & N  & N? & N? & Y  & ?  & N  & N  & N & N  & Y \\
-Self velocity invalid   & N  & Y? & Y? & Y & ?  & N  & N  & N  & N  & ?  & ?  & Y  & Y  & N  & N  & N & N  & Y \\
-Ball position invalid   & Y  & Y  & Y? & N & N  & Y  & N  & N  & N  & N  & N  & Y  & N  & N  & N  & N & N  & Y \\
-Ball velocity invalid   & Y  & Y  & Y  & ? & ?  & Y  & Y  & N? & ?  & N  & N? & Y? & Y? & Y  & Y  & Y & Y  & Y \\
-Teammate loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y  & N  & Y  & N  & Y? & Y  & Y  & Y  & Y & Y  & Y \\
-Team. unum invalid      & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y  & Y  & Y  & N  & Y  & Y  & Y  & Y  & Y & Y  & Y \\
-Opponent loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & Y? & Y  & N  & Y? & Y  & Y? & Y  & Y  & Y  & Y & N  & Y \\
-Opp. unum invalid       & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y & N  & Y \\
+Self position invalid   & Y  & Y  & Y  & Y & N  & N  & N  & N & N & N & N & Y & Y & N  & N  & N & N  & Y \\
+Self velocity invalid   & N  & Y  & Y  & Y & N  & N  & N  & N & N & N & Y & Y & Y & N  & N  & N & N  & Y \\
+Ball position invalid   & Y  & Y  & Y  & N & N  & Y  & Y  & N & N & N & N & Y & N & N  & N  & N & N  & Y \\
+Ball velocity invalid   & Y  & Y  & Y  & Y & N  & Y  & N  & Y & Y & N & N & Y & Y & Y  & Y  & Y & Y  & Y \\
+Teammate loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y  & Y \\
+Team. unum invalid      & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y  & Y \\
+Opponent loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & N  & Y & N & Y & Y & N & Y & Y  & Y  & Y & N  & Y \\
+Opp. unum invalid       & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & Y & Y & Y & Y  & Y  & Y & N  & Y \\
 \hline
-Ball kickable           & Y  & Y  & Y  & Y & Y  & N  & Y  & N  & *  & Y  & Y  & Y  & Y  & ?  & ?  & N & Y  & N \\
-Ball not kickable       & Y  & Y  & Y  & N & N  & Y  & Y  & Y  & Y  & N  & N  & N  & Y  & Y  & Y  & Y & Y  & Y \\
+Ball kickable           & Y  & Y  & Y  & Y & Y  & N  & Y  & N & * & Y & Y & Y & Y & N  & N  & N & Y  & N \\
+Ball not kickable       & Y  & Y  & Y  & N & N  & Y  & Y  & Y & Y & N & N & N & Y & Y  & Y  & Y & Y  & Y \\
 \hline
-Frozen                  & N  & N  & N  & N & N  & N  & N? & N  & N? & N  & N  & Y  & N? & N  & N  & N & N  & Y \\
-Colliding w/ball        & Y  & Y  & ?  & N & Y  & N  & Y  & Y  & Y  & ?  & Y  & Y  & ?  & ?  & ?  & N & ?  & ? \\
-Colliding w/player      & Y  & Y  & ?  & Y & Y  & Y  & Y  & Y  & Y  & ?  & N  & Y  & ?  & ?  & ?  & Y & ?  & ? \\
-Colliding w/post        & Y  & Y  & N? & Y & Y  & Y  & N  & Y  & Y  & ?  & N  & Y  & ?  & Y  & Y  & Y & Y  & ? \\
+Frozen                  & N  & N  & N  & N & N  & N  & N  & N & N & N & N & Y & N & N  & N  & N & N  & Y \\
+Colliding w/ball        & Y  & Y  & N  & N & Y  & N  & Y  & Y & Y & Y & Y & Y & Y & N  & N  & N & N  & N \\
+Colliding w/player      & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y  & Y \\
+Colliding w/post        & Y  & Y  & Y  & Y & Y  & Y  & N  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y  & Y \\
 \hline
-Offense                 & Y  & Y  & N  & Y & Y  & Y  & Y  & Y  & Y  & Y  & Y  & Y  & N  & N  & N  & Y & N  & Y \\
-Defense, not goalie     & Y  & Y  & Y  & N & N  & Y  & N  & Y  & Y  & N  & N  & N  & N  & Y  & ?  & Y & Y  & Y \\
-Goalie (defense)        & Y  & Y  & Y  & N & N  & Y  & N  & Y  & ?  & N  & N  & N  & Y  & ?  & ?  & ? & N  & Y \\
+Offense                 & Y  & Y  & N  & Y & Y  & Y  & Y  & Y & Y & Y & Y & Y & N & N  & N  & Y & N  & Y \\
+Defense, not goalie     & Y  & Y  & Y  & N & N  & Y  & N  & Y & Y & N & N & N & N & Y  & Y  & Y & Y  & Y \\
+Goalie (defense)        & Y  & Y  & Y  & N & N  & Y  & N  & Y & Y & N & N & N & Y & N  & Y  & N & N  & Y \\
 \end{tabular}
 }
 \end{center}
@@ -643,7 +644,7 @@ Goalie (defense)        & Y  & Y  & Y  & N & N  & Y  & N  & Y  & ?  & N  & N  & 
 \begin{itemize}[noitemsep]
 \item{Da:\,Dash; Tu:\,Turn; Ta:\,Tackle; K:\,Kick}
 \item{KT:\,Kick\_To; MT:\,Move\_To; DT:\,Dribble\_To; I:\,Intercept}
-\item{M:\,Move; S:\,Shoot; P:\,Pass; Dr:\,Dribble; C:\,Catch; RG:\,Reduce\_Angle\_To\_Goal; DG:\,Defend\_Goal; G:\,Go\_To\_Ball; MP:\,Mark\_Player; Re: Reorient}
+\item{M:\,Move; S:\,Shoot; P:\,Pass; D:\,Dribble; C:\,Catch; RG:\,Reduce\_Angle\_To\_Goal; DG:\,Defend\_Goal; G:\,Go\_To\_Ball; MP:\,Mark\_Player; Re: Reorient}
 \end{itemize}
 
 \section{Developing a New Agent}
