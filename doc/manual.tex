@@ -11,7 +11,7 @@
 \renewcommand*{\labelenumi}{\theenumi}
 
 \usepackage{hyperref,graphicx}
-\usepackage{fullpage}
+\usepackage[cm]{fullpage}
 \usepackage{enumitem}
 \usepackage{subcaption}
 
@@ -153,6 +153,9 @@ visualizer. \\
 \noindent To change the logging directory:\\
 \verb+  > ./bin/HFO --log-dir /path/to/new/dir +
 
+Note that the logs can become quite large for a prolonged series of
+episodes.
+
 \section{Making Videos}
 It is possible to make videos from logs by saving frames from
 SoccerWindow2. It helps to full-screen SoccerWindow2 before making a
@@ -197,9 +200,9 @@ A seed may be specified as follows:\\
 
 This seed will determine the placement of the players and the ball at
 the beginning of each episode. Due to non-determinism in the player
-policies, it is not sufficient to precisely replicate full games. It
+policies, it is \textbf{not} sufficient to precisely replicate full games. It
 \textit{only} replicates the starting conditions for each episode. The
-player's behavior, observations, and physics all proceed
+players' behavior, observations, and physics all proceed
 stochastically.
 
 \section{Player On Ball}
@@ -227,7 +230,7 @@ follows:\\
 
 This would take offense NPCs from Helios' 2013 Eindhoven release and
 defensive NPCs from the default Agent2D-base. Currently the only
-supported teams are Helios and Base.
+supported teams are Helios (on Linux only) and Base.
 
 \section{Communication}
 HFO allows agents to receive and broadcast messages. This is
@@ -239,19 +242,20 @@ maximum allowed message size is controlled by HFO's
 
 \section{Fullstate}
 By default, perceptions and actions in HFO are noisy. The
-\verb+ --fullstate+ flag in HFO removes noise from the agent's
+\verb|--fullstate| flag in HFO removes noise from the agent's
 perception of the world. Many tasks become significantly easier as a
 result. Noise in actions remains. This flag is disabled by default.
 
 \section{Controlling Trials}
-HFO trials typically end with a goal, the defense capturing the ball,
-the ball going out of bounds, or running out of time. The trials flag
-specifies a maximum number of trials
-\verb+ > ./bin/HFO --trials 500+. Instead, a maximum number of frames
-may be specified: \verb+ > ./bin/HFO --frames 1000+ will stop the
-server after 10,000 steps have passed. Each trial is run for a maximum
-of \verb --frames-per-trial \ steps, but may stop early if no agent
-approaches the ball within \verb --untouched-time \ steps.
+HFO trials typically end with a goal, the defense capturing
+the ball, the ball going out of bounds, or running out of time.
+The trials flag specifies a maximum number of
+trials: \verb|> ./bin/HFO --trials 500|.
+Instead, a maximum number of frames may be specified; for
+instance, \verb|--frames 1000| will stop the
+server after 1,000 steps have passed. Each trial is run for a
+maximum of \verb|--frames-per-trial| steps, but may stop early
+if no agent approaches the ball within \verb|--untouched-time| steps.
 
 \section{State Spaces}
 The HFO domains provides a choice between a low and a high-level
@@ -271,7 +275,7 @@ used. The following sections explain the feature sets.
 
 \subsection{High Level Feature Set}
 A set of high-level features is provided following the example given
-by Barrett et al. pp. 159-160 \cite{THESIS14-Barrett}. Barrett writes
+by Barrett pp. 159-160 \cite{THESIS14-Barrett}. Barrett writes:
 ``There are many ways to represent the state of a game of half field
 offense.  Ideally, we want a compact representation that allows the
 agent to learn quickly by generalizing its knowledge about a state to
@@ -373,8 +377,8 @@ value of -1. Otherwise it will assume the maximum value of 1.
 
 The features associated with a valid feature are given the value of
 zero if an inconsistency is detected. For example, if the world model
-detects that the agent's velocity is invalid, the feature that encodes
-the magnitude of self velocity will be set to zero.
+detects that the agent's velocity perception is invalid, the feature
+that encodes the magnitude of self velocity will be set to zero.
 
 \subsubsection{Angular Features}
 \textit{Angular features} (e.g. the angle to the ball), are encoded as
@@ -391,8 +395,8 @@ changes in $\theta$.
 Given an angular feature $\langle \alpha_1, \alpha_2 \rangle$ we can
 recover the original angle $\theta$ (in radians) by taking the
 $cos^{-1}(\alpha_2)$ and multiplying by the sign of $\alpha_1$.
-Another method uses the common 'atan2' function as
-$atan2(\alpha_1, \alpha_2)$.
+Another method, possibly preferable in the presence of noise, uses
+the common 'atan2' function as $atan2(\alpha_1, \alpha_2)$.
 
 \begin{figure*}[htp]
   \centering
@@ -432,7 +436,7 @@ Landmark features encode the relative angle and proximity of the agent
 to a landmark of interest. Each landmark feature consists of three
 floating point values, two to encode the agent's relative angle to the
 landmark and one to encode the landmark's proximity. Note that if the
-agent's self position is invalid, then the landmark feature values are
+agent's self position is invalid, the landmark feature values are
 zeroed.
 
 \subsubsection{Player Features}
@@ -448,7 +452,7 @@ In the low-level feature space, unknown uniform numbers, or \textit{unums},
 are encoded as -1, while known ones are encoded as $\frac{unum}{100}$, thus
 remaining well within the $[-1, 1]$ range. (Note that roundoff error may need
 to be allowed for when converting these back to integers, such as for use in
-high-level actions; e.g., 0.0799 will need to be converted back to 8.)
+high-level actions; \textit{e.g.}, 0.0799 will need to be converted back to 8.)
 Uniform number features, a later addition to the low-level feature space,
 are positioned after all other features to hopefully ensure compatibility
 with older programs.
@@ -487,12 +491,12 @@ low-level features:
   \itemrange{2}{\textbf{Penalty Box Center} [Landmark] Center of the penalty box line.}
   \itemrange{2}{\textbf{Penalty Box Top} [Landmark] Top corner of the penalty box.}
   \itemrange{2}{\textbf{Penalty Box Bot} [Landmark] Bottom corner of the penalty box.}
-  \itemrange{2}{\textbf{Center Field} [Landmark] The left middle point of the
-    HFO play area.}
+  \itemrange{2}{\textbf{Center Field} [Landmark] The left middle point of the RoboCup field
+    (note that this is \textbf{not} the center of the HFO play area).}
   \itemrange{2}{\textbf{Corner Top Left} [Landmark] Top left corner HFO Playfield.}
   \itemrange{2}{\textbf{Corner Top Right} [Landmark] Top right corner HFO Playfield.}
-  \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bot right corner HFO Playfield.}
-  \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bot left corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Right} [Landmark] Bottom right corner HFO Playfield.}
+  \itemrange{2}{\textbf{Corner Bot Left} [Landmark] Bottom left corner HFO Playfield.}
   \item{\textbf{OOB Left Dist} [Proximity] Proximity to the nearest
     point of the left side of the HFO playable area. E.g. distance
     remaining before the agent goes out of bounds in left field.}
@@ -506,17 +510,21 @@ low-level features:
   \item{\textbf{Ball Vel Valid} [Valid] Indicates the ball velocity estimate is valid.}
   \item{\textbf{Ball Vel Mag} [Other] Magnitude of the ball's velocity.}
   \itemrange{1}{\textbf{Ball Vel Ang} [Angle] Global angle of ball velocity.}
-  \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features) for each teammate active in HFO, sorted by proximity to the agent.}
-  \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features) for each opponent present, sorted by proximity to the player.}
-  \item [$T$]  {\textbf{Teammate Uniform Nums} [Unum] One uniform number for each teammate active in HFO, sorted by proximity to the agent.}
-  \item [$O$]  {\textbf{Opponent Uniform Nums} [Unum] One uniform number for each opponent present, sorted by proximity to the player.}
+  \item [$8T$] {\textbf{Teammate Features} [Player] One teammate feature set (8 features)
+	for each teammate active in HFO, sorted by proximity to the agent.}
+  \item [$8O$] {\textbf{Opponent Features} [Player] One opponent feature set (8 features)
+	for each opponent active in HFO, sorted by proximity to the player.}
+  \item [$T$]  {\textbf{Teammate Uniform Nums} [Unum] One uniform number for each teammate active in HFO,
+	sorted by proximity to the agent.}
+  \item [$O$]  {\textbf{Opponent Uniform Nums} [Unum] One uniform number for each opponent active in HFO,
+	sorted by proximity to the player.}
 \end{enumerate}
 
 \section{Action Space}
 The HFO domain provides support for both low-level primitive actions,
 mid-level, and high-level strategic actions. Low-level, parameterized
 actions are provided for locomotion and kicking. Mid-level actions are
-still parameterized by capture high level activities such as
+still mostly parameterized but capture high-level activities such as
 dribbling. Finally, high-level discrete, strategic actions are
 available for moving, shooting, passing and dribbling. Control of the
 agent's head and gaze is not provided and follows Agent2D's default
@@ -579,14 +587,13 @@ faithfully report which action spaces were used.
   combination of short kicks and moves.}
 \item{\textbf{Catch}(): This goalie-specific action may be used to
   catch the ball.}
-\item {\textbf{Reduce\_Angle\_To\_Goal} (): Moves the agent to a point on the field, such that the kicker has the least open angle to the goal. }
-
-
-\item {\textbf{Defend\_Goal} () : Moves the agent to a point on a fixed line on the field, such that the kicker has the least open angle to the goal.}
-
-\item {\textbf{Go\_To\_Ball} (): Makes the agent go towards the ball.}
-
-\item {\textbf{Mark\_Player} (uniform\_number): Moves the agent so as to mark the player with the specified uniform number.}
+\item{\textbf{Reduce\_Angle\_To\_Goal}(): Moves the agent to a point on the field,
+	such that the kicker has the least open angle to the goal. }
+\item{\textbf{Defend\_Goal}(): Moves the agent to a point on a fixed line on the field,
+	such that the kicker has the least open angle to the goal.}
+\item{\textbf{Go\_To\_Ball}(): Makes the agent go towards the ball.}
+\item{\textbf{Mark\_Player}(uniform\_number): Moves the agent so as to mark the player
+	with the specified uniform number.}
 
 \end{itemize}
 
@@ -597,12 +604,52 @@ faithfully report which action spaces were used.
   terminate the HFO environment.}
 \end{itemize}
 
+\subsection{Applicable Actions}
+The Special Actions are always applicable (potentially appropriate). The below table indicates whether
+other actions are applicable (only if there are no ``N''s indicated); check
+below the table for the action abbreviations and notes.
+
+\begin{center}
+{\footnotesize
+\begin{tabular}{r       | c    c    c    c | c    c    c    c | c   c   c   c   c   c    c    c    c}
+Action                  & Da & Tu & Ta & K & KT & MT & DT & I & M & S & P & D & C & RG & DG & G & MP \\
+\hline \hline
+Self position invalid   & Y  & Y  & Y  & Y & N  & N  & N  & N & N & N & N & Y & Y & N  & N  & N & N \\
+Self velocity invalid   & N  & Y  & Y  & Y & N  & N  & N  & N & N & N & Y & Y & Y & N  & N  & N & N \\
+Ball position invalid   & Y  & Y  & Y  & N & N  & Y  & Y  & N & N & N & N & Y & N & N  & N  & N & N \\
+Ball velocity invalid   & Y  & Y  & Y  & Y & N  & Y  & N  & Y & Y & N & N & Y & Y & Y  & Y  & Y & Y \\
+Teammate loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y \\
+Team. unum invalid      & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y \\
+Opponent loc invalid    & Y  & Y  & Y  & Y & Y  & Y  & N  & Y & N & Y & Y & N & Y & Y  & Y  & Y & N \\
+Opp. unum invalid       & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & Y & Y & Y & Y  & Y  & Y & N \\
+\hline
+Ball kickable           & Y  & Y  & Y  & Y & Y  & N  & Y  & N & * & Y & Y & Y & Y & N  & N  & N & Y \\
+Ball not kickable       & Y  & Y  & Y  & N & N  & Y  & Y  & Y & Y & N & N & N & Y & Y  & Y  & Y & Y \\
+\hline
+Frozen                  & N  & N  & N  & N & N  & N  & N  & N & N & N & N & N & N & N  & N  & N & N \\
+Colliding w/ball        & Y  & Y  & N  & N & Y  & N  & Y  & Y & Y & Y & Y & Y & Y & N  & N  & N & N \\
+Colliding w/player      & Y  & Y  & Y  & Y & Y  & Y  & Y  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y \\
+Colliding w/post        & Y  & Y  & Y  & Y & Y  & Y  & N  & Y & Y & Y & N & Y & Y & Y  & Y  & Y & Y \\
+\hline
+Offense                 & Y  & Y  & N  & Y & Y  & Y  & Y  & Y & Y & Y & Y & Y & N & N  & N  & Y & N \\
+Defense, not goalie     & Y  & Y  & Y  & N & N  & Y  & N  & Y & Y & N & N & N & N & Y  & Y  & Y & Y \\
+Goalie (defense)        & Y  & Y  & Y  & N & N  & Y  & N  & Y & Y & N & N & N & Y & N  & Y  & N & N \\
+\end{tabular}
+}
+\end{center}
+*: The Move command is not recommended for offensive players able to kick the ball, but can work for defensive players (usually by triggering a tackle).\\
+\begin{itemize}[noitemsep]
+\item{Da:\,Dash; Tu:\,Turn; Ta:\,Tackle; K:\,Kick}
+\item{KT:\,Kick\_To; MT:\,Move\_To; DT:\,Dribble\_To; I:\,Intercept}
+\item{M:\,Move; S:\,Shoot; P:\,Pass; D:\,Dribble; C:\,Catch; RG:\,Reduce\_Angle\_To\_Goal; DG:\,Defend\_Goal; G:\,Go\_To\_Ball; MP:\,Mark\_Player}
+\end{itemize}
+
 \section{Developing a New Agent}
 
 New agents may be developed in C++ or Python. In Python, as long as
-the hfo interface has been installed, the agent needs only to
-\verb+from hfo import *+. In C++ it is necessary to
-\verb+#include <HFO.hpp>+ and also to link against the shared object
+the hfo interface has been installed, the agent only needs to
+\verb+import hfo+ (or \verb+from hfo import *+). In C++, it is necessary to
+\verb+#include <HFO.hpp>+ and also link against the shared object
 library \verb+lib/libhfo.so+ when compiling:
 
 \begin{verbatim}
