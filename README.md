@@ -16,13 +16,14 @@ RoboCup 2D Half Field Offense
  - numpy
 
 ## Install
-Note: There is no need for 'sudo' with 'make install' - the files will be installed below the starting directory.
 ```
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=RelwithDebInfo ..
 make -j4
 make install
 ```
+Note: There is no need for 'sudo' with 'make install' - the files will be installed below the starting directory.
+
 #### Python Install [required for python interface]
 From the main HFO directory: `pip install [--user] .`
 
