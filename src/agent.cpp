@@ -727,10 +727,12 @@ Agent::doReorient()
         dlog.addText( Logger::TEAM,
                       __FILE__": tackle wait. expires= %d",
                       wm.self().tackleExpires() );
-        // face neck to ball
-        this->setViewAction( new View_Tactical() );
-        this->setNeckAction( new Neck_TurnToBallOrScan() );
-        return true;
+
+	if (Bhv_Emergency().execute( this )){ // includes change view
+	  return ACTION_STATUS_MAYBE;
+	} else {
+	  return ACTION_STATUS_UNKNOWN;
+	}
     }
 
     //
