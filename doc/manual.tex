@@ -573,9 +573,9 @@ faithfully report which action spaces were used.
 \label{sec:high_level_actions}
 \begin{itemize}[noitemsep]
 \item{\textbf{Move}(): Re-positions the agent according to the
-  strategy given by Agent2D. The \textit{move} command works only when
-  agent does not have the ball. If the agent has the ball, another
-  command such as \textit{dribble}, \textit{shoot}, or \textit{pass}
+  strategy given by Agent2D. The \textit{Move} command works only when
+  the agent does not have the ball. If the agent has the ball, another
+  command such as \textit{Dribble}, \textit{Shoot}, or \textit{Pass}
   should be used.}
 \item{\textbf{Shoot}(): Executes the best available shot. This command
   only works when the agent has the ball.}
@@ -594,7 +594,8 @@ faithfully report which action spaces were used.
 \item{\textbf{Go\_To\_Ball}(): Makes the agent go towards the ball.}
 \item{\textbf{Mark\_Player}(uniform\_number): Moves the agent so as to mark the player
 	with the specified uniform number.}
-
+\item{\textbf{Reorient}(): Deal with loss of self or ball localization information and
+	pay increased attention to surroundings.}
 \end{itemize}
 
 \subsection{Special Actions}
