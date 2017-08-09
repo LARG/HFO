@@ -603,7 +603,7 @@ Agent::doPreprocess()
                   __FILE__": (doPreProcess)" );
 
     //
-    // freezed by tackle effect
+    // frozen by tackle effect
     //
     if ( wm.self().isFrozen() )
     {
@@ -728,11 +728,7 @@ Agent::doReorient()
                       __FILE__": tackle wait. expires= %d",
                       wm.self().tackleExpires() );
 
-	if (Bhv_Emergency().execute( this )){ // includes change view
-	  return ACTION_STATUS_MAYBE;
-	} else {
-	  return ACTION_STATUS_UNKNOWN;
-	}
+	return Bhv_Emergency().execute( this )); // includes change view
     }
 
     //
@@ -761,8 +757,7 @@ Agent::doReorient()
 	dlog.addText( Logger::TEAM,
                       __FILE__": invalid my vel" );
       }
-      Bhv_Emergency().execute( this ); // includes change view
-      return true;
+      return Bhv_Emergency().execute( this ); // includes change view
     }
 
     //
@@ -783,21 +778,9 @@ Agent::doReorient()
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
-        Bhv_NeckBodyToBall().execute( this );
-        return true;
+        return Bhv_NeckBodyToBall().execute( this );
     }
 
-
-
-    //
-    // check queued action
-    //
-    if ( this->doIntention() )
-    {
-        dlog.addText( Logger::TEAM,
-                      __FILE__": do queued intention" );
-        return true;
-    }
 
     //
     // check pass message
@@ -811,10 +794,18 @@ Agent::doReorient()
     if (! ( ball.rposValid() && ball.velValid() )) {
       dlog.addText( Logger::TEAM,
 		    __FILE__": search ball" );
-      Bhv_NeckBodyToBall().execute( this );
-      return true;
+      return Bhv_NeckBodyToBall().execute( this );
     }
-    
+
+    //
+    // check queued action
+    //
+    if ( this->doIntention() )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": do queued intention" );
+        return true;
+    }
 
     return false;
 }
