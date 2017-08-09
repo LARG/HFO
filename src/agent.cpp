@@ -831,18 +831,6 @@ Agent::doReorient()
 	}
     }
 
-
-
-    //
-    // check queued action
-    //
-    if ( this->doIntention() )
-    {
-        dlog.addText( Logger::TEAM,
-                      __FILE__": do queued intention" );
-        return ACTION_STATUS_MAYBE;
-    }
-
     //
     // check pass message
     //
@@ -861,7 +849,16 @@ Agent::doReorient()
 	return ACTION_STATUS_UNKNOWN;
       }
     }
-    
+
+    //
+    // check queued action
+    //
+    if ( this->doIntention() )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": do queued intention" );
+        return ACTION_STATUS_MAYBE;
+    }
 
     return ACTION_STATUS_BAD;
 }
