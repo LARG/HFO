@@ -247,6 +247,13 @@ void Agent::actionImpl() {
               << " parameters, given " << params.size() << std::endl;
     exit(1);
   }
+
+  // For now let's not worry about turning the neck or setting the vision.
+  // However, do this now so doesn't override anything changed by the requested action.
+  // TODO for librcsc: setViewActionDefault, setNeckActionDefault that will not overwrite if already set.
+  this->setViewAction(new View_Tactical());
+  this->setNeckAction(new Neck_TurnToBallOrScan());
+
   switch(requested_action) {
     case DASH:
       this->doDash(params[0], params[1]);
@@ -317,14 +324,15 @@ void Agent::actionImpl() {
     case GO_TO_BALL:
       this->doGoToBall();
       break;
+    case REORIENT:
+      this->doReorient();
+      break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
                 << requested_action << std::endl;
       exit(1);
   }
-  // For now let's not worry about turning the neck or setting the vision.
-  this->setViewAction(new View_Tactical());
-  this->setNeckAction(new Neck_TurnToBallOrScan());
+
 }
 
 void
@@ -600,7 +608,7 @@ Agent::doPreprocess()
                   __FILE__": (doPreProcess)" );
 
     //
-    // freezed by tackle effect
+    // frozen by tackle effect
     //
     if ( wm.self().isFrozen() )
     {
@@ -692,6 +700,115 @@ Agent::doPreprocess()
     //
     if ( doHeardPassReceive() )
     {
+        return true;
+    }
+
+    return false;
+}
+
+/*-------------------------------------------------------------------*/
+/*!
+  Alternative high-level action to always doing "Move"; usable by either side, although
+  probably more useful for offense. Variant of doPreprocess (above), which is called by doDribble.
+*/
+bool
+Agent::doReorient()
+{
+    // check tackle expires
+    // check self position accuracy
+    // ball search
+    // check queued intention
+
+    const WorldModel & wm = this->world();
+
+    dlog.addText( Logger::TEAM,
+                  __FILE__": (doPreProcessAsAction)" );
+
+    //
+    // frozen by tackle effect
+    //
+    if ( wm.self().isFrozen() )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": tackle wait. expires= %d",
+                      wm.self().tackleExpires() );
+
+	return Bhv_Emergency().execute( this ); // includes change view
+    }
+
+    //
+    // BeforeKickOff or AfterGoal. jump to the initial position
+    //
+    if ( wm.gameMode().type() == GameMode::BeforeKickOff
+         || wm.gameMode().type() == GameMode::AfterGoal_ )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": before_kick_off" );
+        Vector2D move_point =  Strategy::i().getPosition( wm.self().unum() );
+        Bhv_CustomBeforeKickOff( move_point ).execute( this );
+        this->setViewAction( new View_Tactical() );
+        return true;
+    }
+
+    //
+    // self localization error
+    //
+    if ( ! ( wm.self().posValid() && wm.self().velValid() ) )
+    {
+      if (! wm.self().posValid() ) {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": invalid my pos" );
+      } else {
+	dlog.addText( Logger::TEAM,
+                      __FILE__": invalid my vel" );
+      }
+      return Bhv_Emergency().execute( this ); // includes change view
+    }
+
+    //
+    // set default change view
+    //
+
+    this->setViewAction( new View_Tactical() );
+
+    //
+    // ball localization error
+    //
+    const int count_thr = ( wm.self().goalie()
+                            ? 10
+                            : 5 );
+    if ( wm.ball().posCount() > count_thr
+         || ( wm.gameMode().type() != GameMode::PlayOn
+              && wm.ball().seenPosCount() > count_thr + 10 ) )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": search ball" );
+        return Bhv_NeckBodyToBall().execute( this );
+    }
+
+
+    //
+    // check pass message
+    //
+    if ( doHeardPassReceive() )
+    {
+        return true;
+    }
+
+    const BallObject& ball = wm.ball();
+    if (! ( ball.rposValid() && ball.velValid() )) {
+      dlog.addText( Logger::TEAM,
+		    __FILE__": search ball" );
+      return Bhv_NeckBodyToBall().execute( this );
+    }
+
+    //
+    // check queued action
+    //
+    if ( this->doIntention() )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": do queued intention" );
         return true;
     }
 

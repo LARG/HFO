@@ -26,10 +26,10 @@ LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(NUM_FEATURE_SETS))
   [High-Level] Catch(): Catch the ball (Goalie Only)
   NOOP(): Do Nothing
   QUIT(): Quit the game '''
-NUM_HFO_ACTIONS = 19
+NUM_HFO_ACTIONS = 20
 DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
-    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL = list(range(NUM_HFO_ACTIONS))
-ACTION_STRINGS = ["Dash", "Turn", "Tackle", "Kick", "KickTo", "MoveTo", "DribbleTo", "Intercept", "Move", "Shoot", "Pass", "Dribble", "Catch", "No-op", "Quit", "Reduce_Angle_To_Goal", "Mark_Player", "Defend_Goal", "Go_To_Ball"]
+    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL,REORIENT = list(range(NUM_HFO_ACTIONS))
+ACTION_STRINGS = ["Dash", "Turn", "Tackle", "Kick", "KickTo", "MoveTo", "DribbleTo", "Intercept", "Move", "Shoot", "Pass", "Dribble", "Catch", "No-op", "Quit", "Reduce_Angle_To_Goal", "Mark_Player", "Defend_Goal", "Go_To_Ball", "Reorient"]
 
 ''' Possible game status
   [IN_GAME] Game is currently active
@@ -98,7 +98,7 @@ class HFOEnvironment(object):
                       play_goalie=False,
                       record_dir=''):
     """
-      Connect to the server on the specified port. The
+      Connects to the server on the specified port. The
       following information is provided by the ./bin/HFO
 
       feature_set: High or low level state features
@@ -130,7 +130,7 @@ class HFOEnvironment(object):
     hfo_lib.act(self.obj, action_type, params.ctypes.data_as(POINTER(c_float)))
 
   def say(self, message):
-    """ Transmit a message """
+    """ Transmits a message """
     hfo_lib.say(self.obj, message.encode('utf-8'))
 
   def hear(self):
@@ -154,7 +154,7 @@ class HFOEnvironment(object):
     return STATUS_STRINGS[status]
 
   def getUnum(self):
-    """ Return the uniform number of the agent """
+    """ Returns the uniform number of the agent """
     return hfo_lib.getUnum(self.obj)
 
   def getNumTeammates(self):

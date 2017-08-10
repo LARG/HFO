@@ -67,13 +67,11 @@ def test_with_server():
 
         state = try_step()
 
-        for x in range(0,20):
+        for x in range(0,25):
             if int(state[12]) == 1: # can kick the ball
                 hfo_env.act(hfo.DRIBBLE)
-            elif (x % 2) != 0:
-                hfo_env.act(hfo.MOVE)
-            elif int(state[50]) == 1: # can see the ball
-                hfo_env.act(hfo.GO_TO_BALL)
+            elif (state[50] < 0) or (state[0] < 0) or (state[1] < 0) or (state[54] < 0):
+                hfo_env.act(hfo.REORIENT)
             else:
                 hfo_env.act(hfo.MOVE)
             

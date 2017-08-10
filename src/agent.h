@@ -80,6 +80,7 @@ protected:
 
  private:
   bool doPreprocess();
+  bool doReorient();
   bool doSmartKick();
   bool doShoot();
   bool doPass();
