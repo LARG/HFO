@@ -733,7 +733,7 @@ Agent::doReorient()
                       __FILE__": tackle wait. expires= %d",
                       wm.self().tackleExpires() );
 
-	return Bhv_Emergency().execute( this )); // includes change view
+	return Bhv_Emergency().execute( this ); // includes change view
     }
 
     //
