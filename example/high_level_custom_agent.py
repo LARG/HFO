@@ -7,6 +7,7 @@ from __future__ import print_function
 # First Start the server: $> bin/start.py
 import argparse
 import itertools
+import math
 import random
 try:
   import hfo
@@ -17,13 +18,22 @@ except ImportError:
 params = {'SHT_DST':0.136664020547, 'SHT_ANG':-0.747394386098,
           'PASS_ANG':0.464086704478, 'DRIB_DST':-0.999052871962}
 
+HALF_FIELD_WIDTH = 68 # y coordinate -34 to 34 (-34 = bottom 34 = top)
+HALF_FIELD_LENGTH = 52.5 # x coordinate 0 to 52.5 (0 = goalline 52.5 = center)
+oldHFODist = math.sqrt(math.pow(HALF_FIELD_WIDTH,2)+math.pow(HALF_FIELD_LENGTH,2))
+newHFODist = math.sqrt(math.pow((HALF_FIELD_WIDTH*2),2)+math.pow(HALF_FIELD_LENGTH,2))
+
+def correct_dist(curr_dist):
+  old_dist = min(1.0,(((curr_dist+1)*(newHFODist/oldHFODist))-1))
+  return old_dist
+
 def can_shoot(goal_dist, goal_angle):
   """Returns True if if player may have a good shot at the goal"""
-  return bool((goal_dist < params['SHT_DST']) and (goal_angle > params['SHT_ANG']))
+  return bool((correct_dist(goal_dist) < params['SHT_DST']) and (goal_angle > params['SHT_ANG']))
 
 def has_better_pos(dist_to_op, goal_angle, pass_angle, curr_goal_angle):
   """Returns True if teammate is in a better attacking position"""
-  if (curr_goal_angle > goal_angle) or (dist_to_op < params['DRIB_DST']):
+  if (curr_goal_angle > goal_angle) or (correct_dist(dist_to_op) < params['DRIB_DST']):
     return False
   if pass_angle < params['PASS_ANG']:
     return False
@@ -116,19 +126,19 @@ def main():
       status=hfo_env.step()
       #print(status)
 
+    # Check the outcome of the episode
+    print("Episode {0:n} ended with {1:s}".format(episode,
+                                                  hfo_env.statusToString(status)))
+    if args.epsilon > 0:
+      print("\tNum move: {0:n}; Random action: {1:n}; Nonrandom: {2:n}".format(num_move,
+                                                                               num_eps,
+                                                                               (num_had_ball-
+                                                                                num_eps)))
     # Quit if the server goes down
     if status == hfo.SERVER_DOWN:
       hfo_env.act(hfo.QUIT)
       exit()
-
-    # Check the outcome of the episode
-    print("Episode {0:d} ended with {1:s}".format(episode,
-                                                  hfo_env.statusToString(status)))
-    if args.epsilon > 0:
-      print("\tNum move: {0:d}; Random action: {1:d}; Nonrandom: {2:d}".format(num_move,
-                                                                               num_eps,
-                                                                               (num_had_ball-
-                                                                                num_eps)))
+      
 
 if __name__ == '__main__':
   main()

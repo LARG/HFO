@@ -7,6 +7,8 @@ RoboCup 2D Half Field Offense
 
 [Half Field Offense in RoboCup 2D Soccer](http://www.cs.utexas.edu/~AustinVilla/sim/halffieldoffense/) is a subtask in RoboCup simulated soccer, modeling a situation in which the offense of one team has to get past the defense of the opposition in order to shoot goals. This repository offers the ability to quickly and easily interface your learning agent with the HFO domain. Interfaces are provided for C++ and Python.
 
+NOTE: The previous distances, normalized to a range of -1 to 1, returned in the two state spaces were being divided by a too-small maximum distance; the correction for this should be accounted for in existing code. (An example of such a correction can be seen in `./example/high_level_custom_agent.py`.)
+
 ## Dependencies
  - Boost-system, filesystem
  - Qt4 [Required for SoccerWindow2 visualizer]: To not build the visualizer, add cmake flag `-DBUILD_SOCCERWINDOW=False`

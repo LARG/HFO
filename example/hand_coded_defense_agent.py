@@ -128,7 +128,7 @@ def do_defense_action(state_vec, hfo_env,
       # remove if get high-level working for invalid
       hfo_env.act(add_num_times(hfo.REORIENT,num_times_overall))
     elif ball_toward_goal:
-      if ball_nearer_goal:
+      if ball_nearer_goal or (state_vec[5] > 0):
         hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall))
       else:
         hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall))
@@ -157,12 +157,8 @@ def do_defense_action(state_vec, hfo_env,
     misc_tracked['max_kickable_dist'] = max(agent_to_ball_dist,misc_tracked['max_kickable_dist'])
     if is_tackleable_opp:
       hfo_env.act(add_num_times(hfo.MOVE,num_times_overall,num_times_kickable)) # will do tackle
-    elif ball_nearer_goal:
-      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall,num_times_kickable))
-    elif ball_toward_goal:
-      hfo_env.act(add_num_times(hfo.INTERCEPT,num_times_overall,num_times_kickable))
     else:
-      hfo_env.act(add_num_times(hfo.GO_TO_BALL,num_times_overall,num_times_kickable))
+      hfo_env.act(add_num_times(hfo.REDUCE_ANGLE_TO_GOAL,num_times_overall,num_times_kickable))
     return
 
   if goal_sorted_list[0][0] != ball_sorted_list[0][0]:

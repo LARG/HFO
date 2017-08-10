@@ -28,9 +28,9 @@ FeatureExtractor::FeatureExtractor(int num_teammates,
   penaltyAreaLength = SP.penaltyAreaLength();
   penaltyAreaWidth = SP.penaltyAreaWidth();
 
-  // Maximum possible radius in HFO
-  maxHFORadius = sqrtf(pitchHalfLength * pitchHalfLength +
-                       pitchHalfWidth * pitchHalfWidth);
+  // Maximum possible distance in in-bounds area of HFO
+  maxHFODist = sqrtf(pitchHalfLength * pitchHalfLength +
+                       pitchWidth * pitchWidth);
 }
 
 FeatureExtractor::~FeatureExtractor() {}
@@ -68,7 +68,7 @@ void FeatureExtractor::addLandmarkFeatures(const rcsc::Vector2D& landmark,
   } else {
     Vector2D vec_to_landmark = landmark - self_pos;
     addAngFeature(vec_to_landmark.th() - self_ang);
-    addDistFeature(vec_to_landmark.r(), maxHFORadius);
+    addDistFeature(vec_to_landmark.r(), maxHFODist);
   }
 }
 

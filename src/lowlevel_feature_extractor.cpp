@@ -103,16 +103,16 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
   rcsc::Vector2D cornerBotLeft(0, pitchHalfWidth);
   addLandmarkFeatures(cornerBotLeft, self_pos, self_ang);
 
-  // Distances to the edges of the playable area
+  // Distances to being out of bounds (OOB)
   if (self.posValid()) {
-    // Distance to Left field line
-    addDistFeature(self_pos.x, pitchHalfLength);
-    // Distance to Right field line
-    addDistFeature(pitchHalfLength - self_pos.x, pitchHalfLength);
-    // Distance to top field line
-    addDistFeature(pitchHalfWidth + self_pos.y, pitchWidth);
-    // Distance to Bottom field line
-    addDistFeature(pitchHalfWidth - self_pos.y, pitchWidth);
+    // Distance to being OOB over the Left field line
+    addDistFeature(self_pos.x, (1.1*pitchHalfLength));
+    // Distance to being OOB over the Right field line
+    addDistFeature(pitchHalfLength - self_pos.x, (1.1*pitchHalfLength));
+    // Distance to being OOB over the Top field line
+    addDistFeature(pitchHalfWidth + self_pos.y, (1.05*pitchWidth));
+    // Distance to being OOB over the Bottom field line
+    addDistFeature(pitchHalfWidth - self_pos.y, (1.05*pitchWidth));
   } else {
     addFeature(0);
     addFeature(0);
@@ -197,7 +197,7 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
       detected_teammates++;
     }
   }
-  // Add -2 features for any missing teammates
+  // Add -1 features for any missing teammates
   for (int i=detected_teammates; i<numTeammates; ++i) {
     addFeature(FEAT_MIN);
   }
@@ -212,7 +212,7 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
       detected_opponents++;
     }
   }
-  // Add -2 features for any missing opponents
+  // Add -1 features for any missing opponents
   for (int i=detected_opponents; i<numOpponents; ++i) {
     addFeature(FEAT_MIN);
   }

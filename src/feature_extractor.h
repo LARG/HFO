@@ -1,3 +1,5 @@
+// -*-c++-*-
+
 #ifndef FEATURE_EXTRACTOR_H
 #define FEATURE_EXTRACTOR_H
 
@@ -125,7 +127,7 @@ protected:
   constexpr static float observedPlayerSpeedMax = 0.75;
   constexpr static float observedStaminaMax     = 8000.;
   constexpr static float observedBallSpeedMax   = 5.0;
-  float maxHFORadius; // Maximum possible distance in HFO playable region
+  float maxHFODist; // Maximum possible distance in HFO in-bounds region
   // Useful measures defined by the Server Parameters
   float pitchLength, pitchWidth, pitchHalfLength, pitchHalfWidth,
     goalHalfWidth, penaltyAreaLength, penaltyAreaWidth;
