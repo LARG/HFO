@@ -247,6 +247,13 @@ void Agent::actionImpl() {
               << " parameters, given " << params.size() << std::endl;
     exit(1);
   }
+
+  // For now let's not worry about turning the neck or setting the vision.
+  // However, do this now so doesn't override anything changed by the requested action.
+  // TODO for librcsc: setViewActionDefault, setNeckActionDefault that will not overwrite if already set.
+  this->setViewAction(new View_Tactical());
+  this->setNeckAction(new Neck_TurnToBallOrScan());
+
   switch(requested_action) {
     case DASH:
       this->doDash(params[0], params[1]);
@@ -325,9 +332,7 @@ void Agent::actionImpl() {
                 << requested_action << std::endl;
       exit(1);
   }
-  // For now let's not worry about turning the neck or setting the vision.
-  this->setViewAction(new View_Tactical());
-  this->setNeckAction(new Neck_TurnToBallOrScan());
+
 }
 
 void
