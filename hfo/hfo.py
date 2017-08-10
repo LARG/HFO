@@ -29,6 +29,7 @@ An enum of the possible HFO actions, including:
   QUIT(): Quit the game
 """
 NUM_HFO_ACTIONS = 20
+<<<<<<< HEAD
 DASH,TURN,TACKLE,KICK,KICK_TO,MOVE_TO,DRIBBLE_TO,INTERCEPT,MOVE,SHOOT,PASS,DRIBBLE,CATCH,NOOP,QUIT,REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL,REORIENT = list(range(NUM_HFO_ACTIONS))
 ACTION_STRINGS = {DASH: "Dash",
                   TURN: "Turn",
@@ -53,6 +54,13 @@ ACTION_STRINGS = {DASH: "Dash",
 
 """
 Possible game statuses:
+=======
+DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
+    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL,REORIENT = list(range(NUM_HFO_ACTIONS))
+ACTION_STRINGS = ["Dash", "Turn", "Tackle", "Kick", "KickTo", "MoveTo", "DribbleTo", "Intercept", "Move", "Shoot", "Pass", "Dribble", "Catch", "No-op", "Quit", "Reduce_Angle_To_Goal", "Mark_Player", "Defend_Goal", "Go_To_Ball", "Reorient"]
+
+''' Possible game status
+>>>>>>> add_reorient
   [IN_GAME] Game is currently active
   [GOAL] A goal has been scored by the offense
   [CAPTURED_BY_DEFENSE] The defense has captured the ball

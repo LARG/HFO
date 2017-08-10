@@ -642,7 +642,7 @@ Agent::doPreprocess()
                   __FILE__": (doPreProcess)" );
 
     //
-    // freezed by tackle effect
+    // frozen by tackle effect
     //
     if ( wm.self().isFrozen() )
     {
@@ -766,7 +766,8 @@ Agent::doReorient()
         dlog.addText( Logger::TEAM,
                       __FILE__": tackle wait. expires= %d",
                       wm.self().tackleExpires() );
-	if (Bhv_Emergency().execute( this )){ // includes change view
+
+	if (Bhv_Emergency().execute( this )) { // includes change view
 	  return ACTION_STATUS_MAYBE;
 	} else {
 	  return ACTION_STATUS_UNKNOWN;
@@ -824,12 +825,14 @@ Agent::doReorient()
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
+
         if (Bhv_NeckBodyToBall().execute( this )) {
 	  return ACTION_STATUS_MAYBE;
 	} else {
 	  return ACTION_STATUS_UNKNOWN;
 	}
     }
+
 
     //
     // check pass message
@@ -843,6 +846,7 @@ Agent::doReorient()
     if (! ( ball.rposValid() && ball.velValid() )) {
       dlog.addText( Logger::TEAM,
 		    __FILE__": search ball" );
+
       if (Bhv_NeckBodyToBall().execute( this )) {
 	return ACTION_STATUS_MAYBE;
       } else {
