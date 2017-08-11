@@ -336,8 +336,11 @@ features.
     red-rectangle shows the boundaries of the reported positions,
     which exceed the play field boundaries by 10\% in each
     direction. Positions exceeding this rectangle are bounded (via
-    min/max) to the edges of the rectangle. All distance features are
-    normalized against the max HFO distance shown in orange.}
+    min/max) to the edges of the rectangle. (Note that this does
+    \textbf{not} mean that agents are limited to this rectangle;
+    low-level movement actions (Section \ref{sec:low_level_actions})
+    can go outside it.) All distance features are normalized against
+    the max HFO distance shown in orange.}
   \label{fig:playfieldCoords}
 \end{figure}
 
