@@ -977,11 +977,11 @@ bool Agent::doMarkPlayer(int unum) {
   double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
   bool may_fix = wm.self().collidesWithPost();
 
-  if (Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this)) {
+  if (Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this) ||
+      wm.self().collidesWithPost()) { // latter because sometimes fixes
     return true;
-  } else {
-    return may_fix;
   }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/
@@ -1073,12 +1073,11 @@ bool Agent::doReduceAngleToGoal() {
   double dist_to_end2 = targetLineEnd2.dist2(ball_pos);
   double ratio = dist_to_end2/(dist_to_end1+dist_to_end2);
   Vector2D target = targetLineEnd1 * ratio + targetLineEnd2 * (1-ratio);
-  bool may_fix = wm.self().collidesWithPost();
-  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this)) {
+  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this) ||
+      wm.self().collidesWithPost()) { // latter because sometimes fixes
     return true;
-  } else {
-    return may_fix;
   }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/
@@ -1102,13 +1101,12 @@ bool Agent::doDefendGoal() {
   double dist_to_post2 = goal_pos2.dist2(ball_pos);
   double ratio = dist_to_post2/(dist_to_post1+dist_to_post2);
   Vector2D target = goal_pos1 * ratio + goal_pos2 * (1-ratio);
-  bool may_fix = wm.self().collidesWithPost();
 
-  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this)) {
+  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this) ||
+      wm.self().collidesWithPost()) { // latter because sometimes fixes
     return true;
-  } else {
-    return may_fix;
   }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/
