@@ -61,7 +61,6 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     dlog.addText( Logger::TEAM,
                   __FILE__": Bhv_BasicMove" );
     bool success = false;
-    bool maybe_success = true;
 
     //-----------------------------------------------
     // tackle
@@ -95,11 +94,6 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     const double dash_power = Strategy::get_normal_dash_power( wm );
 
     const BallObject& ball = wm.ball();
-    if (! ball.rposValid()) {
-      if (! wm.self().collidesWithPost()) {
-	maybe_success = false;
-      }
-    }
 
     double dist_thr = ball.distFromSelf() * 0.1;
     if ( dist_thr < 1.0 ) dist_thr = 1.0;
@@ -113,16 +107,17 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     agent->debugClient().setTarget( target_point );
     agent->debugClient().addCircle( target_point, dist_thr );
 
-    if ( ! Body_GoToPoint( target_point, dist_thr, dash_power
-                           ).execute( agent ) )
-    {
-      if (! Body_TurnToBall().execute( agent )) {
-	success = false;
+
+    if ( Body_GoToPoint( target_point, dist_thr, dash_power
+			 ).execute( agent ) ||
+	 Body_TurnToBall().execute( agent ) ) {
+      if (ball.rposValid() || wm.self().collidesWithPost()) {
+	success = true;
       } else {
-	success = maybe_success;
+	success = false;
       }
     } else {
-      success = maybe_success;
+      success = false;
     }
 
     if ( wm.existKickableOpponent() &&
