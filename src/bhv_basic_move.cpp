@@ -52,32 +52,23 @@
 
 using namespace rcsc;
 
-bool
-Bhv_BasicMove::execute( PlayerAgent * agent )
-{
-  if (Bhv_BasicMove::action_execute(agent) == hfo::ACTION_STATUS_MAYBE) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 /*-------------------------------------------------------------------*/
 /*!
 
  */
-hfo::action_status_t
+bool
 Bhv_BasicMove::action_execute( PlayerAgent * agent )
 {
     dlog.addText( Logger::TEAM,
                   __FILE__": Bhv_BasicMove" );
-    hfo::action_status_t success = hfo::ACTION_STATUS_UNKNOWN;
+    bool success = false;
+    bool maybe_success = true;
 
     //-----------------------------------------------
     // tackle
     if ( Bhv_BasicTackle( 0.8, 80.0 ).execute( agent ) )
     {
-      return hfo::ACTION_STATUS_MAYBE;
+      return true;
     }
 
     const WorldModel & wm = agent->world();
@@ -96,7 +87,7 @@ Bhv_BasicMove::action_execute( PlayerAgent * agent )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": intercept" );
-        success = hfo::BooleanToActionStatus(Body_Intercept().execute( agent ));
+        success = Body_Intercept().execute( agent );
         agent->setNeckAction( new Neck_OffensiveInterceptNeck() );
         return success;
     }
@@ -107,7 +98,7 @@ Bhv_BasicMove::action_execute( PlayerAgent * agent )
     const BallObject& ball = wm.ball();
     if (! ball.rposValid()) {
       if (! wm.self().collidesWithPost()) {
-	success = hfo::ACTION_STATUS_BAD;
+	maybe_success = false;
       }
     }
 
@@ -127,10 +118,12 @@ Bhv_BasicMove::action_execute( PlayerAgent * agent )
                            ).execute( agent ) )
     {
       if (! Body_TurnToBall().execute( agent )) {
-	success = hfo::ACTION_STATUS_BAD;
+	success = false;
+      } else {
+	success = maybe_success;
       }
-    } else if (success != hfo::ACTION_STATUS_BAD) {
-      success = hfo::ACTION_STATUS_MAYBE;
+    } else {
+      success = maybe_success;
     }
 
     if ( wm.existKickableOpponent() &&

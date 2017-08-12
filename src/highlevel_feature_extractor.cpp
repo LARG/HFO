@@ -4,6 +4,7 @@
 
 #include "highlevel_feature_extractor.h"
 #include <rcsc/common/server_param.h>
+#include "agent.h"
 
 using namespace rcsc;
 
@@ -16,6 +17,7 @@ HighLevelFeatureExtractor::HighLevelFeatureExtractor(int num_teammates,
   assert(numOpponents >= 0);
   numFeatures = num_basic_features + features_per_teammate * numTeammates
       + features_per_opponent * numOpponents;
+  numFeatures++; // action status
   feature_vec.resize(numFeatures);
 }
 
@@ -176,6 +178,12 @@ const std::vector<float>& HighLevelFeatureExtractor::ExtractFeatures(
     addFeature(FEAT_INVALID);
     addFeature(FEAT_INVALID);
     addFeature(FEAT_INVALID);
+  }
+
+  if (getLastActionStatus()) {
+    addFeature(FEAT_MAX);
+  } else {
+    addFeature(FEAT_MIN);
   }
 
   assert(featIndx == numFeatures);

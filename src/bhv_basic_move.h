@@ -38,7 +38,6 @@ public:
       { }
 
   bool execute( rcsc::PlayerAgent * agent );
-  hfo::action_status_t action_execute( rcsc::PlayerAgent * agent );
 
 private:
     double getDashPower( const rcsc::PlayerAgent * agent );

@@ -1,3 +1,5 @@
+// -*-c++-*-
+
 #ifndef HIGHLEVEL_FEATURE_EXTRACTOR_H
 #define HIGHLEVEL_FEATURE_EXTRACTOR_H
 

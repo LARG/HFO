@@ -4,6 +4,7 @@
 
 #include "lowlevel_feature_extractor.h"
 #include <rcsc/common/server_param.h>
+#include "agent.h"
 
 using namespace rcsc;
 
@@ -17,6 +18,7 @@ LowLevelFeatureExtractor::LowLevelFeatureExtractor(int num_teammates,
   numFeatures = num_basic_features +
       features_per_player * (numTeammates + numOpponents);
   numFeatures += numTeammates + numOpponents; // Uniform numbers
+  numFeatures++; // action state
   feature_vec.resize(numFeatures);
 }
 
@@ -197,7 +199,7 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
       detected_teammates++;
     }
   }
-  // Add -2 features for any missing teammates
+  // Add -1 features for any missing teammates
   for (int i=detected_teammates; i<numTeammates; ++i) {
     addFeature(FEAT_MIN);
   }
@@ -212,8 +214,14 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
       detected_opponents++;
     }
   }
-  // Add -2 features for any missing opponents
+  // Add -1 features for any missing opponents
   for (int i=detected_opponents; i<numOpponents; ++i) {
+    addFeature(FEAT_MIN);
+  }
+
+  if (getLastActionStatus()) {
+    addFeature(FEAT_MAX);
+  } else {
     addFeature(FEAT_MIN);
   }
 

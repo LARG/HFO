@@ -55,8 +55,6 @@ class HFOEnvironment {
   // Returns the number of opponents
   virtual int getNumOpponents();
 
-  virtual action_status_t getLastActionStatus(action_t last_action);
-
   // Get the current player holding the ball
   virtual Player playerOnBall();
 

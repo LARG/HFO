@@ -151,9 +151,8 @@ Agent::Agent()
     // set communication planner
     M_communication = Communication::Ptr(new SampleCommunication());
 
-    // setup last_action variables
-    last_action_with_status = NOOP;
-    last_action_status = ACTION_STATUS_UNKNOWN;
+    // setup last_action variable
+    last_action_status = false;
 }
 
 Agent::~Agent() {
@@ -166,27 +165,11 @@ int Agent::getUnum() {
   return world().self().unum();
 }
 
-action_status_t Agent::getLastActionStatus(action_t last_action) {
-  if (last_action == last_action_with_status) {
-    return last_action_status;
+void Agent::setLastActionStatusCollision(bool may_fix, bool likely_success) {
+  if (likely_success || may_fix) {
+    last_action_status = true;
   } else {
-    return ACTION_STATUS_UNKNOWN;
-  }
-}
-
-void Agent::addLastActionStatus(action_t last_action, action_status_t action_status) {
-  last_action_with_status = last_action;
-  last_action_status = action_status;
-}
-
-void Agent::addLastActionStatusCollision(action_t last_action, bool may_fix, bool likely_success) {
-  last_action_with_status = last_action;
-  if (likely_success) {
-    last_action_status = ACTION_STATUS_MAYBE;
-  } else if (may_fix) {
-    last_action_status = ACTION_STATUS_UNKNOWN;
-  } else {
-    last_action_status = ACTION_STATUS_BAD;
+    last_action_status = false;
   }
 }
 
@@ -287,28 +270,27 @@ void Agent::actionImpl() {
 
   switch(requested_action) {
     case DASH:
-      addLastActionStatusCollision(DASH, may_fix, this->doDash(params[0], params[1]));
+      setLastActionStatusCollision(may_fix, this->doDash(params[0], params[1]));
       break;
     case TURN:
-      addLastActionStatusCollision(TURN, may_fix, this->doTurn(params[0]));
+      setLastActionStatusCollision(may_fix, this->doTurn(params[0]));
       break;
     case TACKLE:
-      addLastActionStatus(TACKLE, BooleanToActionStatus(this->doTackle(params[0], false)));
+      setLastActionStatus(this->doTackle(params[0], false));
       break;
     case KICK:
-      addLastActionStatus(KICK, BooleanToActionStatus(this->doKick(params[0], params[1])));
+      setLastActionStatus(this->doKick(params[0], params[1]));
       break;
     case KICK_TO:
       if (feature_extractor != NULL) {
-        addLastActionStatus(KICK_TO,
-			    BooleanToActionStatus(Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
-									  feature_extractor->absoluteYPos(params[1])),
-								 params[2], params[2] * 0.99, 3).execute(this)));
+        setLastActionStatus(Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
+						    feature_extractor->absoluteYPos(params[1])),
+					   params[2], params[2] * 0.99, 3).execute(this));
       }
       break;
     case MOVE_TO:
       if (feature_extractor != NULL) {
-        addLastActionStatusCollision(MOVE_TO, may_fix,
+        setLastActionStatusCollision(may_fix,
 				     Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
 							     feature_extractor->absoluteYPos(params[1])), 0.25,
 						    ServerParam::i().maxDashPower()).execute(this));
@@ -316,50 +298,51 @@ void Agent::actionImpl() {
       break;
     case DRIBBLE_TO:
       if (feature_extractor != NULL) {
-        addLastActionStatusCollision(DRIBBLE_TO, may_fix,
+        setLastActionStatusCollision(may_fix,
 				     Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
 							   feature_extractor->absoluteYPos(params[1])), 1.0,
 						  ServerParam::i().maxDashPower(), 2).execute(this));
       }
       break;
     case INTERCEPT:
-      addLastActionStatusCollision(INTERCEPT, may_fix, Body_Intercept().execute(this));
+      setLastActionStatusCollision(may_fix, Body_Intercept().execute(this));
       break;
     case MOVE:
-      addLastActionStatus(MOVE, this->doMove());
+      setLastActionStatus(this->doMove());
       break;
     case SHOOT:
-      addLastActionStatus(SHOOT, this->doSmartKick());
+      setLastActionStatus(this->doSmartKick());
       break;
     case PASS:
-      addLastActionStatus(PASS, this->doPassTo(int(params[0])));
+      setLastActionStatus(this->doPassTo(int(params[0])));
       break;
     case DRIBBLE:
-      addLastActionStatus(DRIBBLE, this->doDribble());
+      setLastActionStatus(this->doDribble());
       break;
     case CATCH:
-      addLastActionStatus(CATCH, BooleanToActionStatus(this->doCatch()));
+      setLastActionStatus(this->doCatch());
       break;
     case NOOP:
+      setLastActionStatus(false);
       break;
     case QUIT:
       std::cout << "Got quit from agent." << std::endl;
       handleExit();
       return;
     case REDUCE_ANGLE_TO_GOAL:
-      addLastActionStatus(REDUCE_ANGLE_TO_GOAL, this->doReduceAngleToGoal());
+      setLastActionStatus(this->doReduceAngleToGoal());
       break;
     case MARK_PLAYER:
-      addLastActionStatus(MARK_PLAYER, this->doMarkPlayer(int(params[0])));
+      setLastActionStatus(this->doMarkPlayer(int(params[0])));
       break;
     case DEFEND_GOAL:
-      addLastActionStatus(DEFEND_GOAL, this->doDefendGoal());
+      setLastActionStatus(this->doDefendGoal());
       break;
     case GO_TO_BALL:
-      addLastActionStatus(GO_TO_BALL, this->doGoToBall());
+      setLastActionStatus(this->doGoToBall());
       break;
     case REORIENT:
-      addLastActionStatus(REORIENT, this->doReorient());
+      setLastActionStatus(this->doReorient());
       break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
@@ -745,7 +728,7 @@ Agent::doPreprocess()
   Alternative high-level action to always doing "Move"; usable by either side, although
   probably more useful for offense. Variant of doPreprocess (above), which is called by doDribble.
 */
-action_status_t
+bool
 Agent::doReorient()
 {
     // check tackle expires
@@ -767,11 +750,8 @@ Agent::doReorient()
                       __FILE__": tackle wait. expires= %d",
                       wm.self().tackleExpires() );
 
-	if (Bhv_Emergency().execute( this )) { // includes change view
-	  return ACTION_STATUS_MAYBE;
-	} else {
-	  return ACTION_STATUS_UNKNOWN;
-	}
+	Bhv_Emergency().execute( this ); // includes change view
+	return true;
     }
 
     //
@@ -785,7 +765,7 @@ Agent::doReorient()
         Vector2D move_point =  Strategy::i().getPosition( wm.self().unum() );
 	Bhv_CustomBeforeKickOff( move_point ).execute( this );
         this->setViewAction( new View_Tactical() );
-        return ACTION_STATUS_MAYBE;
+        return true;
     }
 
     //
@@ -800,11 +780,8 @@ Agent::doReorient()
 	dlog.addText( Logger::TEAM,
                       __FILE__": invalid my vel" );
       }
-      if (Bhv_Emergency().execute( this )) { // includes change view
-	return ACTION_STATUS_MAYBE;
-      } else {
-	return ACTION_STATUS_UNKNOWN;
-      }
+      Bhv_Emergency().execute( this ); // includes change view
+      return true;
     }
 
     //
@@ -826,11 +803,8 @@ Agent::doReorient()
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
 
-        if (Bhv_NeckBodyToBall().execute( this )) {
-	  return ACTION_STATUS_MAYBE;
-	} else {
-	  return ACTION_STATUS_UNKNOWN;
-	}
+        Bhv_NeckBodyToBall().execute( this );
+	return true;
     }
 
 
@@ -839,7 +813,7 @@ Agent::doReorient()
     //
     if ( doHeardPassReceive() )
     {
-        return ACTION_STATUS_MAYBE;
+        return true;
     }
 
     const BallObject& ball = wm.ball();
@@ -847,11 +821,8 @@ Agent::doReorient()
       dlog.addText( Logger::TEAM,
 		    __FILE__": search ball" );
 
-      if (Bhv_NeckBodyToBall().execute( this )) {
-	return ACTION_STATUS_MAYBE;
-      } else {
-	return ACTION_STATUS_UNKNOWN;
-      }
+      Bhv_NeckBodyToBall().execute( this );
+      return true;
     }
 
     //
@@ -861,17 +832,17 @@ Agent::doReorient()
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": do queued intention" );
-        return ACTION_STATUS_MAYBE;
+        return true;
     }
 
-    return ACTION_STATUS_BAD;
+    return false;
 }
 
 /*-------------------------------------------------------------------*/
 /*!
 
 */
-action_status_t
+bool
 Agent::doShoot()
 {
     const WorldModel & wm = this->world();
@@ -886,23 +857,23 @@ Agent::doShoot()
 
         // reset intention
         this->setIntention( static_cast< SoccerIntention * >( 0 ) );
-        return ACTION_STATUS_MAYBE;
+        return true;
     }
 
-    return ACTION_STATUS_BAD;
+    return false;
 }
 
-action_status_t
+bool
 Agent::doSmartKick()
 {
     const ShootGenerator::Container & cont =
         ShootGenerator::instance().courses(this->world(), false);
     ShootGenerator::Container::const_iterator best_shoot
         = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
-    return BooleanToActionStatus(Body_SmartKick(best_shoot->target_point_,
-						best_shoot->first_ball_speed_,
-						best_shoot->first_ball_speed_ * 0.99,
-						3).execute(this));
+    return Body_SmartKick(best_shoot->target_point_,
+			  best_shoot->first_ball_speed_,
+			  best_shoot->first_ball_speed_ * 0.99,
+			  3).execute(this);
 }
 
 
@@ -919,19 +890,19 @@ Agent::doPass()
     return true;
 }
 
-action_status_t
+bool
 Agent::doPassTo(int receiver)
 {
     Force_Pass pass;
     pass.get_pass_to_player(this->world(), receiver);
-    return BooleanToActionStatus(pass.execute(this));
+    return pass.execute(this);
 }
 
 /*-------------------------------------------------------------------*/
 /*!
 
 */
-action_status_t
+bool
 Agent::doDribble()
 {
   bool success = false;
@@ -945,9 +916,9 @@ Agent::doDribble()
   success = doPreprocess();
   ActionChainHolder::instance().update( world() );
   if (Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this)) {
-    return ACTION_STATUS_MAYBE;
+    return true;
   } else {
-    return BooleanToActionStatus(success);
+    return success;
   }
 }
 
@@ -955,19 +926,19 @@ Agent::doDribble()
 /*!
 
 */
-action_status_t
+bool
 Agent::doMove()
 {
   Strategy::instance().update( world() );
   int role_num = Strategy::i().roleNumber(world().self().unum()); // Unused?
-  return Bhv_BasicMove().action_execute(this);
+  return Bhv_BasicMove().execute(this);
 }
 
 /*-------------------------------------------------------------------*/
 /*!
  * This Action marks the player with the specified uniform number.
 */
-action_status_t Agent::doMarkPlayer(int unum) {
+bool Agent::doMarkPlayer(int unum) {
   const WorldModel & wm = this->world();
   Vector2D kicker_pos = Vector2D :: INVALIDATED;
   Vector2D player_pos =  Vector2D :: INVALIDATED;
@@ -991,26 +962,24 @@ action_status_t Agent::doMarkPlayer(int unum) {
 
   if (!player_pos.isValid()) {
       //Player to be marked not found
-      return ACTION_STATUS_BAD;
+      return false;
   }
   if (!kicker_pos.isValid()) {
       //Kicker not found
-      return ACTION_STATUS_BAD;
+      return false;
   }
   if (unum == kicker_unum || kicker_pos.equals(player_pos)) {
     //Player to be marked is kicker
-    return ACTION_STATUS_BAD;
+    return false;
   }
   double x = player_pos.x + (kicker_pos.x - player_pos.x)*0.1;
   double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
   bool may_fix = wm.self().collidesWithPost();
 
   if (Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this)) {
-    return ACTION_STATUS_MAYBE;
-  } else if (may_fix) {
-    return ACTION_STATUS_UNKNOWN;
+    return true;
   } else {
-    return ACTION_STATUS_BAD;
+    return may_fix;
   }
 }
 
@@ -1020,12 +989,12 @@ action_status_t Agent::doMarkPlayer(int unum) {
  * This action cuts off the angle between the shooter and the goal the players always move to a dynamic line in between the kicker and the goal.
  */
 
-/* Comparator for sorting teammated based on y positions.*/
+/* Comparator for sorting teammates based on y positions.*/
 bool compare_y_pos (PlayerObject* i, PlayerObject* j) {
   return i->pos().y < j->pos().y;
 }
 
-action_status_t Agent::doReduceAngleToGoal() {
+bool Agent::doReduceAngleToGoal() {
   const WorldModel & wm = this->world();
   Vector2D goal_pos1( -ServerParam::i().pitchHalfLength(), ServerParam::i().goalHalfWidth() );
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength(), -ServerParam::i().goalHalfWidth() );
@@ -1034,7 +1003,7 @@ action_status_t Agent::doReduceAngleToGoal() {
 
   const BallObject& ball = wm.ball();
   if (! ball.rposValid()) {
-    return ACTION_STATUS_BAD;
+    return false;
   }
 
   Vector2D ball_pos = ball.pos();
@@ -1105,11 +1074,9 @@ action_status_t Agent::doReduceAngleToGoal() {
   Vector2D target = targetLineEnd1 * ratio + targetLineEnd2 * (1-ratio);
   bool may_fix = wm.self().collidesWithPost();
   if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this)) {
-    return ACTION_STATUS_MAYBE;
-  } else if (may_fix) {
-    return ACTION_STATUS_UNKNOWN;
+    return true;
   } else {
-    return ACTION_STATUS_BAD;
+    return may_fix;
   }
 }
 
@@ -1120,7 +1087,7 @@ action_status_t Agent::doReduceAngleToGoal() {
  * This action cuts off the angle between the shooter and the goal; the player always moves on a fixed line.
  */
 
-action_status_t Agent::doDefendGoal() {
+bool Agent::doDefendGoal() {
   const WorldModel & wm = this->world();
   Vector2D goal_pos1( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), ServerParam::i().goalHalfWidth() );
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), -ServerParam::i().goalHalfWidth() );
@@ -1137,11 +1104,9 @@ action_status_t Agent::doDefendGoal() {
   bool may_fix = wm.self().collidesWithPost();
 
   if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this)) {
-    return ACTION_STATUS_MAYBE;
-  } else if (may_fix) {
-    return ACTION_STATUS_UNKNOWN;
+    return true;
   } else {
-    return ACTION_STATUS_BAD;
+    return may_fix;
   }
 }
 
@@ -1153,13 +1118,13 @@ action_status_t Agent::doDefendGoal() {
  */
 
 
-action_status_t Agent::doGoToBall() {
+bool Agent::doGoToBall() {
   const WorldModel & wm = this->world();
   const BallObject& ball = wm.ball();
   if (! ball.rposValid()) {
-    return ACTION_STATUS_BAD;
+    return false;
   }
-  return BooleanToActionStatus(Body_GoToPoint(ball.pos(), 0.25, ServerParam::i().maxDashPower()).execute(this));
+  return Body_GoToPoint(ball.pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
 }
 
 /*-------------------------------------------------------------------*/
