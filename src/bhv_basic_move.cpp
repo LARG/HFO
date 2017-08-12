@@ -57,7 +57,7 @@ using namespace rcsc;
 
  */
 bool
-Bhv_BasicMove::action_execute( PlayerAgent * agent )
+Bhv_BasicMove::execute( PlayerAgent * agent )
 {
     dlog.addText( Logger::TEAM,
                   __FILE__": Bhv_BasicMove" );

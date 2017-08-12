@@ -398,7 +398,8 @@ void
 Agent::UpdateFeatures()
 {
   if (feature_extractor != NULL) {
-    state = feature_extractor->ExtractFeatures(this->world());
+    state = feature_extractor->ExtractFeatures(this->world(),
+					       getLastActionStatus());
   }
 }
 
@@ -1093,7 +1094,7 @@ bool Agent::doDefendGoal() {
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), -ServerParam::i().goalHalfWidth() );
   const BallObject& ball = wm.ball();
   if (! ball.rposValid()) {
-    return ACTION_STATUS_BAD;
+    return false;
   }
 
   Vector2D ball_pos = ball.pos();

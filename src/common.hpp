@@ -199,22 +199,6 @@ inline std::string StatusToString(status_t status) {
 };
 
 /**
- * Returns a string representation of an action status.
- */
-inline std::string ActionStatusToString(action_status_t status) {
-  switch (status) {
-  case ACTION_STATUS_BAD:
-    return "Bad";
-  case ACTION_STATUS_MAYBE:
-    return "MaybeOK";
-  case ACTION_STATUS_UNKNOWN:
-    return "Unknown";
-  default:
-    return "Invalid";
-  }
-}
-
-/**
  * Parse a Trainer message to populate config. Returns a bool
  * indicating if the struct was correctly parsed.
  */

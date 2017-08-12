@@ -43,9 +43,6 @@ extern "C" {
   int getUnum(hfo::HFOEnvironment *hfo) {return hfo->getUnum();}
   int getNumTeammates(hfo::HFOEnvironment *hfo) {return hfo->getNumTeammates();}
   int getNumOpponents(hfo::HFOEnvironment *hfo) {return hfo->getNumOpponents();}
-  int getLastActionStatus(hfo::HFOEnvironment *hfo, hfo::action_t last_action) {
-    return hfo->getLastActionStatus(last_action);
-  }
 }
 
 #endif

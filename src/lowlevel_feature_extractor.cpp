@@ -24,8 +24,9 @@ LowLevelFeatureExtractor::LowLevelFeatureExtractor(int num_teammates,
 
 LowLevelFeatureExtractor::~LowLevelFeatureExtractor() {}
 
-const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
-    const WorldModel& wm) {
+const std::vector<float>&
+LowLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
+					  bool last_action_status) {
   featIndx = 0;
   const ServerParam& SP = ServerParam::i();
   // ======================== SELF FEATURES ======================== //
@@ -219,7 +220,7 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
     addFeature(FEAT_MIN);
   }
 
-  if (getLastActionStatus()) {
+  if (last_action_status) {
     addFeature(FEAT_MAX);
   } else {
     addFeature(FEAT_MIN);
