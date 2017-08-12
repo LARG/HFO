@@ -99,7 +99,6 @@ protected:
   bool doDefendGoal();
   bool doGoToBall();
   bool doNewAction1();
-  inline void setLastActionStatus(bool likely_success) { last_action_status = likely_success; }
   void setLastActionStatusCollision(bool may_fix, bool likely_success);
 
 

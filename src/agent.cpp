@@ -276,16 +276,16 @@ void Agent::actionImpl() {
       setLastActionStatusCollision(may_fix, this->doTurn(params[0]));
       break;
     case TACKLE:
-      setLastActionStatus(this->doTackle(params[0], false));
+      last_action_status = this->doTackle(params[0], false);
       break;
     case KICK:
-      setLastActionStatus(this->doKick(params[0], params[1]));
+      last_action_status = this->doKick(params[0], params[1]);
       break;
     case KICK_TO:
       if (feature_extractor != NULL) {
-        setLastActionStatus(Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
-						    feature_extractor->absoluteYPos(params[1])),
-					   params[2], params[2] * 0.99, 3).execute(this));
+        last_action_status = Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
+						     feature_extractor->absoluteYPos(params[1])),
+					    params[2], params[2] * 0.99, 3).execute(this);
       }
       break;
     case MOVE_TO:
@@ -308,41 +308,41 @@ void Agent::actionImpl() {
       setLastActionStatusCollision(may_fix, Body_Intercept().execute(this));
       break;
     case MOVE:
-      setLastActionStatus(this->doMove());
+      last_action_status = this->doMove();
       break;
     case SHOOT:
-      setLastActionStatus(this->doSmartKick());
+      last_action_status = this->doSmartKick();
       break;
     case PASS:
-      setLastActionStatus(this->doPassTo(int(params[0])));
+      last_action_status = this->doPassTo(int(params[0]));
       break;
     case DRIBBLE:
-      setLastActionStatus(this->doDribble());
+      last_action_status = this->doDribble();
       break;
     case CATCH:
-      setLastActionStatus(this->doCatch());
+      last_action_status = this->doCatch();
       break;
     case NOOP:
-      setLastActionStatus(false);
+      last_action_status = false;
       break;
     case QUIT:
       std::cout << "Got quit from agent." << std::endl;
       handleExit();
       return;
     case REDUCE_ANGLE_TO_GOAL:
-      setLastActionStatus(this->doReduceAngleToGoal());
+      last_action_status = this->doReduceAngleToGoal();
       break;
     case MARK_PLAYER:
-      setLastActionStatus(this->doMarkPlayer(int(params[0])));
+      last_action_status = this->doMarkPlayer(int(params[0]));
       break;
     case DEFEND_GOAL:
-      setLastActionStatus(this->doDefendGoal());
+      last_action_status = this->doDefendGoal();
       break;
     case GO_TO_BALL:
-      setLastActionStatus(this->doGoToBall());
+      last_action_status = this->doGoToBall();
       break;
     case REORIENT:
-      setLastActionStatus(this->doReorient());
+      last_action_status = this->doReorient();
       break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
