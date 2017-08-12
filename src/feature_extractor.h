@@ -6,8 +6,6 @@
 #include <rcsc/player/player_agent.h>
 #include <vector>
 
-class Agent;
-
 typedef std::pair<float, float> OpenAngle;
 
 class FeatureExtractor {

@@ -48,7 +48,6 @@
 #include <rcsc/common/server_param.h>
 
 #include "neck_offensive_intercept_neck.h"
-#include "common.hpp"
 
 using namespace rcsc;
 

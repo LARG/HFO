@@ -29,7 +29,6 @@
 
 #include <rcsc/geom/vector_2d.h>
 #include <rcsc/player/soccer_action.h>
-#include "common.hpp"
 
 class Bhv_BasicMove
     : public rcsc::SoccerBehavior {

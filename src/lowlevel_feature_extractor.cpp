@@ -4,7 +4,6 @@
 
 #include "lowlevel_feature_extractor.h"
 #include <rcsc/common/server_param.h>
-#include "agent.h"
 
 using namespace rcsc;
 
