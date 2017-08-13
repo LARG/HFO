@@ -258,7 +258,6 @@ void Agent::actionImpl() {
   this->setNeckAction(new Neck_TurnToBallOrScan());
 
   const WorldModel & wm = this->world();
-  bool may_fix = wm.self().collidesWithPost();
 
   switch(requested_action) {
     case DASH:
@@ -972,7 +971,6 @@ bool Agent::doMarkPlayer(int unum) {
   }
   double x = player_pos.x + (kicker_pos.x - player_pos.x)*0.1;
   double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
-  bool may_fix = wm.self().collidesWithPost();
 
   if (Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this) ||
       wm.self().collidesWithPost()) { // latter because sometimes fixes
