@@ -263,11 +263,9 @@ void Agent::actionImpl() {
   switch(requested_action) {
     case DASH:
       last_action_status = this->doDash(params[0], params[1]);
-      last_action_status |= wm.self().collidesWithPost(); // Can sometimes get out of collision
       break;
     case TURN:
       last_action_status = this->doTurn(params[0]);
-      last_action_status |= wm.self().collidesWithPost(); // ditto
       break;
     case TACKLE:
       last_action_status = this->doTackle(params[0], false);
