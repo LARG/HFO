@@ -890,8 +890,12 @@ bool
 Agent::doPassTo(int receiver)
 {
     Force_Pass pass;
-    pass.get_pass_to_player(this->world(), receiver);
-    return pass.execute(this);
+    const WorldModel & wm = this->world();
+    pass.get_pass_to_player(wm, receiver);
+    if (pass.execute(this) || wm.self().collidesWithBall()) { // can sometimes fix
+      return true;
+    }
+    return false;
 }
 
 /*-------------------------------------------------------------------*/
