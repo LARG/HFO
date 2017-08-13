@@ -165,14 +165,6 @@ int Agent::getUnum() {
   return world().self().unum();
 }
 
-void Agent::setLastActionStatusCollision(bool may_fix, bool likely_success) {
-  if (likely_success || may_fix) {
-    last_action_status = true;
-  } else {
-    last_action_status = false;
-  }
-}
-
 bool Agent::initImpl(CmdLineParser & cmd_parser) {
     bool result = PlayerAgent::initImpl(cmd_parser);
 
@@ -270,10 +262,12 @@ void Agent::actionImpl() {
 
   switch(requested_action) {
     case DASH:
-      setLastActionStatusCollision(may_fix, this->doDash(params[0], params[1]));
+      last_action_status = this->doDash(params[0], params[1]);
+      last_action_status |= wm.self().collidesWithPost(); // Can sometimes get out of collision
       break;
     case TURN:
-      setLastActionStatusCollision(may_fix, this->doTurn(params[0]));
+      last_action_status = this->doTurn(params[0]);
+      last_action_status |= wm.self().collidesWithPost(); // ditto
       break;
     case TACKLE:
       last_action_status = this->doTackle(params[0], false);
@@ -290,22 +284,23 @@ void Agent::actionImpl() {
       break;
     case MOVE_TO:
       if (feature_extractor != NULL) {
-        setLastActionStatusCollision(may_fix,
-				     Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
-							     feature_extractor->absoluteYPos(params[1])), 0.25,
-						    ServerParam::i().maxDashPower()).execute(this));
+	last_action_status = Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
+						     feature_extractor->absoluteYPos(params[1])), 0.25,
+					    ServerParam::i().maxDashPower()).execute(this);
+	last_action_status |= wm.self().collidesWithPost(); // can get out of collision w/post
       }
       break;
     case DRIBBLE_TO:
       if (feature_extractor != NULL) {
-        setLastActionStatusCollision(may_fix,
-				     Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
-							   feature_extractor->absoluteYPos(params[1])), 1.0,
-						  ServerParam::i().maxDashPower(), 2).execute(this));
+        last_action_status = Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
+						   feature_extractor->absoluteYPos(params[1])), 1.0,
+					  ServerParam::i().maxDashPower(), 2).execute(this);
+	last_action_status |= wm.self().collidesWithPost(); // ditto
       }
       break;
     case INTERCEPT:
-      setLastActionStatusCollision(may_fix, Body_Intercept().execute(this));
+      last_action_status = Body_Intercept().execute(this);
+      last_action_status |= wm.self().collidesWithPost(); // ditto
       break;
     case MOVE:
       last_action_status = this->doMove();
@@ -914,13 +909,13 @@ Agent::doDribble()
   M_action_generator = ActionGenerator::ConstPtr(g);
   ActionChainHolder::instance().setFieldEvaluator( M_field_evaluator );
   ActionChainHolder::instance().setActionGenerator( M_action_generator );
-  success = doPreprocess();
+  bool preprocess_success = doPreprocess();
   ActionChainHolder::instance().update( world() );
-  if (Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this)) {
+  if (Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this) ||
+      preprocess_success) {
     return true;
-  } else {
-    return success;
   }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/

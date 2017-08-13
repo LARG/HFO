@@ -99,7 +99,6 @@ protected:
   bool doDefendGoal();
   bool doGoToBall();
   bool doNewAction1();
-  void setLastActionStatusCollision(bool may_fix, bool likely_success);
 
 
   Communication::Ptr M_communication;
