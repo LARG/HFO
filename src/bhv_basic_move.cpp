@@ -60,7 +60,6 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
 {
     dlog.addText( Logger::TEAM,
                   __FILE__": Bhv_BasicMove" );
-    bool success = false;
 
     //-----------------------------------------------
     // tackle
@@ -85,7 +84,7 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": intercept" );
-        success = Body_Intercept().execute( agent );
+        bool success = Body_Intercept().execute( agent );
         agent->setNeckAction( new Neck_OffensiveInterceptNeck() );
         return success;
     }
@@ -107,10 +106,9 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     agent->debugClient().setTarget( target_point );
     agent->debugClient().addCircle( target_point, dist_thr );
 
-    if (ball.rposValid() || wm.self().collidesWithPost()) {
+    bool success = false;
+    if (ball.posValid() || wm.self().collidesWithPost()) {
       success = true;
-    } else {
-      success = false;
     }
 
     if ( Body_GoToPoint( target_point, dist_thr, dash_power
@@ -122,16 +120,15 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
       success = false;
     }
 
-    if ( wm.existKickableOpponent() &&
-	 ball.rposValid()
-         && wm.ball().distFromSelf() < 18.0 )
-    {
-        agent->setNeckAction( new Neck_TurnToBall() );
+    if ( wm.existKickableOpponent()
+         && ball.distFromSelf() < 18.0 ) {
+      agent->setNeckAction( new Neck_TurnToBall() );
+    } else if ( ball.posValid() ) {
+      agent->setNeckAction( new Neck_TurnToBallOrScan() );
+    } else {
+      agent->setNeckAction( new Neck_TurnToBall() );
     }
-    else
-    {
-        agent->setNeckAction( new Neck_TurnToBallOrScan() );
-    }
+
 
     return success;
 }

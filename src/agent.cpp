@@ -254,10 +254,18 @@ void Agent::actionImpl() {
   // For now let's not worry about turning the neck or setting the vision.
   // But do the settings now, so that doesn't override any set by the actions below.
   // TODO: Add setViewActionDefault, setNeckActionDefault to librcsc that only set if not already set.
-  this->setViewAction(new View_Tactical());
-  this->setNeckAction(new Neck_TurnToBallOrScan());
 
   const WorldModel & wm = this->world();
+
+  this->setViewAction(new View_Tactical());
+
+  if (wm.ball().posValid()) {
+    this->setNeckAction(new Neck_TurnToBallOrScan()); // if not ball().posValid(), requests possibly-invalid queuedNextBallPos()
+  } else {
+    this->setNeckAction(new Neck_ScanField()); // equivalent to Neck_TurnToBall()
+  }
+
+
 
   switch(requested_action) {
     case DASH:
@@ -627,7 +635,11 @@ Agent::doPreprocess()
                       wm.self().tackleExpires() );
         // face neck to ball
         this->setViewAction( new View_Tactical() );
-        this->setNeckAction( new Neck_TurnToBallOrScan() );
+	if (wm.ball().posValid()) {
+	  this->setNeckAction( new Neck_TurnToBallOrScan() );
+	} else{
+	  this->setNeckAction( new Neck_TurnToBall() );
+	}
         return true;
     }
 
@@ -652,8 +664,7 @@ Agent::doPreprocess()
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": invalid my pos" );
-        Bhv_Emergency().execute( this ); // includes change view
-        return true;
+        return Bhv_Emergency().execute( this ); // includes change view
     }
 
     //
@@ -662,15 +673,14 @@ Agent::doPreprocess()
     const int count_thr = ( wm.self().goalie()
                             ? 10
                             : 5 );
-    if ( wm.ball().posCount() > count_thr
+    if ( wm.ball().posCount() < count_thr
          || ( wm.gameMode().type() != GameMode::PlayOn
-              && wm.ball().seenPosCount() > count_thr + 10 ) )
+              && wm.ball().seenPosCount() < count_thr + 10 ) )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
         this->setViewAction( new View_Tactical() );
-        Bhv_NeckBodyToBall().execute( this );
-        return true;
+        return Bhv_NeckBodyToBall().execute( this );
     }
 
     //
@@ -743,8 +753,7 @@ Agent::doReorient()
                       __FILE__": tackle wait. expires= %d",
                       wm.self().tackleExpires() );
 
-	Bhv_Emergency().execute( this ); // includes change view
-	return true;
+	return Bhv_Emergency().execute( this ); // includes change view
     }
 
     //
@@ -773,8 +782,7 @@ Agent::doReorient()
 	dlog.addText( Logger::TEAM,
                       __FILE__": invalid my vel" );
       }
-      Bhv_Emergency().execute( this ); // includes change view
-      return true;
+      return Bhv_Emergency().execute( this ); // includes change view
     }
 
     //
@@ -786,20 +794,14 @@ Agent::doReorient()
     //
     // ball localization error
     //
-    const int count_thr = ( wm.self().goalie()
-                            ? 10
-                            : 5 );
-    if ( wm.ball().posCount() > count_thr
-         || ( wm.gameMode().type() != GameMode::PlayOn
-              && wm.ball().seenPosCount() > count_thr + 10 ) )
-    {
-        dlog.addText( Logger::TEAM,
-                      __FILE__": search ball" );
 
-        Bhv_NeckBodyToBall().execute( this );
-	return true;
+    const BallObject& ball = wm.ball();
+    if (! ( ball.posValid() && ball.velValid() )) {
+      dlog.addText( Logger::TEAM,
+		    __FILE__": search ball" );
+
+      return Bhv_NeckBodyToBall().execute( this );
     }
-
 
     //
     // check pass message
@@ -809,13 +811,20 @@ Agent::doReorient()
         return true;
     }
 
-    const BallObject& ball = wm.ball();
-    if (! ( ball.rposValid() && ball.velValid() )) {
-      dlog.addText( Logger::TEAM,
-		    __FILE__": search ball" );
+    //
+    // ball localization error
+    //
+    const int count_thr = ( wm.self().goalie()
+                            ? 10
+                            : 5 );
+    if ( wm.ball().posCount() < count_thr
+         || ( wm.gameMode().type() != GameMode::PlayOn
+              && wm.ball().seenPosCount() < count_thr + 10 ) )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": search ball" );
 
-      Bhv_NeckBodyToBall().execute( this );
-      return true;
+        return Bhv_NeckBodyToBall().execute( this );
     }
 
     //
@@ -902,7 +911,6 @@ Agent::doPassTo(int receiver)
 bool
 Agent::doDribble()
 {
-  bool success = false;
   Strategy::instance().update( world() );
   M_field_evaluator = createFieldEvaluator();
   CompositeActionGenerator * g = new CompositeActionGenerator();
@@ -998,7 +1006,7 @@ bool Agent::doReduceAngleToGoal() {
   const PlayerPtrCont::const_iterator o_end = wm.opponentsFromSelf().end();
 
   const BallObject& ball = wm.ball();
-  if (! ball.rposValid()) {
+  if (! ball.posValid()) {
     return false;
   }
 
@@ -1087,7 +1095,7 @@ bool Agent::doDefendGoal() {
   Vector2D goal_pos1( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), ServerParam::i().goalHalfWidth() );
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), -ServerParam::i().goalHalfWidth() );
   const BallObject& ball = wm.ball();
-  if (! ball.rposValid()) {
+  if (! ball.posValid()) {
     return false;
   }
 
@@ -1115,7 +1123,7 @@ bool Agent::doDefendGoal() {
 bool Agent::doGoToBall() {
   const WorldModel & wm = this->world();
   const BallObject& ball = wm.ball();
-  if (! ball.rposValid()) {
+  if (! ball.posValid()) {
     return false;
   }
   return Body_GoToPoint(ball.pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
