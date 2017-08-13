@@ -107,15 +107,13 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     agent->debugClient().addCircle( target_point, dist_thr );
 
     bool success = false;
-    if (ball.posValid() || wm.self().collidesWithPost()) {
-      success = true;
-    }
 
     if ( Body_GoToPoint( target_point, dist_thr, dash_power
-			 ).execute( agent ) ) {
-      // OK
-    } else if (Body_TurnToBall().execute( agent ) ) {
-      // OK
+			 ).execute( agent ) ||
+	 Body_TurnToBall().execute( agent ) ) {
+      if (ball.posValid() || wm.self().collidesWithPost()) {
+	success = true;
+      }
     } else {
       success = false;
     }

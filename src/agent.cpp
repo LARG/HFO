@@ -673,9 +673,9 @@ Agent::doPreprocess()
     const int count_thr = ( wm.self().goalie()
                             ? 10
                             : 5 );
-    if ( wm.ball().posCount() < count_thr
+    if ( wm.ball().posCount() > count_thr
          || ( wm.gameMode().type() != GameMode::PlayOn
-              && wm.ball().seenPosCount() < count_thr + 10 ) )
+              && wm.ball().seenPosCount() > count_thr + 10 ) )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
@@ -817,9 +817,9 @@ Agent::doReorient()
     const int count_thr = ( wm.self().goalie()
                             ? 10
                             : 5 );
-    if ( wm.ball().posCount() < count_thr
+    if ( wm.ball().posCount() > count_thr
          || ( wm.gameMode().type() != GameMode::PlayOn
-              && wm.ball().seenPosCount() < count_thr + 10 ) )
+              && wm.ball().seenPosCount() > count_thr + 10 ) )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
@@ -935,7 +935,6 @@ bool
 Agent::doMove()
 {
   Strategy::instance().update( world() );
-  int role_num = Strategy::i().roleNumber(world().self().unum()); // Unused?
   return Bhv_BasicMove().execute(this);
 }
 
