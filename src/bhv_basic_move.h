@@ -36,7 +36,7 @@ public:
     Bhv_BasicMove()
       { }
 
-    bool execute( rcsc::PlayerAgent * agent );
+  bool execute( rcsc::PlayerAgent * agent );
 
 private:
     double getDashPower( const rcsc::PlayerAgent * agent );

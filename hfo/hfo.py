@@ -6,11 +6,12 @@ import os
 hfo_lib = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__),
                                         'libhfo_c.so'))
 
-''' Possible feature sets '''
+"""Possible feature sets"""
 NUM_FEATURE_SETS = 2
 LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(NUM_FEATURE_SETS))
 
-''' An enum of the possible HFO actions
+"""
+An enum of the possible HFO actions, including:
   [Low-Level] Dash(power, relative_direction)
   [Low-Level] Turn(direction)
   [Low-Level] Tackle(direction)
@@ -25,25 +26,50 @@ LOW_LEVEL_FEATURE_SET, HIGH_LEVEL_FEATURE_SET = list(range(NUM_FEATURE_SETS))
   [High-Level] Dribble(): Offensive dribble
   [High-Level] Catch(): Catch the ball (Goalie Only)
   NOOP(): Do Nothing
-  QUIT(): Quit the game '''
+  QUIT(): Quit the game
+"""
 NUM_HFO_ACTIONS = 20
-DASH, TURN, TACKLE, KICK, KICK_TO, MOVE_TO, DRIBBLE_TO, INTERCEPT, \
-    MOVE, SHOOT, PASS, DRIBBLE, CATCH, NOOP, QUIT, REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL,REORIENT = list(range(NUM_HFO_ACTIONS))
-ACTION_STRINGS = ["Dash", "Turn", "Tackle", "Kick", "KickTo", "MoveTo", "DribbleTo", "Intercept", "Move", "Shoot", "Pass", "Dribble", "Catch", "No-op", "Quit", "Reduce_Angle_To_Goal", "Mark_Player", "Defend_Goal", "Go_To_Ball", "Reorient"]
+DASH,TURN,TACKLE,KICK,KICK_TO,MOVE_TO,DRIBBLE_TO,INTERCEPT,MOVE,SHOOT,PASS,DRIBBLE,CATCH,NOOP,QUIT,REDUCE_ANGLE_TO_GOAL,MARK_PLAYER,DEFEND_GOAL,GO_TO_BALL,REORIENT = list(range(NUM_HFO_ACTIONS))
+ACTION_STRINGS = {DASH: "Dash",
+                  TURN: "Turn",
+                  TACKLE: "Tackle",
+                  KICK: "Kick",
+                  KICK_TO: "KickTo",
+                  MOVE_TO: "MoveTo",
+                  DRIBBLE_TO: "DribbleTo",
+                  INTERCEPT: "Intercept",
+                  MOVE: "Move",
+                  SHOOT: "Shoot",
+                  PASS: "Pass",
+                  DRIBBLE: "Dribble",
+                  CATCH: "Catch",
+                  NOOP: "No-op",
+                  QUIT: "Quit",
+                  REDUCE_ANGLE_TO_GOAL: "Reduce_Angle_To_Goal",
+                  MARK_PLAYER: "Mark_Player",
+                  DEFEND_GOAL: "Defend_Goal",
+                  GO_TO_BALL: "Go_To_Ball",
+                  REORIENT: "Reorient"}
 
-''' Possible game status
+"""
+Possible game statuses:
   [IN_GAME] Game is currently active
   [GOAL] A goal has been scored by the offense
   [CAPTURED_BY_DEFENSE] The defense has captured the ball
   [OUT_OF_BOUNDS] Ball has gone out of bounds
   [OUT_OF_TIME] Trial has ended due to time limit
   [SERVER_DOWN] Server is not alive
-'''
+"""
 NUM_GAME_STATUS_STATES = 6
 IN_GAME, GOAL, CAPTURED_BY_DEFENSE, OUT_OF_BOUNDS, OUT_OF_TIME, SERVER_DOWN = list(range(NUM_GAME_STATUS_STATES))
-STATUS_STRINGS = ["InGame", "Goal", "CapturedByDefense", "OutOfBounds", "OutOfTime", "ServerDown"]
+STATUS_STRINGS = {IN_GAME: "InGame",
+                  GOAL: "Goal",
+                  CAPTURED_BY_DEFENSE: "CapturedByDefense",
+                  OUT_OF_BOUNDS: "OutOfBounds",
+                  OUT_OF_TIME: "OutOfTime",
+                  SERVER_DOWN: "ServerDown"}
 
-''' Possible sides '''
+"""Possible sides."""
 RIGHT, NEUTRAL, LEFT = list(range(-1,2))
 
 class Player(Structure): pass
@@ -109,7 +135,14 @@ class HFOEnvironment(object):
       play_goalie: is this player the goalie
       record_dir: record agent's states/actions/rewards to this directory
     """
-    hfo_lib.connectToServer(self.obj, feature_set, config_dir.encode('utf-8'), server_port,server_addr.encode('utf-8'), team_name.encode('utf-8'), play_goalie, record_dir.encode('utf-8'))
+    hfo_lib.connectToServer(self.obj,
+                            feature_set,
+                            config_dir.encode('utf-8'),
+                            server_port,server_addr.encode('utf-8'),
+                            team_name.encode('utf-8'),
+                            play_goalie,
+                            record_dir.encode('utf-8'))
+
   def getStateSize(self):
     """ Returns the number of state features """
     return hfo_lib.getStateSize(self.obj)
