@@ -33,15 +33,15 @@ enum action_t
   DRIBBLE,    // [High-Level] Dribble(): Offensive dribble
   CATCH,      // [High-Level] Catch(): Catch the ball (Goalie only!)
   NOOP,       // Do nothing
-  QUIT,        // Special action to quit the game
+  QUIT,       // Special action to quit the game
   REDUCE_ANGLE_TO_GOAL, // [High-Level] Reduce_Angle_To_Goal : Reduces the shooting angle
-  MARK_PLAYER, 			// [High-Level] Mark_Player(opponent_unum [0,11]) : Moves to the position in between the kicker and a given player
+  MARK_PLAYER, // [High-Level] Mark_Player(opponent_unum [0,11]) : Moves to the position in between the kicker and a given player
   DEFEND_GOAL,
   GO_TO_BALL,
   REORIENT  // [High-Level] Handle lost position of self/ball, misc other situations; variant of doPreprocess called in DRIBBLE
 };
 
-// Status of a HFO game
+// Status of an HFO game
 enum status_t
 {
   IN_GAME,             // Game is currently active
@@ -176,7 +176,7 @@ inline std::string ActionToString(action_t action) {
 };
 
 /**
- * Returns a string representation of a game_status.
+ * Returns a string representation of a game status.
  */
 inline std::string StatusToString(status_t status) {
   switch (status) {

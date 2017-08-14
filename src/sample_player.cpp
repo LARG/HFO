@@ -257,7 +257,7 @@ SamplePlayer::actionImpl()
       lastTrainerMessageTime = audioSensor().trainerMessageTime().cycle();
     }
     if (feature_extractor != NULL) {
-      feature_extractor->ExtractFeatures(this->world());
+      feature_extractor->ExtractFeatures(this->world(), true);
       feature_extractor->LogFeatures();
     }
   }

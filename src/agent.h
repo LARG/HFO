@@ -1,3 +1,5 @@
+// -*-c++-*-
+
 #ifndef AGENT_H
 #define AGENT_H
 
@@ -63,6 +65,7 @@ protected:
   std::vector<float> params;           // Parameters of current action
   int num_teammates;                   // Number of teammates
   int num_opponents;                   // Number of opponents
+  bool last_action_status;  // Recorded return status of last action
 
  public:
   inline const std::vector<float>& getState() { return state; }
@@ -72,6 +75,7 @@ protected:
   int getUnum(); // Returns the uniform number of the player
   inline int getNumTeammates() { return num_teammates; }
   inline int getNumOpponents() { return num_opponents; }
+  inline bool getLastActionStatus() { return last_action_status; }
 
   inline void setFeatureSet(hfo::feature_set_t fset) { feature_set = fset; }
   inline std::vector<float>* mutable_params() { return &params; }

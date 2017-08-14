@@ -1,3 +1,5 @@
+// -*-c++-*-
+
 #ifndef HIGHLEVEL_FEATURE_EXTRACTOR_H
 #define HIGHLEVEL_FEATURE_EXTRACTOR_H
 
@@ -18,7 +20,8 @@ public:
   virtual ~HighLevelFeatureExtractor();
 
   // Updated the state features stored in feature_vec
-  virtual const std::vector<float>& ExtractFeatures(const rcsc::WorldModel& wm);
+  virtual const std::vector<float>& ExtractFeatures(const rcsc::WorldModel& wm,
+						    bool last_action_status);
 
 protected:
   // Number of features for non-player objects.

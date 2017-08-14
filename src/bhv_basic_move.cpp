@@ -65,7 +65,7 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     // tackle
     if ( Bhv_BasicTackle( 0.8, 80.0 ).execute( agent ) )
     {
-        return true;
+      return true;
     }
 
     const WorldModel & wm = agent->world();
@@ -84,16 +84,17 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": intercept" );
-        Body_Intercept().execute( agent );
+        bool success = Body_Intercept().execute( agent );
         agent->setNeckAction( new Neck_OffensiveInterceptNeck() );
-
-        return true;
+        return success;
     }
 
     const Vector2D target_point = Strategy::i().getPosition( wm.self().unum() );
     const double dash_power = Strategy::get_normal_dash_power( wm );
 
-    double dist_thr = wm.ball().distFromSelf() * 0.1;
+    const BallObject& ball = wm.ball();
+
+    double dist_thr = ball.distFromSelf() * 0.1;
     if ( dist_thr < 1.0 ) dist_thr = 1.0;
 
     dlog.addText( Logger::TEAM,
@@ -105,21 +106,27 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     agent->debugClient().setTarget( target_point );
     agent->debugClient().addCircle( target_point, dist_thr );
 
-    if ( ! Body_GoToPoint( target_point, dist_thr, dash_power
-                           ).execute( agent ) )
-    {
-        Body_TurnToBall().execute( agent );
+    bool success = false;
+
+    if ( Body_GoToPoint( target_point, dist_thr, dash_power
+			 ).execute( agent ) ||
+	 Body_TurnToBall().execute( agent ) ) {
+      if (ball.posValid() || wm.self().collidesWithPost()) {
+	success = true;
+      }
+    } else {
+      success = false;
     }
 
     if ( wm.existKickableOpponent()
-         && wm.ball().distFromSelf() < 18.0 )
-    {
-        agent->setNeckAction( new Neck_TurnToBall() );
-    }
-    else
-    {
-        agent->setNeckAction( new Neck_TurnToBallOrScan() );
+         && ball.distFromSelf() < 18.0 ) {
+      agent->setNeckAction( new Neck_TurnToBall() );
+    } else if ( ball.posValid() ) {
+      agent->setNeckAction( new Neck_TurnToBallOrScan() );
+    } else {
+      agent->setNeckAction( new Neck_TurnToBall() );
     }
 
-    return true;
+
+    return success;
 }

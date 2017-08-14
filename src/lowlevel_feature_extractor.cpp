@@ -17,13 +17,15 @@ LowLevelFeatureExtractor::LowLevelFeatureExtractor(int num_teammates,
   numFeatures = num_basic_features +
       features_per_player * (numTeammates + numOpponents);
   numFeatures += numTeammates + numOpponents; // Uniform numbers
+  numFeatures++; // action state
   feature_vec.resize(numFeatures);
 }
 
 LowLevelFeatureExtractor::~LowLevelFeatureExtractor() {}
 
-const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
-    const WorldModel& wm) {
+const std::vector<float>&
+LowLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
+					  bool last_action_status) {
   featIndx = 0;
   const ServerParam& SP = ServerParam::i();
   // ======================== SELF FEATURES ======================== //
@@ -214,6 +216,12 @@ const std::vector<float>& LowLevelFeatureExtractor::ExtractFeatures(
   }
   // Add -1 features for any missing opponents
   for (int i=detected_opponents; i<numOpponents; ++i) {
+    addFeature(FEAT_MIN);
+  }
+
+  if (last_action_status) {
+    addFeature(FEAT_MAX);
+  } else {
     addFeature(FEAT_MIN);
   }
 

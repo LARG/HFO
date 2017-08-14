@@ -19,7 +19,7 @@ except ImportError:
     ' run: \"pip install .\"')
   exit()
 
-GOAL_POS_X = 1.0
+GOAL_POS_X = 0.9
 GOAL_POS_Y = 0.0
 
 # below - from hand_coded_defense_agent.cpp except LOW_KICK_DIST

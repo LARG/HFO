@@ -150,6 +150,9 @@ Agent::Agent()
 
     // set communication planner
     M_communication = Communication::Ptr(new SampleCommunication());
+
+    // setup last_action variable
+    last_action_status = false;
 }
 
 Agent::~Agent() {
@@ -249,83 +252,97 @@ void Agent::actionImpl() {
   }
 
   // For now let's not worry about turning the neck or setting the vision.
-  // However, do this now so doesn't override anything changed by the requested action.
-  // TODO for librcsc: setViewActionDefault, setNeckActionDefault that will not overwrite if already set.
+  // But do the settings now, so that doesn't override any set by the actions below.
+  // TODO: Add setViewActionDefault, setNeckActionDefault to librcsc that only set if not already set.
+
+  const WorldModel & wm = this->world();
+
   this->setViewAction(new View_Tactical());
-  this->setNeckAction(new Neck_TurnToBallOrScan());
+
+  if (wm.ball().posValid()) {
+    this->setNeckAction(new Neck_TurnToBallOrScan()); // if not ball().posValid(), requests possibly-invalid queuedNextBallPos()
+  } else {
+    this->setNeckAction(new Neck_ScanField()); // equivalent to Neck_TurnToBall()
+  }
+
+
 
   switch(requested_action) {
     case DASH:
-      this->doDash(params[0], params[1]);
+      last_action_status = this->doDash(params[0], params[1]);
       break;
     case TURN:
-      this->doTurn(params[0]);
+      last_action_status = this->doTurn(params[0]);
       break;
     case TACKLE:
-      this->doTackle(params[0], false);
+      last_action_status = this->doTackle(params[0], false);
       break;
     case KICK:
-      this->doKick(params[0], params[1]);
+      last_action_status = this->doKick(params[0], params[1]);
       break;
     case KICK_TO:
       if (feature_extractor != NULL) {
-        Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                                feature_extractor->absoluteYPos(params[1])),
-                       params[2], params[2] * 0.99, 3).execute(this);
+        last_action_status = Body_SmartKick(Vector2D(feature_extractor->absoluteXPos(params[0]),
+						     feature_extractor->absoluteYPos(params[1])),
+					    params[2], params[2] * 0.99, 3).execute(this);
       }
       break;
     case MOVE_TO:
       if (feature_extractor != NULL) {
-        Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                                feature_extractor->absoluteYPos(params[1])), 0.25,
-                       ServerParam::i().maxDashPower()).execute(this);
+	last_action_status = Body_GoToPoint(Vector2D(feature_extractor->absoluteXPos(params[0]),
+						     feature_extractor->absoluteYPos(params[1])), 0.25,
+					    ServerParam::i().maxDashPower()).execute(this);
+	last_action_status |= wm.self().collidesWithPost(); // can get out of collision w/post
       }
       break;
     case DRIBBLE_TO:
       if (feature_extractor != NULL) {
-        Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
-                              feature_extractor->absoluteYPos(params[1])), 1.0,
-                     ServerParam::i().maxDashPower(), 2).execute(this);
+        last_action_status = Body_Dribble(Vector2D(feature_extractor->absoluteXPos(params[0]),
+						   feature_extractor->absoluteYPos(params[1])), 1.0,
+					  ServerParam::i().maxDashPower(), 2).execute(this);
+	last_action_status |= wm.self().collidesWithPost(); // ditto
       }
       break;
     case INTERCEPT:
-      Body_Intercept().execute(this);
+      last_action_status = Body_Intercept().execute(this);
+      last_action_status |= wm.self().collidesWithPost(); // ditto
       break;
     case MOVE:
-      this->doMove();
+      last_action_status = this->doMove();
       break;
     case SHOOT:
-      this->doSmartKick();
+      last_action_status = this->doSmartKick();
       break;
     case PASS:
-      this->doPassTo(int(params[0]));
+      last_action_status = this->doPassTo(int(params[0]));
       break;
     case DRIBBLE:
-      this->doDribble();
+      last_action_status = this->doDribble();
       break;
     case CATCH:
-      this->doCatch();
+      last_action_status = this->doCatch();
       break;
     case NOOP:
+      last_action_status = false;
       break;
     case QUIT:
       std::cout << "Got quit from agent." << std::endl;
       handleExit();
       return;
     case REDUCE_ANGLE_TO_GOAL:
-      this->doReduceAngleToGoal();
+      last_action_status = this->doReduceAngleToGoal();
       break;
     case MARK_PLAYER:
-      this->doMarkPlayer(int(params[0]));
+      last_action_status = this->doMarkPlayer(int(params[0]));
       break;
     case DEFEND_GOAL:
-      this->doDefendGoal();
+      last_action_status = this->doDefendGoal();
       break;
     case GO_TO_BALL:
-      this->doGoToBall();
+      last_action_status = this->doGoToBall();
       break;
     case REORIENT:
-      this->doReorient();
+      last_action_status = this->doReorient();
       break;
     default:
       std::cerr << "ERROR: Unsupported Action: "
@@ -381,7 +398,8 @@ void
 Agent::UpdateFeatures()
 {
   if (feature_extractor != NULL) {
-    state = feature_extractor->ExtractFeatures(this->world());
+    state = feature_extractor->ExtractFeatures(this->world(),
+					       getLastActionStatus());
   }
 }
 
@@ -617,7 +635,11 @@ Agent::doPreprocess()
                       wm.self().tackleExpires() );
         // face neck to ball
         this->setViewAction( new View_Tactical() );
-        this->setNeckAction( new Neck_TurnToBallOrScan() );
+	if (wm.ball().posValid()) {
+	  this->setNeckAction( new Neck_TurnToBallOrScan() );
+	} else{
+	  this->setNeckAction( new Neck_TurnToBall() );
+	}
         return true;
     }
 
@@ -642,8 +664,7 @@ Agent::doPreprocess()
     {
         dlog.addText( Logger::TEAM,
                       __FILE__": invalid my pos" );
-        Bhv_Emergency().execute( this ); // includes change view
-        return true;
+        return Bhv_Emergency().execute( this ); // includes change view
     }
 
     //
@@ -659,8 +680,7 @@ Agent::doPreprocess()
         dlog.addText( Logger::TEAM,
                       __FILE__": search ball" );
         this->setViewAction( new View_Tactical() );
-        Bhv_NeckBodyToBall().execute( this );
-        return true;
+        return Bhv_NeckBodyToBall().execute( this );
     }
 
     //
@@ -745,7 +765,7 @@ Agent::doReorient()
         dlog.addText( Logger::TEAM,
                       __FILE__": before_kick_off" );
         Vector2D move_point =  Strategy::i().getPosition( wm.self().unum() );
-        Bhv_CustomBeforeKickOff( move_point ).execute( this );
+	Bhv_CustomBeforeKickOff( move_point ).execute( this );
         this->setViewAction( new View_Tactical() );
         return true;
     }
@@ -774,18 +794,14 @@ Agent::doReorient()
     //
     // ball localization error
     //
-    const int count_thr = ( wm.self().goalie()
-                            ? 10
-                            : 5 );
-    if ( wm.ball().posCount() > count_thr
-         || ( wm.gameMode().type() != GameMode::PlayOn
-              && wm.ball().seenPosCount() > count_thr + 10 ) )
-    {
-        dlog.addText( Logger::TEAM,
-                      __FILE__": search ball" );
-        return Bhv_NeckBodyToBall().execute( this );
-    }
 
+    const BallObject& ball = wm.ball();
+    if (! ( ball.posValid() && ball.velValid() )) {
+      dlog.addText( Logger::TEAM,
+		    __FILE__": search ball" );
+
+      return Bhv_NeckBodyToBall().execute( this );
+    }
 
     //
     // check pass message
@@ -795,11 +811,20 @@ Agent::doReorient()
         return true;
     }
 
-    const BallObject& ball = wm.ball();
-    if (! ( ball.rposValid() && ball.velValid() )) {
-      dlog.addText( Logger::TEAM,
-		    __FILE__": search ball" );
-      return Bhv_NeckBodyToBall().execute( this );
+    //
+    // ball localization error
+    //
+    const int count_thr = ( wm.self().goalie()
+                            ? 10
+                            : 5 );
+    if ( wm.ball().posCount() > count_thr
+         || ( wm.gameMode().type() != GameMode::PlayOn
+              && wm.ball().seenPosCount() > count_thr + 10 ) )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": search ball" );
+
+        return Bhv_NeckBodyToBall().execute( this );
     }
 
     //
@@ -847,9 +872,10 @@ Agent::doSmartKick()
         ShootGenerator::instance().courses(this->world(), false);
     ShootGenerator::Container::const_iterator best_shoot
         = std::min_element(cont.begin(), cont.end(), ShootGenerator::ScoreCmp());
-    Body_SmartKick(best_shoot->target_point_, best_shoot->first_ball_speed_,
-                   best_shoot->first_ball_speed_ * 0.99, 3).execute(this);
-    return true;
+    return Body_SmartKick(best_shoot->target_point_,
+			  best_shoot->first_ball_speed_,
+			  best_shoot->first_ball_speed_ * 0.99,
+			  3).execute(this);
 }
 
 
@@ -870,9 +896,12 @@ bool
 Agent::doPassTo(int receiver)
 {
     Force_Pass pass;
-    pass.get_pass_to_player(this->world(), receiver);
-    pass.execute(this);
-    return true;
+    const WorldModel & wm = this->world();
+    pass.get_pass_to_player(wm, receiver);
+    if (pass.execute(this) || wm.self().collidesWithBall()) { // can sometimes fix
+      return true;
+    }
+    return false;
 }
 
 /*-------------------------------------------------------------------*/
@@ -889,10 +918,13 @@ Agent::doDribble()
   M_action_generator = ActionGenerator::ConstPtr(g);
   ActionChainHolder::instance().setFieldEvaluator( M_field_evaluator );
   ActionChainHolder::instance().setActionGenerator( M_action_generator );
-  doPreprocess();
+  bool preprocess_success = doPreprocess();
   ActionChainHolder::instance().update( world() );
-  Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this);
-  return true;
+  if (Bhv_ChainAction(ActionChainHolder::instance().graph()).execute(this) ||
+      preprocess_success) {
+    return true;
+  }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/
@@ -903,9 +935,7 @@ bool
 Agent::doMove()
 {
   Strategy::instance().update( world() );
-  int role_num = Strategy::i().roleNumber(world().self().unum());
-  Bhv_BasicMove().execute(this);
-  return true;
+  return Bhv_BasicMove().execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -948,8 +978,12 @@ bool Agent::doMarkPlayer(int unum) {
   }
   double x = player_pos.x + (kicker_pos.x - player_pos.x)*0.1;
   double y = player_pos.y + (kicker_pos.y - player_pos.y)*0.1;
-  Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+
+  if (Body_GoToPoint(Vector2D(x,y), 0.25, ServerParam::i().maxDashPower()).execute(this) ||
+      wm.self().collidesWithPost()) { // latter because sometimes fixes
+    return true;
+  }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/
@@ -958,7 +992,7 @@ bool Agent::doMarkPlayer(int unum) {
  * This action cuts off the angle between the shooter and the goal the players always move to a dynamic line in between the kicker and the goal.
  */
 
-/* Comparator for sorting teammated based on y positions.*/
+/* Comparator for sorting teammates based on y positions.*/
 bool compare_y_pos (PlayerObject* i, PlayerObject* j) {
   return i->pos().y < j->pos().y;
 }
@@ -970,7 +1004,12 @@ bool Agent::doReduceAngleToGoal() {
 
   const PlayerPtrCont::const_iterator o_end = wm.opponentsFromSelf().end();
 
-  Vector2D ball_pos = wm.ball().pos();
+  const BallObject& ball = wm.ball();
+  if (! ball.posValid()) {
+    return false;
+  }
+
+  Vector2D ball_pos = ball.pos();
   double nearRatio = 0.9;
   const PlayerPtrCont::const_iterator o_t_end = wm.teammatesFromSelf().end();
 
@@ -1036,28 +1075,40 @@ bool Agent::doReduceAngleToGoal() {
   double dist_to_end2 = targetLineEnd2.dist2(ball_pos);
   double ratio = dist_to_end2/(dist_to_end1+dist_to_end2);
   Vector2D target = targetLineEnd1 * ratio + targetLineEnd2 * (1-ratio);
-  Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this) ||
+      wm.self().collidesWithPost()) { // latter because sometimes fixes
+    return true;
+  }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/
 
 /*!
  *
- * This action cuts off the angle between the shooter and the goal the players always moves on a fixed line.
+ * This action cuts off the angle between the shooter and the goal; the player always moves on a fixed line.
  */
 
 bool Agent::doDefendGoal() {
   const WorldModel & wm = this->world();
   Vector2D goal_pos1( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), ServerParam::i().goalHalfWidth() );
   Vector2D goal_pos2( -ServerParam::i().pitchHalfLength() + ServerParam::i().goalAreaLength(), -ServerParam::i().goalHalfWidth() );
-  Vector2D ball_pos = wm.ball().pos();
+  const BallObject& ball = wm.ball();
+  if (! ball.posValid()) {
+    return false;
+  }
+
+  Vector2D ball_pos = ball.pos();
   double dist_to_post1 = goal_pos1.dist2(ball_pos);
   double dist_to_post2 = goal_pos2.dist2(ball_pos);
   double ratio = dist_to_post2/(dist_to_post1+dist_to_post2);
   Vector2D target = goal_pos1 * ratio + goal_pos2 * (1-ratio);
-  Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+
+  if (Body_GoToPoint(target, 0.25, ServerParam::i().maxDashPower()).execute(this) ||
+      wm.self().collidesWithPost()) { // latter because sometimes fixes
+    return true;
+  }
+  return false;
 }
 
 /*-------------------------------------------------------------------*/
@@ -1070,8 +1121,11 @@ bool Agent::doDefendGoal() {
 
 bool Agent::doGoToBall() {
   const WorldModel & wm = this->world();
-  Body_GoToPoint(wm.ball().pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
-  return true;
+  const BallObject& ball = wm.ball();
+  if (! ball.posValid()) {
+    return false;
+  }
+  return Body_GoToPoint(ball.pos(), 0.25, ServerParam::i().maxDashPower()).execute(this);
 }
 
 /*-------------------------------------------------------------------*/
@@ -1101,9 +1155,9 @@ Agent::doForceKick()
             dlog.addText( Logger::TEAM,
                           __FILE__": simultaneous kick cross type" );
         }
-        Body_KickOneStep( goal_pos,
-                          ServerParam::i().ballSpeedMax()
-                          ).execute( this );
+	Body_KickOneStep( goal_pos,
+			  ServerParam::i().ballSpeedMax()
+			  ).execute( this );
         this->setNeckAction( new Neck_ScanField() );
         return true;
     }
