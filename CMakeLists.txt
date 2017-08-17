@@ -173,6 +173,10 @@ add_executable(communication_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/communica
 set_target_properties(communication_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
 target_link_libraries(communication_agent hfo-lib)
 
+add_executable(thread_agents ${CMAKE_CURRENT_SOURCE_DIR}/example/thread_agents.cpp)
+set_target_properties(thread_agents PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+target_link_libraries(thread_agents hfo-lib pthread)
+
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} USE_SOURCE_PERMISSIONS)
 install(DIRECTORY ${RCSSSERVER_BINARY_DIR} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} USE_SOURCE_PERMISSIONS)
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/bin USE_SOURCE_PERMISSIONS)
