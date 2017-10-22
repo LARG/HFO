@@ -1,11 +1,11 @@
 #Flags
-CXXFLAGS = -g -O3 -Wall
+CXXFLAGS = -shared -g -O3 -Wall -fPIC  
 
 #Compiler
 CXX = g++
 
 #Sources
-SRCS = FuncApprox.cpp tiles2.cpp CMAC.cpp
+SRCS = FuncApprox.cpp tiles2.cpp CMAC.cpp 
 
 #Objects
 OBJS = $(SRCS:.cpp=.o)
@@ -18,11 +18,11 @@ TARGET = libfuncapprox.a
 all: $(TARGET)
 
 .cpp.o:
-	$(CXX) $(CXXFLAGS) -c -o $@ $(@F:%.o=%.cpp)
+	$(CXX) $(CXXFLAGS) -c -o $@ $(@F:%.o=%.cpp) 
 
 $(TARGET): $(OBJS)
-	ar cq $@ $(OBJS)
+	ar cq $@ $(OBJS); 
 
 clean:
-	rm -f $(TARGET) $(OBJS) *~
+	rm -f $(TARGET) $(OBJS) *~; 
 
