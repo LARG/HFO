@@ -21,7 +21,7 @@ all: $(TARGET)
 	$(CXX) $(CXXFLAGS) -c -o $@ $(@F:%.o=%.cpp) 
 
 $(TARGET): $(OBJS)
-	ar cq $@ $(OBJS); #g++ -shared -o libFA.so libfuncapprox.a ;
+	ar cq $@ $(OBJS); 
 
 clean:
 	rm -f $(TARGET) $(OBJS) *~; 
