@@ -32,7 +32,7 @@ rm weights*   #remove weights from old runs
 
 python="/usr/bin/python3" #which python?
 agent_path="./example/sarsa_offense"
-log_dir="log"
+log_dir="."
 output_path=$agent_path
 agent_filename="high_level_sarsa_agent.py"
 
