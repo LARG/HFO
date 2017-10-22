@@ -80,23 +80,4 @@ class SarsaAgent(object):
      
 
 
-#NF=8
-#NA=2 #PASS to each teammate, SHOOT, DRIBBLE
-#discFac=1.0
-#resolution=0.1
-#eps=0.01
-#NOT=0
-#Lambda=0.0
-#learnR=0.1
-#Min=[]
-#Range=[]
-#Res=[]
-#for i in range(NF):
-#  Min.append(-1.0)
-#  Range.append(2.0)
-#  Res.append(resolution)
-#
-#FA=CMAC(NF, NA, Range, Min, Res)
-#SA=SarsaAgent(NF, NA, learnR, eps, Lambda, FA.obj, "", "")
-#SA.endEpisode()
     

@@ -5,7 +5,7 @@ FA_DIR = ../funcapprox
 INCLUDES = -I$(FA_DIR)
 
 #Flags
-CXXFLAGS = -shared -g -O3 -Wall -fPIC -lpython2.7
+CXXFLAGS = -shared -g -O3 -Wall -fPIC 
 
 #Compiler
 CXX = g++

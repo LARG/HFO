@@ -1,5 +1,5 @@
 #Flags
-CXXFLAGS = -shared -g -O3 -Wall -fPIC -lpython2.7 
+CXXFLAGS = -shared -g -O3 -Wall -fPIC  
 
 #Compiler
 CXX = g++
@@ -24,5 +24,5 @@ $(TARGET): $(OBJS)
 	ar cq $@ $(OBJS); #g++ -shared -o libFA.so libfuncapprox.a ;
 
 clean:
-	rm -f $(TARGET) $(OBJS) *~; #rm *.so;
+	rm -f $(TARGET) $(OBJS) *~; 
 
