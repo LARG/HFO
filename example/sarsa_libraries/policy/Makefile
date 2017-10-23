@@ -5,7 +5,7 @@ FA_DIR = ../funcapprox
 INCLUDES = -I$(FA_DIR)
 
 #Flags
-CXXFLAGS = -g -O3 -Wall
+CXXFLAGS = -shared -g -O3 -Wall -fPIC 
 
 #Compiler
 CXX = g++

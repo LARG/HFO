@@ -11,6 +11,7 @@ addons:
       - libboost-filesystem-dev
 install:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+       brew update ;
        brew install cartr/qt4/qt 
        ;
     fi
