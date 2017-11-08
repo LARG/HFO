@@ -78,6 +78,8 @@ def main(args):
                   'server::hfo_max_untouched_time=%i ' \
                   'server::hfo_min_ball_pos_x=%f ' \
                   'server::hfo_max_ball_pos_x=%f ' \
+                  'server::hfo_min_ball_pos_y=%f ' \
+                  'server::hfo_max_ball_pos_y=%f ' \
                   'server::say_msg_size=%i ' \
                   'server::record_messages=%i' \
                   %(server_port, coach_port, olcoach_port,
@@ -86,7 +88,9 @@ def main(args):
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
                     args.offenseOnBall, args.seed, args.maxUntouchedTime,
-                    args.min_ball_x, args.max_ball_x, args.messageSize,
+                    args.min_ball_x, args.max_ball_x,
+                    args.min_ball_y, args.max_ball_y,
+                    args.messageSize,
                     args.verbose)
 
   try:
