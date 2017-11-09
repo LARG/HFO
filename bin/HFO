@@ -78,6 +78,8 @@ def main(args):
                   'server::hfo_max_untouched_time=%i ' \
                   'server::hfo_min_ball_pos_x=%f ' \
                   'server::hfo_max_ball_pos_x=%f ' \
+                  'server::hfo_min_ball_pos_y=%f ' \
+                  'server::hfo_max_ball_pos_y=%f ' \
                   'server::say_msg_size=%i ' \
                   'server::record_messages=%i' \
                   %(server_port, coach_port, olcoach_port,
@@ -86,7 +88,9 @@ def main(args):
                     args.sync, args.fullstate, args.fullstate,
                     args.maxFramesPerTrial, args.numTrials, args.numFrames,
                     args.offenseOnBall, args.seed, args.maxUntouchedTime,
-                    args.min_ball_x, args.max_ball_x, args.messageSize,
+                    args.min_ball_x, args.max_ball_x,
+                    args.min_ball_y, args.max_ball_y,
+                    args.messageSize,
                     args.verbose)
 
   try:
@@ -159,7 +163,7 @@ def parseArgs():
   p.add_argument('--agent-play-goalie', dest='agentPlayGoalie', action='store_true',
                  default=False, help='Defense-agent plays goalie, rather than defender.')
   p.add_argument('--offense-team', dest='offenseTeam', type=str, default='base',
-                 help='Offense team binary. Options: '+str(installed_teams)+'. Default: base.') 
+                 help='Offense team binary. Options: '+str(installed_teams)+'. Default: base.')
   p.add_argument('--defense-team', dest='defenseTeam', type=str, default='base',
                  help='Defense team binary. Options: '+str(installed_teams)+'. Default: base.')
   p.add_argument('--no-sync', dest='sync', action='store_false', default=True,
@@ -192,6 +196,10 @@ def parseArgs():
                  help='Ball initialization min x position: [0,1]. Default: 0')
   p.add_argument('--ball-x-max', dest='max_ball_x', type=float, default=0.2,
                  help='Ball initialization max x position: [0,1]. Default: .2')
+  p.add_argument('--ball-y-min', dest='min_ball_y', type=float, default=-0.8,
+                 help='Ball initialization min y position: [-1,1]. Default: -0.8')
+  p.add_argument('--ball-y-max', dest='max_ball_y', type=float, default=0.8,
+                 help='Ball initialization max y position: [-1,1]. Default: 0.8')
   p.add_argument('--verbose', dest='verbose', action='store_true',
                  default=False, help='Print verbose output.')
   args = p.parse_args()

@@ -109,7 +109,7 @@ list(APPEND RCSC_LINK_LIBS rcsc_agent rcsc_geom rcsc_param rcsc_ann rcsc_net rcs
 
 add_library(player_chain_action STATIC ${PLAYER_SOURCES} ${CHAIN_ACTION_SOURCES})
 add_executable(sample_coach ${SOURCE_DIR}/main_coach.cpp ${SOURCE_DIR}/sample_coach.cpp)
-add_executable(sample_player ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCE_DIR}/agent.cpp) 
+add_executable(sample_player ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_player.cpp ${SOURCE_DIR}/sample_player.cpp ${SOURCE_DIR}/agent.cpp)
 add_executable(sample_trainer ${SOURCE_DIR}/main_trainer.cpp ${SOURCE_DIR}/sample_trainer.cpp)
 add_executable(agent ${SOURCE_DIR}/HFO.cpp ${SOURCE_DIR}/main_agent.cpp ${SOURCE_DIR}/agent.cpp)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/teams/base)
