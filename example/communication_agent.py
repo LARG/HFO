@@ -28,7 +28,11 @@ def main():
       # Take an action
       hfo.act(DASH, 20.0, 0.)
       # Create outgoing communication
-      hfo.say('Hello!')
+      # the message can contain charachters a-z A-Z 0-9 
+      # the message can contain special charachters like ?SPACE-*()+_<>/
+      # the message cannot contain !@#$^&={}[];:"'
+      hfo.say('Hello World')
+
       # Advance the environment and get the game status
       status = hfo.step()
     # Check the outcome of the episode
