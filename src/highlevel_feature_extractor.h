@@ -25,7 +25,7 @@ public:
 
   //override FeatureExtractor::valid
   //this method takes a pointer instead of a reference
-  static bool valid(const rcsc::PlayerObject* player);
+  bool valid(const rcsc::PlayerObject* player);
 
 protected:
   // Number of features for non-player objects.
