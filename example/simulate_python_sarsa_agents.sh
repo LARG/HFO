@@ -37,7 +37,7 @@ output_path=$agent_path
 agent_filename="high_level_sarsa_agent.py"
 
 #start the server
-stdbuf -oL ./bin/HFO --port=$port --no-logging --offense-agents=$oa --defense-npcs=$da --trials=$trials --defense-team=base  --headless --fullstate  > $log_dir/"$oa"v"$da""_sarsa_py_agents.log" &
+stdbuf -oL ./bin/HFO --port=$port --no-logging --offense-agents=$oa --defense-npcs=$da --trials=$trials --defense-team=base --fullstate  --headless > $log_dir/"$oa"v"$da""_sarsa_py_agents.log" &
 
 #each agent is a seperate process
 for n in $(seq 1 $oa)
@@ -48,7 +48,7 @@ do
     fname+=".txt"
     logfile=$log_dir/$fname
     rm $logfile
-    $python $agent_path/$agent_filename --port=$port --numTeammates=`expr $oa - 1` --numOpponents=$da --numEpisodes=$trials &> $log_dir/$fname &
+    $python $agent_path/$agent_filename --port=$port --numTeammates=`expr $oa - 1` --numOpponents=$da --numEpisodes=$trials --suffix=$n &> $log_dir/$fname &
 done
     
 # The magic line
