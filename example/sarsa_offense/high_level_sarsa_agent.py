@@ -8,10 +8,6 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'sarsa_libraries','python_wrapper'))
 from py_wrapper import *
 
-NA=0      #Number of actions
-NOT=0     #Number of teammates
-NF=0      #Number of features
-
 def getReward(s):
   reward=0
   #--------------------------- 
@@ -44,7 +40,7 @@ def purge_features(state):
   tmpIndex= 9 + 3*NOT
   for i in range(len(state)):
     # Ignore first six features and teammate proximity to opponent(when opponent is absent)and opponent features
-    if(i < 6 or i>9+6*NOT or (args.numOpponents==0 and ((i>9+numTMates and i<=9+2*numTMates) or i==9)) ): 
+    if(i < 6 or i>9+6*NOT or (NOO==0 and ((i>9+NOT and i<=9+2*NOT) or i==9)) ): 
       continue;
     #Ignore Angle and Uniform Number of Teammates
     temp =  i-tmpIndex;
@@ -71,7 +67,8 @@ if __name__ == '__main__':
   hfo = HFOEnvironment()
   #now connect to the server
   hfo.connectToServer(HIGH_LEVEL_FEATURE_SET,'bin/teams/base/config/formations-dt',args.port,'localhost','base_left',False)
-  global NF,NA, NOT
+  global NF,NA,NOT,NOO
+  NOO=args.numOpponents
   if args.numOpponents >0: 
     NF=4+4*args.numTeammates
   else:
@@ -85,7 +82,7 @@ if __name__ == '__main__':
   Min=[-1]*NF
   Res=[resolution]*NF
   #Sarsa Agent Parameters
-  wt_filename="weights_"+str(NOT+1)+"v"+str(args.numOpponents)+'_'+str(args.suffix)
+  wt_filename="weights_"+str(NOT+1)+"v"+str(NOO)+'_'+str(args.suffix)
   discFac=1
   Lambda=0
   eps=0.01
