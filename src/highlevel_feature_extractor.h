@@ -23,6 +23,10 @@ public:
   virtual const std::vector<float>& ExtractFeatures(const rcsc::WorldModel& wm,
 						    bool last_action_status);
 
+  //override FeatureExtractor::valid
+  //this method takes a pointer instead of a reference
+  static bool valid(const rcsc::PlayerObject* player);
+
 protected:
   // Number of features for non-player objects.
   const static int num_basic_features = 10;

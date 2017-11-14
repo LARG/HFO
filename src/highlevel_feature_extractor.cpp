@@ -30,8 +30,8 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   const SelfObject& self = wm.self();
   const Vector2D& self_pos = self.pos();
   const float self_ang = self.body().radian();
-  const PlayerCont& teammates = wm.teammates();
-  const PlayerCont& opponents = wm.opponents();
+  const PlayerPtrCont& teammates = wm.teammatesFromSelf();
+  const PlayerPtrCont& opponents = wm.opponentsFromSelf();
   float maxR = sqrtf(SP.pitchHalfLength() * SP.pitchHalfLength()
                      + SP.pitchHalfWidth() * SP.pitchHalfWidth());
   // features about self pos
@@ -89,10 +89,10 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
 
   // Features[9 - 9+T]: teammate's open angle to goal
   int detected_teammates = 0;
-  for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
-    const PlayerObject& teammate = *it;
+  for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
+    const PlayerObject* teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
-      addNormFeature(calcLargestGoalAngle(wm, teammate.pos()), 0, M_PI);
+      addNormFeature(calcLargestGoalAngle(wm, teammate->pos()), 0, M_PI);
       detected_teammates++;
     }
   }
@@ -104,10 +104,10 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   // Features[9+T - 9+2T]: teammates' dists to closest opps
   if (numOpponents > 0) {
     detected_teammates = 0;
-    for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
-      const PlayerObject& teammate = *it;
+    for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
+      const PlayerObject* teammate = *it;
       if (valid(teammate) && detected_teammates < numTeammates) {
-        calcClosestOpp(wm, teammate.pos(), th, r);
+        calcClosestOpp(wm, teammate->pos(), th, r);
         addNormFeature(r, 0, maxR);
         detected_teammates++;
       }
@@ -124,10 +124,10 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
 
   // Features [9+2T - 9+3T]: open angle to teammates
   detected_teammates = 0;
-  for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
-    const PlayerObject& teammate = *it;
+  for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
+    const PlayerObject* teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
-      addNormFeature(calcLargestTeammateAngle(wm, self_pos, teammate.pos()),0,M_PI);
+      addNormFeature(calcLargestTeammateAngle(wm, self_pos, teammate->pos()),0,M_PI);
       detected_teammates++;
     }
   }
@@ -138,16 +138,16 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
 
   // Features [9+3T - 9+6T]: x, y, unum of teammates
   detected_teammates = 0;
-  for (PlayerCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
-    const PlayerObject& teammate = *it;
+  for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
+    const PlayerObject* teammate = *it;
     if (valid(teammate) && detected_teammates < numTeammates) {
       if (playingOffense) {
-        addNormFeature(teammate.pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+        addNormFeature(teammate->pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
       } else {
-        addNormFeature(teammate.pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+        addNormFeature(teammate->pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
       }
-      addNormFeature(teammate.pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
-      addFeature(teammate.unum());
+      addNormFeature(teammate->pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
+      addFeature(teammate->unum());
       detected_teammates++;
     }
   }
@@ -160,16 +160,16 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
 
   // Features [9+6T - 9+6T+3O]: x, y, unum of opponents
   int detected_opponents = 0;
-  for (PlayerCont::const_iterator it = opponents.begin(); it != opponents.end(); ++it) {
-    const PlayerObject& opponent = *it;
+  for (PlayerPtrCont::const_iterator it = opponents.begin(); it != opponents.end(); ++it) {
+    const PlayerObject* opponent = *it;
     if (valid(opponent) && detected_opponents < numOpponents) {
       if (playingOffense) {
-        addNormFeature(opponent.pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
+        addNormFeature(opponent->pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
       } else {
-        addNormFeature(opponent.pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
+        addNormFeature(opponent->pos().x, -SP.pitchHalfLength()-tolerance_x, tolerance_x);
       }
-      addNormFeature(opponent.pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
-      addFeature(opponent.unum());
+      addNormFeature(opponent->pos().y, -tolerance_y - SP.pitchHalfWidth(), SP.pitchHalfWidth() + tolerance_y);
+      addFeature(opponent->unum());
       detected_opponents++;
     }
   }
@@ -190,3 +190,13 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   // checkFeatures();
   return feature_vec;
 }
+
+bool HighLevelFeatureExtractor::valid(const rcsc::PlayerObject* player) {
+  if (!player) {return false;} //avoid segfaults
+  const rcsc::Vector2D& pos = player->pos();
+  if (!player->posValid()) {
+    return false;
+  }
+  return pos.isValid();
+}
+
