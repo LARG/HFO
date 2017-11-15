@@ -91,7 +91,7 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   int detected_teammates = 0;
   for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject* teammate = *it;
-    if (valid(teammate) && detected_teammates < numTeammates) {
+    if (valid(teammate) && teammate->unum() > 0 && detected_teammates < numTeammates) {
       addNormFeature(calcLargestGoalAngle(wm, teammate->pos()), 0, M_PI);
       detected_teammates++;
     }
@@ -106,7 +106,7 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
     detected_teammates = 0;
     for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
       const PlayerObject* teammate = *it;
-      if (valid(teammate) && detected_teammates < numTeammates) {
+      if (valid(teammate) && teammate->unum() > 0 && detected_teammates < numTeammates) {
         calcClosestOpp(wm, teammate->pos(), th, r);
         addNormFeature(r, 0, maxR);
         detected_teammates++;
@@ -126,7 +126,7 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   detected_teammates = 0;
   for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject* teammate = *it;
-    if (valid(teammate) && detected_teammates < numTeammates) {
+    if (valid(teammate) && teammate->unum() > 0 && detected_teammates < numTeammates) {
       addNormFeature(calcLargestTeammateAngle(wm, self_pos, teammate->pos()),0,M_PI);
       detected_teammates++;
     }
@@ -140,7 +140,7 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   detected_teammates = 0;
   for (PlayerPtrCont::const_iterator it=teammates.begin(); it != teammates.end(); ++it) {
     const PlayerObject* teammate = *it;
-    if (valid(teammate) && detected_teammates < numTeammates) {
+    if (valid(teammate) && teammate->unum() > 0 && detected_teammates < numTeammates) {
       if (playingOffense) {
         addNormFeature(teammate->pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
       } else {
@@ -162,7 +162,7 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   int detected_opponents = 0;
   for (PlayerPtrCont::const_iterator it = opponents.begin(); it != opponents.end(); ++it) {
     const PlayerObject* opponent = *it;
-    if (valid(opponent) && detected_opponents < numOpponents) {
+    if (valid(opponent) && opponent->unum() > 0 && detected_opponents < numOpponents) {
       if (playingOffense) {
         addNormFeature(opponent->pos().x, -tolerance_x, SP.pitchHalfLength() + tolerance_x);
       } else {
