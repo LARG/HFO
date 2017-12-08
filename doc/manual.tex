@@ -286,7 +286,7 @@ follows:
 
 \subsubsection{High Level State Feature List}
 Let $T$ denote the number of teammates in the HFO game and $O$ the
-number of opponents. There are a total of $10 + 6T + 3O$ high-level
+number of opponents. There are a total of $10 + 6T + 3O + 2$ high-level
 features.
 
 \begin{enumerate}[noitemsep]
@@ -328,6 +328,7 @@ features.
 	the last action taken was successful, either in accomplishing the
 	usual intent of the action or (primarily for the offense) in some other way such as
 	getting out of a goal-collision state. 1 for yes, -1 for no.}
+\item [$+1$] {\textbf{Stamina} Agent's Stamina: Low stamina slows movement.}
 \end{enumerate}
 
 \begin{figure}[htp]
@@ -468,7 +469,7 @@ the above categories. These features are referred to as \textit{other
 
 \subsubsection{Low Level State Feature List}
 Let $T$ denote the number of teammates and $O$ denote the number of
-opponents in the HFO game. Then there are a total of $58 + 9T + 9O$
+opponents in the HFO game. Then there are a total of $58 + 9T + 9O + 1$
 low-level features:
 
 \begin{enumerate}[noitemsep]
