@@ -15,7 +15,8 @@ install:
        brew install cartr/qt4/qt 
        ;
     fi
-  - sudo -H pip install --upgrade nose numpy
+  - sudo -H pip2 install --upgrade nose numpy
+  - sudo -H pip3 install --upgrade nose numpy
 os:
   - linux
   - osx
@@ -27,4 +28,4 @@ env:
 script:
   - mkdir build && cd build
   - cmake -DCMAKE_BUILD_TYPE=RelwithDebInfo .. && make -j4 && make install
-  - cd .. && pip install --user . && nosetests --exe -vd tests/test_basic.py
+  - cd .. && pip3 install --user . && nosetests --exe -vd tests/test_basic.py
