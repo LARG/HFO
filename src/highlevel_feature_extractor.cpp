@@ -16,7 +16,7 @@ HighLevelFeatureExtractor::HighLevelFeatureExtractor(int num_teammates,
   assert(numOpponents >= 0);
   numFeatures = num_basic_features + features_per_teammate * numTeammates
       + features_per_opponent * numOpponents;
-  numFeatures++; // action status
+  numFeatures+=2; // action status, stamina
   feature_vec.resize(numFeatures);
 }
 
@@ -185,6 +185,7 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   } else {
     addFeature(FEAT_MIN);
   }
+  addNormFeature(self.stamina(), 0., observedStaminaMax);
 
   assert(featIndx == numFeatures);
   // checkFeatures();
