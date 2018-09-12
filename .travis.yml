@@ -27,4 +27,4 @@ env:
 script:
   - mkdir build && cd build
   - cmake -DCMAKE_BUILD_TYPE=RelwithDebInfo .. && make -j4 && make install
-  - cd .. && pip2 install --user . && nosetests --exe -vd tests/test_basic.py
+  - cd .. && pip2 install --user .
