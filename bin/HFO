@@ -93,6 +93,12 @@ def main(args):
                     args.messageSize,
                     args.verbose)
 
+  if args.deterministic:
+    serverOptions += ' server::player_rand=0 ' \
+                     'server::ball_rand=0 ' \
+                     'server::kick_rand=0 ' \
+                     'server::wind_rand=0'
+
   try:
     signal.signal(signal.SIGTERM, term)
   except (ValueError, AttributeError):
@@ -202,6 +208,8 @@ def parseArgs():
                  help='Ball initialization max y position: [-1,1]. Default: 0.8')
   p.add_argument('--verbose', dest='verbose', action='store_true',
                  default=False, help='Print verbose output.')
+  p.add_argument('--deterministic', dest='deterministic', action='store_true',
+                 default=False, help='Make environment deterministic.')
   args = p.parse_args()
   if args.offenseAgents not in list(range(0, 11)):
     p.error('argument --offense-agents: invalid choice: '\

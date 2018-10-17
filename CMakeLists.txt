@@ -14,7 +14,7 @@ find_package(FLEX REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 ExternalProject_Add(rcssserver
-  GIT_REPOSITORY "https://github.com/mhauskn/rcssserver.git"
+  GIT_REPOSITORY "https://github.com/CoolPhilChen/rcssserver.git"
   GIT_TAG "master"
   CMAKE_ARGS -DCMAKE_BUILD_TYPE=MinSizeRel
   UPDATE_COMMAND ""
@@ -39,6 +39,7 @@ set(LIBRCSC_LINK_DIR ${BINARY_DIR}/lib)
 
 if(BUILD_SOCCERWINDOW)
   find_package(Qt4 REQUIRED COMPONENTS QTCORE QTGUI QTNETWORK)
+  include(${QT_USE_FILE})
   if(NOT Qt4_FOUND)
     message(FATAL_ERROR "Qt4 is needed for soccerwindow2 visualizer. Install Qt4 or disable soccerwindow2: \"cmake -DBUILD_SOCCERWINDOW=False\"")
   endif()
