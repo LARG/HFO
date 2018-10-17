@@ -14,7 +14,7 @@ find_package(FLEX REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 ExternalProject_Add(rcssserver
-  GIT_REPOSITORY "https://github.com/mhauskn/rcssserver.git"
+  GIT_REPOSITORY "https://github.com/CoolPhilChen/rcssserver.git"
   GIT_TAG "master"
   CMAKE_ARGS -DCMAKE_BUILD_TYPE=MinSizeRel
   UPDATE_COMMAND ""
