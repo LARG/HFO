@@ -1,7 +1,9 @@
 RoboCup 2D Half Field Offense
 ===============
 
-[![Build Status](https://travis-ci.org/LARG/HFO.svg?branch=master)](https://travis-ci.org/LARG/HFO)
+[![Build Status](https://travis-ci.org/LARG/HFO.svg?branch=master)](https://travis-ci.org/LARG/HFO) [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
+__WARNING: HFO is not actively maintained!__ We accept pull requests and bug fixes, but please be prepared to do your own debugging in case of a problem. If you'd like to become a maintainer of HFO, get in touch.
 
 ![3 on 3 HFO](https://github.com/mhauskn/HFO/blob/master/img/hfo3on3.png)
 
