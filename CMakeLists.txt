@@ -4,9 +4,20 @@ include(ExternalProject)
 
 option(BUILD_SOCCERWINDOW "Build Soccerwindow Visualizer" ON)
 option(INSTALL_ADDITIONAL_TEAMS "Install additional team binaries" ON)
-
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_definitions(-DELOG)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+
+find_package(TensorFlow 1.10 EXACT REQUIRED)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=${TensorFlow_ABI}")
+set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=${TensorFlow_ABI}" )
+
+TensorFlow_REQUIRE_C_LIBRARY()
+TensorFlow_REQUIRE_SOURCE()
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -149,9 +160,16 @@ target_link_libraries(hfo_example_agent hfo-lib)
 add_executable(low_level_random_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/low_level_random_agent.cpp)
 set_target_properties(low_level_random_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
 target_link_libraries(low_level_random_agent hfo-lib)
-add_executable(high_level_random_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/high_level_random_agent.cpp)
-set_target_properties(high_level_random_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+
+add_executable(high_level_random_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/high_level_random_agent.cc)
+target_include_directories(high_level_random_agent PUBLIC ${TensorFlow_SOURCE_DIR})
+target_include_directories(high_level_random_agent PUBLIC ${TensorFlow_INCLUDE_DIR})
+target_link_libraries(high_level_random_agent -Wl,--allow-multiple-definition -Wl,--whole-archive ${TensorFlow_C_LIBRARY} -Wl,--no-whole-archive)
+target_link_libraries(high_level_random_agent -Wl,--allow-multiple-definition -Wl,--whole-archive ${TensorFlow_LIBRARY} -Wl,--no-whole-archive)
 target_link_libraries(high_level_random_agent hfo-lib)
+set_target_properties(high_level_random_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)
+
+
 
 add_executable(hand_coded_defense_agent ${CMAKE_CURRENT_SOURCE_DIR}/example/hand_coded_defense_agent.cpp)
 set_target_properties(hand_coded_defense_agent PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/example)

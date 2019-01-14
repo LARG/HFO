@@ -2,6 +2,8 @@
 #include <vector>
 #include <HFO.hpp>
 #include <cstdlib>
+#include <string>
+
 
 using namespace std;
 using namespace hfo;

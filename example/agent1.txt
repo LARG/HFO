@@ -1,0 +1,10 @@
+******************************************************************
+ librcsc 4.1.0
+ Copyright 2000 - 2007. Hidehisa Akiyama.
+ Copyright 2007 - 2011. Hidehisa Akiyama and Hiroki Shimora
+ All rights reserved.
+******************************************************************
+/home/mateus/robocin/HFO/src/strategy.cpp:316: ***ERROR*** failed to open file [bin/teams/base/config/formations-dt/before-kick-off.conf]
+Failed to read before_kick_off formation
+***ERROR*** Failed to read team strategy.
+Init failed

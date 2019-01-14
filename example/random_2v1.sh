@@ -1,10 +1,10 @@
 #!/bin/bash
 
-./bin/HFO --offense-agents=2 --defense-npcs=1 --trials 20 --headless &
+./bin/HFO --fullstate --headless --no-sync --defense-agents=1 --defense-npcs=1 --offense-npcs=1 --trials 30  &
+sleep 15
+./build/example/high_level_random_agent 6000 &
 sleep 5
-./example/high_level_random_agent 6000 &> agent1.txt &
-sleep 5
-./example/high_level_random_agent 6000 &> agent2.txt &
+
 
 # The magic line
 #   $$ holds the PID for this script
