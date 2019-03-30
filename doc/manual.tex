@@ -341,8 +341,11 @@ features.
     red-rectangle shows the boundaries of the reported positions,
     which exceed the play field boundaries by 10\% in each
     direction. Positions exceeding this rectangle are bounded (via
-    min/max) to the edges of the rectangle. All distance features are
-    normalized against the max HFO distance shown in orange.}
+    min/max) to the edges of the rectangle. (Note that this does
+    \textbf{not} mean that agents are limited to this rectangle;
+    low-level movement actions (Section \ref{sec:low_level_actions})
+    can go outside it.) All distance features are normalized against
+    the max HFO distance shown in orange.}
   \label{fig:playfieldCoords}
 \end{figure}
 
@@ -430,8 +433,8 @@ the common 'atan2' function as $atan2(\alpha_1, \alpha_2)$.
 \subsubsection{Proximity Features}
 \textit{Proximity features} encode the proximity of the agent to an
 object of interest. Unless otherwise indicated, they are normalized
-against the maximum possible distance in the HFO playfield (defined as
-$\sqrt{l^2 + w^2}$ where $l,w$ are the length and width of the HFO
+against the maximum possible distance in the in-bounds HFO playfield (defined as
+$\sqrt{l^2 + w^2}$ where $l,w$ are the length and width of the in-bounds HFO
 playfield). A maximum proximity of 1 indicates the agent is co-located
 with the object of interest, while a minimum proximity of -1 indicates
 that the agent is across the field from the object of interest.
@@ -533,7 +536,7 @@ low-level features:
 The HFO domain provides support for both low-level primitive actions,
 mid-level, and high-level strategic actions. Low-level, parameterized
 actions are provided for locomotion and kicking. Mid-level actions are
-still mostly parameterized but capture high-level activities such as
+still mostly parameterized but capture higher-level activities such as
 dribbling. Finally, high-level discrete, strategic actions are
 available for moving, shooting, passing and dribbling. Control of the
 agent's head and gaze is not provided and follows Agent2D's default
@@ -549,7 +552,7 @@ faithfully report which action spaces were used.
     100] where negative values move backwards. The relative direction
   of movement is given in degrees and varies between [-180,180] with 0
   degrees being a forward dash and 90 degrees dashing to the agent's
-  right side. Note, dashing does not turn the agent.}
+  right side. Note that dashing does not turn the agent.}
 \item{\textbf{Turn}(degrees): Turns the agent in the
   specified direction. Valid values range between [-180, 180] degrees
   where 90 degrees turns the agent to directly to its right side.}

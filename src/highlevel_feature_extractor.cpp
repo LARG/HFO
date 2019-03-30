@@ -33,7 +33,7 @@ HighLevelFeatureExtractor::ExtractFeatures(const rcsc::WorldModel& wm,
   const PlayerPtrCont& teammates = wm.teammatesFromSelf();
   const PlayerPtrCont& opponents = wm.opponentsFromSelf();
   float maxR = sqrtf(SP.pitchHalfLength() * SP.pitchHalfLength()
-                     + SP.pitchHalfWidth() * SP.pitchHalfWidth());
+                     + SP.pitchWidth() * SP.pitchWidth());
   // features about self pos
   // Allow the agent to go 10% over the playfield in any direction
   float tolerance_x = .1 * SP.pitchHalfLength();
