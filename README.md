@@ -49,7 +49,7 @@ forwards slowly. First start the server: `./bin/HFO --offense-agents=1
 
 Or do both in a single command:
 ```
-(./bin/HFO --offense-agents=1 --no-sync &) && ./example/hfo_example_agent
+(./bin/HFO --offense-agents=1 --no-sync &) && sleep 1 && ./example/hfo_example_agent
 ```
 
 ## Example Agents
