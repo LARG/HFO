@@ -48,11 +48,17 @@ void purgeFeatures(double *state, const std::vector<float>& state_vec,
 
   int stateIndex = 0;
 
+  // Features[0 - 9] - {5,8}=8
+  // Features[9+T+1 - 9+2T]: teammates dists to closest opps=T
+  // Features [9+3T+1 - 9+6T]: x, y, unum of teammates ignoring %3 -> unum of team mates=2T
+  // Features  [9+6T+1 - 9+6T+3*O]: x, y, unum of opponents ignoring %3 -> unum of opponents=20
+  // Ignored: Feature [ 9+6T+3O+1, 9+6T+3O+2]: last_action_status,stamina->2 
+
   // If no opponents ignore features Distance to Opponent
   // and Distance from Teammate i to Opponent are absent
   int tmpIndex = oppPres ? (9 + 3 * numTMates) : (9 + 2 * numTMates);
 
-  for(int i = 0; i < state_vec.size(); i++) {
+  for(int i = 0; i < state_vec.size()-2; i++) {
 
     // Ignore first six featues
     if(i == 5 || i==8) continue;
@@ -167,7 +173,7 @@ void offenseAgent(int port, int numTMates, int numOpponents, int numEpi, double 
       // Get hfo::Action
       a = toAction(action, state_vec);
       if (a== hfo::MARK_PLAYER) {
-           unum = state_vec[(state_vec.size()-1 - (action-5)*3)];
+           unum = state_vec[(state_vec.size()-1 -2 - (action-5)*3)];
            hfo.act(a,unum);
         } else {
            hfo.act(a);
